@@ -43,6 +43,7 @@ def main():
     )
 
     # Save the imputed data
+    mynorm_imputed = mynorm_imputed.reset_index()
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
 
 
