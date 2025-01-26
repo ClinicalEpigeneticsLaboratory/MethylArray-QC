@@ -1,9 +1,19 @@
+// General
 params.input = "/mnt/c/Users/jan.binkowski/Desktop/test/idats"
 params.output = "/mnt/c/Users/jan.binkowski/Desktop/test/output"
 params.cpus = 10
+
+// Sesame
 params.prep_code = "QCDPB"
 params.collapse_prefix = "TRUE"
 params.collapse_prefix_method = "mean"
+
+// Imputation
+params.p_threshold = 0.2
+params.s_threshold = 0.2
+params.imputer_type = "knn"
+
+
 
 process QC {
     publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
@@ -40,12 +50,53 @@ process preprocess {
     """
     preprocess.R $idats $cpus $prep_code $collapse_prefix $collapse_prefix_method
     """
+}
 
+process impute {
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'imputed_mynorm.parquet'
+    label 'python'
+
+    input:
+    path mynorm
+    val p_threshold
+    val s_threshold
+    val imputer_type
+
+    output:
+    path "imputed_mynorm.parquet"
+
+    script:
+    """
+    imputation.py $mynorm $p_threshold $s_threshold $imputer_type
+    """
+}
+
+process anomaly_detection {
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
+    label 'python'
+
+    input:
+    path mynorm
+
+    output:
+    path "ao_results.parquet"
+
+    script:
+    """
+    anomaly_detection.py $mynorm
+    """
 }
 
 workflow {
     idats = file("${params.input}", checkIfExists: true)
-    // add internal validation, count files, check sample sheet etc.
+    // TODO: add internal validation, count files, check sample sheet etc.
     QC(idats, params.cpus)
-    preprocess(idats, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method)
+
+    raw_mynorm = preprocess(idats, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method)
+    imputed_mynorm = impute(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
+    // TODO: export stats from imputation as JSON file ...
+
+    anomaly_detection(imputed_mynorm)
+    // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
+    // (4) multiprocessing for
 }

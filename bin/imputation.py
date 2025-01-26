@@ -1,4 +1,4 @@
-#!/bin/Python
+#!/usr/local/bin/python
 
 import sys
 import pandas as pd
@@ -44,7 +44,6 @@ def main():
 
     # Save the imputed data
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
-    print("Imputed mynorm saved as 'imputed_mynorm.parquet'.")
 
 
 if __name__ == "__main__":

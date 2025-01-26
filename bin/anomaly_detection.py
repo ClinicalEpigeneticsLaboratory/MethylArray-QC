@@ -1,4 +1,4 @@
-#!/bin/Python
+#!/usr/local/bin/python
 
 import sys
 import pandas as pd
@@ -32,8 +32,7 @@ def main():
             anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
 
     # Save the results
-    anomaly_results.to_csv("anomaly_results.csv")
-    print("Anomaly detection results saved as 'anomaly_results.csv'.")
+    anomaly_results.to_parquet("ao_results.parquet")
 
 
 if __name__ == "__main__":

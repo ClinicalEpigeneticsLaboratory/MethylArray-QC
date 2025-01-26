@@ -13,6 +13,7 @@ plotly = "^5.24.1"
 scikit-learn = "^1.6.1"
 joblib = "^1.4.2"
 tqdm = "^4.67.1"
+pyarrow = "^19.0.0"
 
 
 [build-system]
