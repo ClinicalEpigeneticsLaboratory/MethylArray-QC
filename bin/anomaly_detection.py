@@ -16,6 +16,8 @@ def main():
 
     # Load data
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
+    if "CpG" in imputed_mynorm.columns:
+        imputed_mynorm = imputed_mynorm.set_index("CpG")
 
     # Anomaly detection
     algorithms = {
