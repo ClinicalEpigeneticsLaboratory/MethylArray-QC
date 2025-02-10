@@ -1,0 +1,71 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+    "title": " pipeline parameters",
+    "description": "",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input",
+                "output"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Path to a directory with IDAT files for the samples in the experiment.",
+                    "help_text": "You will need to create a directory containing two IDAT files per each sample",
+                    "fa_icon": "fas fa-folder"
+                },
+                "output": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Path to a directory for the result of the pipeline.",
+                    "help_text": "You will need to create a directory for the results of the pipeline",
+                    "fa_icon": "fas fa-folder"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        }
+    ],
+    "properties": {
+        "input": {
+            "type": "string"
+        },
+        "output": {
+            "type": "string"
+        },
+        "cpus": {
+            "type": "integer"
+        },
+        "prep_code": {
+            "type": "string"
+        },
+        "collapse_prefix": {
+            "type": "string"
+        },
+        "collapse_prefix_method": {
+            "type": "string"
+        },
+        "p_threshold": {
+            "type": "number"
+        },
+        "s_threshold": {
+            "type": "number"
+        },
+        "imputer_type": {
+            "type": "string"
+        }
+    }
+}

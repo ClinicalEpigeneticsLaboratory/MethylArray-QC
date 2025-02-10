@@ -1,17 +1,19 @@
+include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
+
 // General
-params.input = "/mnt/c/Users/jan.binkowski/Desktop/test/idats"
-params.output = "/mnt/c/Users/jan.binkowski/Desktop/test/output"
-params.cpus = 10
+//params.input = "/mnt/c/Users/jan.binkowski/Desktop/test/idats"
+//params.output = "/mnt/c/Users/jan.binkowski/Desktop/test/output"
+//params.cpus = 10
 
 // Sesame
-params.prep_code = "QCDPB"
-params.collapse_prefix = "TRUE"
-params.collapse_prefix_method = "mean"
+//params.prep_code = "QCDPB"
+//params.collapse_prefix = "TRUE"
+//params.collapse_prefix_method = "mean"
 
 // Imputation
-params.p_threshold = 0.2
-params.s_threshold = 0.2
-params.imputer_type = "knn"
+//params.p_threshold = 0.2
+//params.s_threshold = 0.2
+//params.imputer_type = "knn"
 
 
 
@@ -88,6 +90,7 @@ process anomaly_detection {
 }
 
 workflow {
+    validateParameters()
     idats = file("${params.input}", checkIfExists: true)
     // TODO: add internal validation, count files, check sample sheet etc.
     QC(idats, params.cpus)
@@ -100,3 +103,5 @@ workflow {
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
 }
+
+log.info paramsSummaryLog(workflow)
