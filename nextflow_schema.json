@@ -47,25 +47,49 @@
             "type": "string"
         },
         "cpus": {
-            "type": "integer"
+            "type": "integer",
+            "help_text": "Provide the number of CPUs that will be used by the pipeline"
         },
         "prep_code": {
-            "type": "string"
+            "type": "string",
+            "enum": ["QCDPB", "SQCDPB", "TQCDPB", "SQCDPB", "HCDPB", "SHCDPB"],
+            "errorMessage": "SeSAME prep code must match one of the recommended codes: QCDPB, SQCDPB, TQCDPB, SQCDPB, HCDPB or SHCDPB",
+            "help_text": "Provide SeSAME-recommended prep code matching your array version and organism: QCDPB, SQCDPB, TQCDPB, SQCDPB, HCDPB or SHCDPB"
+
         },
         "collapse_prefix": {
-            "type": "string"
+            "type": "string",
+            "enum": ["TRUE", "FALSE"],
+            "errorMessage": "collapsePrefix must be set to TRUE or FALSE",
+            "help_text": "Decide if you want to have CpG prefixes collapsed (TRUE) or not (FALSE)"
         },
         "collapse_prefix_method": {
-            "type": "string"
+            "type": "string",
+            "enum": ["mean", "minPval"],
+            "errorMessage": "collapse_prefix_method must be set to mean or minPval",
+            "help_text": "Choose the CpG prefix collapse method: mean or minPval"
         },
         "p_threshold": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "errorMessage": "Incorrect p_threshold. Allowed: 0 <= p_threshold <= 1",
+            "help_text": "Choose the fraction of NaN samples for which a CpG is considered corrupted and removed. Allowed: 0 <= p_threshold <= 1"
+
         },
         "s_threshold": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "help_text": "Choose the fraction of NaN probes for which a sample is considered corrupted and removed. Allowed: 0 <= s_threshold <= 1",
+            "errorMessage": "Incorrect s_threshold. Allowed: 0 <= s_threshold <= 1",
+
         },
         "imputer_type": {
-            "type": "string"
+            "type": "string",
+            "enum": ["mean", "median", "knn"],
+            "help_text": "Choose the type of imputation used: mean, median or knn",
+            "errorMessage": "imputer_type must be set to mean, median or knn"
         }
     }
 }
