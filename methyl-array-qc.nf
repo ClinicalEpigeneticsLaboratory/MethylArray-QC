@@ -91,7 +91,26 @@ process anomaly_detection {
 
 workflow {
     validateParameters()
-    idats = file("${params.input}", checkIfExists: true)
+    idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
+
+    idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
+    sample_size = idat_list_size/2
+
+    // TODO: try to rewrite this if-else to assertions (they do not work yet)!
+    // TODO: sample sheet validation (sample sheet schema?) and comparison with IDAT list 
+    // Current sample count validation based ONLY on the number of IDAT files!
+    if(idat_list_size == 0) {
+        error "Input directory does not contain IDAT files!"
+    } else {
+        if(idat_list_size % 2 != 0) {
+            error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
+        }
+    }
+
+    //assert idat_list_size == 0 : "Input directory does not contain IDAT files!"
+    //assert idat_list_size != 0 & idat_list_size % 2 != 0 : "Number of IDAT files is not a multiplication of 2 - did you forget to copy a file?"
+    println "\nYou provided $idat_list_size IDAT files ($sample_size samples)"
+
     // TODO: add internal validation, count files, check sample sheet etc.
     QC(idats, params.cpus)
 
