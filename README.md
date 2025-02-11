@@ -13,7 +13,9 @@ The pipeline performs the following steps:
 
 ### Software Requirements
 - Docker (enabled in the Nextflow config)
-- Nextflow
+- Nextflow 23.10.0 or later
+- Java 11 or later
+- https://github.com/harrel56/json-schema
 
 ### Nextflow 
 ```
