@@ -12,7 +12,7 @@
             },
             "Array_Position": {
                 "type": "string",
-                "pattern": "^R0[0-9]{1}C0[0-9]{1}_[0-9]{12}"
+                "pattern": "^[0-9]{12}_R0[0-9]{1}C0[0-9]{1}"
             }
         },
         "required": ["Sample_Name", "Array_Position"]
