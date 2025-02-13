@@ -12,7 +12,8 @@
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
                 "input",
-                "output"
+                "output",
+                "sample_sheet"
             ],
             "properties": {
                 "input": {
@@ -22,6 +23,16 @@
                     "description": "Path to a directory with IDAT files for the samples in the experiment.",
                     "help_text": "You will need to create a directory containing two IDAT files per each sample",
                     "fa_icon": "fas fa-folder"
+                },
+                "sample_sheet": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "schema": "sample_sheet_schema.json",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns, and a header row.",
+                    "fa_icon": "fas fa-file-csv"
                 },
                 "output": {
                     "type": "string",
