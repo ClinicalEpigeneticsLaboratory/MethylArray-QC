@@ -66,7 +66,6 @@
             "enum": ["QCDPB", "SQCDPB", "TQCDPB", "SQCDPB", "HCDPB", "SHCDPB"],
             "errorMessage": "SeSAME prep code must match one of the recommended codes: QCDPB, SQCDPB, TQCDPB, SQCDPB, HCDPB or SHCDPB",
             "help_text": "Provide SeSAME-recommended prep code matching your array version and organism: QCDPB, SQCDPB, TQCDPB, SQCDPB, HCDPB or SHCDPB"
-
         },
         "collapse_prefix": {
             "type": "string",
@@ -93,7 +92,7 @@
             "minimum": 0,
             "maximum": 1,
             "help_text": "Choose the fraction of NaN probes for which a sample is considered corrupted and removed. Allowed: 0 <= s_threshold <= 1",
-            "errorMessage": "Incorrect s_threshold. Allowed: 0 <= s_threshold <= 1",
+            "errorMessage": "Incorrect s_threshold. Allowed: 0 <= s_threshold <= 1"
 
         },
         "imputer_type": {
