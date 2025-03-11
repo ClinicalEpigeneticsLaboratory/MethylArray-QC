@@ -43,13 +43,14 @@ process preprocess {
     val prep_code
     val collapse_prefix
     val collapse_prefix_method
+    path sample_sheet_path
 
     output:
     path "raw_mynorm.parquet"
 
     script:
     """
-    preprocess.R $idats $cpus $prep_code $collapse_prefix $collapse_prefix_method
+    preprocess.R $idats $cpus $prep_code $collapse_prefix $collapse_prefix_method $sample_sheet_path
     """
 }
 
@@ -88,8 +89,6 @@ process anomaly_detection {
     """
 }
 
-debug = true
-
 workflow {
     validateParameters()
 
@@ -116,7 +115,7 @@ workflow {
     // TODO: add internal validation, count files, check sample sheet etc.
     QC(params.input, params.cpus, params.sample_sheet)
 
-    raw_mynorm = preprocess(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method)
+    raw_mynorm = preprocess(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
     imputed_mynorm = impute(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
     // TODO: export stats from imputation as JSON file ...
 

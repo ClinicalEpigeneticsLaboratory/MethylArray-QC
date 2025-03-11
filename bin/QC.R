@@ -19,14 +19,8 @@ message("Parsing ...")
 sample_sheet <- data.frame()
 sample_sheet <- read.csv(file = sample_sheet_path, sep = ",", dec = ".", quote = "")
 
-#print(idats)
-#print(sample_sheet)
-
 sample_list_dir <- list()
 sample_list_dir <- file.path(idats, sample_sheet$Array_Position)
-print(sample_list_dir)
-print(typeof(sample_list_dir))
-
 
 sdfs <- lapply(sample_list_dir, FUN = readIDATpair, manifest = NULL, platform = "", min_beads = NULL, controls = NULL, verbose = FALSE)
 qcs <- openSesame(sdfs, prep="", func=sesameQC_calcStats, BPPARAM = BiocParallel::MulticoreParam(cpus))

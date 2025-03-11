@@ -2,7 +2,7 @@
 
 args = commandArgs(trailingOnly=TRUE)
 
-if (length(args)!=5) {
+if (length(args)!=6) {
   stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code>")
 } else {
   idats = args[1]
@@ -10,8 +10,10 @@ if (length(args)!=5) {
   prep_code = args[3]
   collapse_prefix = args[4]
   collapse_method = args[5]
+  sample_sheet_path = args[6]
 }
 
+# To discuss: remove redundant parameter validation?
 known_prep_codes <- c("QCDPB", "SQCDPB", "TQCDPB", "SQCDPB", "HCDPB", "SHCDPB")
 if (!(prep_code %in% known_prep_codes)) {
     stop("Unknown preprocessing code. Use codes predefined in sesame documentation.")
@@ -28,7 +30,15 @@ library(glue)
 
 message("Parsing ...")
 collapse_prefix <- toupper(collapse_prefix) == "TRUE"
-mynorm <- openSesame(idats,
+
+sample_sheet <- data.frame()
+sample_sheet <- read.csv(file = sample_sheet_path, sep = ",", dec = ".", quote = "")
+
+sample_list_dir <- list()
+sample_list_dir <- file.path(idats, sample_sheet$Array_Position)
+
+sdfs <- lapply(sample_list_dir, FUN = readIDATpair, manifest = NULL, platform = "", min_beads = NULL, controls = NULL, verbose = FALSE)
+mynorm <- openSesame(sdfs,
                      prep=prep_code,
                      func=getBetas,
                      collapseToPfx=collapse_prefix,
