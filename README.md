@@ -14,6 +14,7 @@ The pipeline performs the following steps:
 ### Software Requirements
 - Docker (enabled in the Nextflow config)
 - Nextflow 23.10.0 or later
+- NF test (installation: https://www.nf-test.com/installation/)
 - Java 11 or later
 - https://github.com/harrel56/json-schema
 
@@ -60,6 +61,10 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
   - `params.p_threshold`: Fraction of NaN probes for which a CpG is considered corrupted and removed.
   - `params.s_threshold`: Fraction of NaN samples for which a sample is considered corrupted and removed.
   - `params.imputer_type`: Type of imputation (`mean`, `median`, `knn`).
+
+In case you need additional information on parameters, run the following command:
+
+nextflow run methyl-array-qc.nf --help
 
 ### 2. Running the Pipeline
 Run the pipeline using the following command:
