@@ -89,31 +89,23 @@ process anomaly_detection {
 
 workflow {
 
-    //println paramsSummaryMap(workflow)
-    //exit 0
-
-    //if(params.help){
-    //    log.info paramsHelp("nextflow run methyl-array_qc.nf --params-file test_params_config.json")
-    //    exit 0
-    //}
-
     validateParameters()
     idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
 
     idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
-    //sample_size = idat_list_size/2
+    sample_size = idat_list_size/2
 
     // TODO: try to rewrite this if-else to assertions (they do not work yet)!
     // TODO: sample sheet validation (sample sheet schema?) and comparison with IDAT list 
     // Current sample count validation based ONLY on the number of IDAT files!
     
-    //if(idat_list_size == 0) {
-    //    error "Input directory does not contain IDAT files!"
-    //} else {
-    //    if(idat_list_size % 2 != 0) {
-    //        error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
-    //    }
-    //}
+    if(idat_list_size == 0) {
+        error "Input directory does not contain IDAT files!"
+    } else {
+        if(idat_list_size % 2 != 0) {
+            error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
+        }
+    }
 
     //assertAll(
     //    { assert idat_list_size != 0 : "Input directory does not contain IDAT files!" }
@@ -121,7 +113,7 @@ workflow {
 
     
     //assert idat_list_size != 0 & idat_list_size % 2 != 0 : "Number of IDAT files is not a multiplication of 2 - did you forget to copy a file?"
-    //println "\nYou provided $idat_list_size IDAT files ($sample_size samples)"
+    println "\nYou provided $idat_list_size IDAT files ($sample_size samples)"
 
     // TODO: add internal validation, count files, check sample sheet etc.
     QC(idats, params.cpus)
