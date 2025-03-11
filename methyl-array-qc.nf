@@ -92,27 +92,20 @@ process anomaly_detection {
 workflow {
     validateParameters()
 
-    // TODO: try to rewrite this if-else to assertions (they do not work yet)!
-    // TODO: sample sheet validation (sample sheet schema?) and comparison with IDAT list 
-    // Current sample count validation based ONLY on the number of IDAT files!
+    // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
     
-    //if(idat_list_size == 0) {
-    //    error "Input directory does not contain IDAT files!"
-    //} else {
-    //    if(idat_list_size % 2 != 0) {
-    //        error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
-    //    }
-    //}
+    idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
 
-    //assertAll(
-    //    { assert idat_list_size != 0 : "Input directory does not contain IDAT files!" }
-    //)
+    idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
 
-    
-    //assert idat_list_size != 0 & idat_list_size % 2 != 0 : "Number of IDAT files is not a multiplication of 2 - did you forget to copy a file?"
-    //println "\nYou provided $idat_list_size IDAT files ($sample_size samples)"
+    if(idat_list_size == 0) {
+        error "Input directory does not contain IDAT files!"
+    } else {
+        if(idat_list_size % 2 != 0) {
+            error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
+        }
+    }
 
-    // TODO: add internal validation, count files, check sample sheet etc.
     QC(params.input, params.cpus, params.sample_sheet)
 
     raw_mynorm = preprocess(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
