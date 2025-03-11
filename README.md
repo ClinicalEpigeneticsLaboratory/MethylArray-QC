@@ -127,3 +127,4 @@ The pipeline produces the following outputs:
 - Add internal validation for input data (e.g., check sample sheet, count files).
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
 - Implement multiprocessing for additional analyses.
+- Implement tests for workflow and for specific processes
