@@ -1,0 +1,138 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com///nextflow_schema.json",
+    "title": "Pipeline parameters",
+    "description": "",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input",
+                "output",
+                "sample_sheet"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Path to a directory with IDAT files for the samples in the experiment.",
+                    "help_text": "You will need to create a directory containing two IDAT files per each sample",
+                    "fa_icon": "fas fa-folder"
+                },
+                "output": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Path to a directory for the result of the pipeline.",
+                    "help_text": "You will need to create a directory for the results of the pipeline",
+                    "fa_icon": "fas fa-folder"
+                },
+                "sample_sheet": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "schema": "sample_sheet_schema.json",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns, and a header row",
+                    "fa_icon": "fas fa-file-csv"
+                }
+            }
+        },
+        "processing_and_qc_options": {
+            "title": "Processing and QC options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "cpus": {
+                    "type": "integer",
+                    "description": "Number of CPUs to use for analysis",
+                    "help_text": "Provide the number of CPUs that will be used by the pipeline",
+                    "default": 1
+                },
+                "prep_code": {
+                    "type": "string",
+                    "enum": [
+                        "QCDPB",
+                        "SQCDPB",
+                        "TQCDPB",
+                        "SQCDPB",
+                        "HCDPB",
+                        "SHCDPB"
+                    ],
+                    "errorMessage": "SeSAME prep code must match one of the recommended codes: QCDPB, SQCDPB, TQCDPB, SQCDPB, HCDPB or SHCDPB",
+                    "description": "SeSAME-recommended prep code matching an array version and organism",
+                    "help_text": "Provide SeSAME-recommended prep code matching your array version and organism"
+                },
+                "collapse_prefix": {
+                    "type": "string",
+                    "enum": [
+                        "TRUE",
+                        "FALSE"
+                    ],
+                    "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to TRUE if you want to have CpG suffixes collapsed or to FALSE if you want to have CpG suffixes preserved",
+                    "errorMessage": "collapsePrefix must be set to TRUE or FALSE",
+                    "help_text": "Decide if you want to have CpG suffixes collapsed (TRUE) or not (FALSE)",
+                    "default": "FALSE"
+                },
+                "collapse_prefix_method": {
+                    "type": "string",
+                    "enum": [
+                        "mean",
+                        "minPval"
+                    ],
+                    "errorMessage": "collapse_prefix_method must be set to mean or minPval",
+                    "description": "Choose the CpG prefix collapse method",
+                    "help_text": "Choose the CpG prefix collapse method"
+                },
+                "p_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "errorMessage": "Incorrect p_threshold. Allowed: 0 <= p_threshold <= 1",
+                    "description": "Choose the fraction of NaN samples for which a CpG is considered corrupted and removed. Allowed: 0 <= p_threshold <= 1",
+                    "help_text": "Choose the fraction of NaN samples for which a CpG is considered corrupted and removed. Allowed: 0 <= p_threshold <= 1",
+                    "default": 0.2
+                },
+                "s_threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "help_text": "Choose the fraction of NaN probes for which a sample is considered corrupted and removed. Allowed: 0 <= s_threshold <= 1",
+                    "description": "Choose the fraction of NaN probes for which a sample is considered corrupted and removed. Allowed: 0 <= s_threshold <= 1",
+                    "errorMessage": "Incorrect s_threshold. Allowed: 0 <= s_threshold <= 1",
+                    "default": 0.2
+                },
+                "imputer_type": {
+                    "type": "string",
+                    "enum": [
+                        "mean",
+                        "median",
+                        "knn"
+                    ],
+                    "help_text": "Choose the type of imputation used: mean, median or knn",
+                    "description": "Choose the type of imputation used",
+                    "errorMessage": "imputer_type must be set to mean, median or knn"
+                }
+            },
+            "required": [
+                "prep_code"
+            ]
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/processing_and_qc_options"
+        }
+    ]
+}
