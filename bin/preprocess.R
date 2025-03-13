@@ -39,7 +39,9 @@ sample_list_dir <- file.path(idats, sample_sheet$Array_Position)
 
 sdfs <- lapply(sample_list_dir, FUN = readIDATpair, manifest = NULL, platform = "", min_beads = NULL, controls = NULL, verbose = FALSE)
 if(length(sdfs) < nrow(sample_sheet)) stop(paste0("IDATs for ", nrow(sample_sheet) - length(sdfs)), " samples are missing!")
+names(sdfs) <- sample_sheet$Sample_Name
 
+# A bug: sample names not preserved in mynorm (TO FIX)
 mynorm <- openSesame(sdfs,
                      prep=prep_code,
                      func=getBetas,
