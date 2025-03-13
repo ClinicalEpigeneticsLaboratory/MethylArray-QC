@@ -56,7 +56,8 @@ write(
         data.frame(
             Sample_Name = sample_sheet$Sample_Name,
             Declared_sex = sample_sheet$Sex,
-            Inferred_sex = unlist(inferred_sex)
+            Inferred_sex = unlist(inferred_sex),
+            Sex_equal = sample_sheet$Sex == unlist(inferred_sex)
         ), 
         pretty = TRUE
     ),
