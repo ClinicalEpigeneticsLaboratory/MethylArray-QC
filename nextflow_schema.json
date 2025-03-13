@@ -120,6 +120,11 @@
                     "help_text": "Choose the type of imputation used: mean, median or knn",
                     "description": "Choose the type of imputation used",
                     "errorMessage": "imputer_type must be set to mean, median or knn"
+                },
+                "infer_sex": {
+                    "type": "boolean",
+                    "help_text": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
+                    "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step"
                 }
             },
             "required": [
