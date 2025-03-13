@@ -39,7 +39,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "schema": "sample_sheet_schema.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.\n\nSample sheet fields:\n 1) Sample_Name (unique, mandatory), \n 2) Array_Position (unique, mandatory, denotes position of a sample on a microarray in a form Sentrix ID_Sentrix Position, \n3) Sex (optional, but required for sex inference analysis - denotes declared sample sex [allowed values: FEMALE, MALE])",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns, and a header row",
                     "fa_icon": "fas fa-file-csv"
                 }
