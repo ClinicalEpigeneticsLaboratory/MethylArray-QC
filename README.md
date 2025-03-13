@@ -124,7 +124,8 @@ The pipeline produces the following outputs:
 - Output: `ao_results.parquet`.
 
 ## Known Issues and TODOs
-- Add internal validation for input data (e.g., check sample sheet, count files).
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
 - Implement multiprocessing for additional analyses.
 - Implement tests for workflow and for specific processes
+- Add sex inference
+- Add epigenetic age inference
