@@ -3,7 +3,7 @@
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args)!=6) {
-  stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code>")
+  stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code> <sample_sheet_path>")
 } else {
   idats = args[1]
   cpus = args[2]

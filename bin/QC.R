@@ -3,7 +3,7 @@
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args)!=3) {
-  stop("Expected input: Rscript QC.R <idats> <cpus> <sample_list>")
+  stop("Expected input: Rscript QC.R <idats> <cpus> <sample_sheet>")
 } else {
   idats = args[1]
   cpus = args[2]
