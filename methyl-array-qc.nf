@@ -15,6 +15,28 @@ include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; sa
 //params.s_threshold = 0.2
 //params.imputer_type = "knn"
 
+process saveParams {
+
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'params.json'
+    label 'r'
+
+    output:
+        path 'params.json', emit: json
+
+    script:
+
+    /* TODO: export: 
+     - number of IDAT files, 
+     - version (Nextflow? Python? R? MethylArray-QC version?), 
+     - when the workflow was started/completed (date + time), 
+     - workflow duration
+     - whether the workflow succeeded
+    */
+    json_params = groovy.json.JsonOutput.toJson(params)
+    pretty_json = groovy.json.JsonOutput.prettyPrint(json_params)
+    "echo '${pretty_json}' > params.json"
+}
+
 process QC {
     publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
     label 'r'
@@ -109,6 +131,7 @@ process sex_inference {
 
 workflow {
     validateParameters()
+    saveParams()
 
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
     
@@ -136,6 +159,7 @@ workflow {
     if(params.infer_sex) {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
+   
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
 }
