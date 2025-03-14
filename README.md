@@ -8,6 +8,7 @@ The pipeline performs the following steps:
 2. **Preprocessing**: Normalizes data based on user-defined options (e.g., `prep_code`, collapsing settings).
 3. **Imputation**: Handles missing data based on user-specified thresholds and imputation methods.
 4. **Anomaly Detection**: Identifies anomalies using multiple machine learning algorithms (e.g., LOF, Isolation Forest, One-Class SVM).
+5. **Sex inference (optional)**: Optional, infers sex using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet.
 
 ## Prerequisites
 
@@ -50,6 +51,7 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **General**:
   - `params.input`: Path to the directory containing IDAT files.
   - `params.output`: Path to the output directory.
+  - `params.sample_sheet`: Path to sample sheet containing at least Sample_Name and Array_Position fields (& Sex field in case sex inference will be performed).
   - `params.cpus`: Number of CPUs to use.
 
 - **Preprocessing (Sesame)**:
@@ -62,9 +64,12 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
   - `params.s_threshold`: Fraction of NaN samples for which a sample is considered corrupted and removed.
   - `params.imputer_type`: Type of imputation (`mean`, `median`, `knn`).
 
+- **Sex inference**:
+   - `params.infer_sex`: Boolean (`true` or `false`) stating whether sex inference will be performed
+
 In case you need additional information on parameters, run the following command:
 
-nextflow run methyl-array-qc.nf --help
+`nextflow run methyl-array-qc.nf --help`
 
 ### 2. Running the Pipeline
 Run the pipeline using the following command:
@@ -103,6 +108,8 @@ The pipeline produces the following outputs:
    - Data with missing values imputed.
 4. **Anomaly Detection Results (`ao_results.parquet`)**:
    - Anomaly scores and classifications for each sample.
+5. **Sex inference results (`inferred_sex.json`)**:
+   - Declared sex, inferred sex and their comparison result for each sample.
 
 ## Process Details
 
@@ -123,8 +130,12 @@ The pipeline produces the following outputs:
 - Uses a Python script (`anomaly_detection.py`) with algorithms such as LOF, Isolation Forest, and One-Class SVM to detect anomalies in the imputed data.
 - Output: `ao_results.parquet`.
 
+### 5. Sex inference process (optional)
+- Uses a R script (`sex_inference.R`) to infer sex from imputed methylation beta values using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet for each sample.
+- Output: `inferred_sex.json`.
+
 ## Known Issues and TODOs
-- Add internal validation for input data (e.g., check sample sheet, count files).
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
 - Implement multiprocessing for additional analyses.
 - Implement tests for workflow and for specific processes
+- Add epigenetic age inference

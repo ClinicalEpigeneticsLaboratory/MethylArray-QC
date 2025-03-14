@@ -89,6 +89,24 @@ process anomaly_detection {
     """
 }
 
+process sex_inference {
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'inferred_sex.json'
+    label 'r'
+
+    input:
+    path imputed_mynorm_path
+    val cpus
+    path sample_sheet_path
+
+    output:
+    path "inferred_sex.json"
+
+    script:
+    """
+    sex_inference.R $imputed_mynorm_path $cpus $sample_sheet_path
+    """
+}
+
 workflow {
     validateParameters()
 
@@ -113,6 +131,11 @@ workflow {
     // TODO: export stats from imputation as JSON file ...
 
     anomaly_detection(imputed_mynorm)
+
+    // run sex_inference process in parameter infer_sex is set to true
+    if(params.infer_sex) {
+        sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
+    }
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
 }
