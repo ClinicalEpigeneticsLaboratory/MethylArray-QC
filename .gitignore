@@ -3,6 +3,7 @@ work/
 .nextflow.log*
 .nextflow
 *.log
+*.pid
 
 # Pycharm
 idea/
