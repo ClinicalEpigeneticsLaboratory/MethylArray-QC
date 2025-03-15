@@ -108,7 +108,6 @@ process sex_inference {
 }
 
 workflow {
-    log.info paramsSummaryLog(workflow)
     validateParameters()
 
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
@@ -133,7 +132,7 @@ workflow {
 
     anomaly_detection(imputed_mynorm)
 
-    // run sex_inference process in parameter infer_sex is set to true
+    // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
@@ -143,9 +142,42 @@ workflow {
 
     /* 
     Moved saveParams to the end of the workflow to add parameters such as workflow duration etc.
+    
+    Temporary manual parameter map flattening - some of the options had to be removed as JSON conversion returned weird StackOverflow error when there were too many items in a map despite map flattening
+    Structure flattening neccessary because of unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/2815
     */
-    def json_params = groovy.json.JsonOutput.toJson(params)
-    file("${params.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
+
+    def params_map = paramsSummaryMap(workflow)
+
+    def params_map_flattened = params
+    params_map_flattened['Container_engine'] = params_map['Core Nextflow options']['containerEngine']
+    params_map_flattened['Container_R'] = params_map['Core Nextflow options']['container']['withLabel:r']
+    params_map_flattened['Container_Python'] = params_map['Core Nextflow options']['container']['withLabel:python']
+    params_map_flattened['Nextflow_version'] = nextflow.version
+    params_map_flattened['IDAT_count'] = idat_list_size
+    params_map_flattened['Workflow_start'] = workflow.start
+    params_map_flattened.remove('container')
+
+    /*
+    Assignment neccessary due to unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/5261
+    https://github.com/nextflow-io/nextflow/issues/5445
+    */
+    workflow.onComplete = {
+
+        params_map_flattened['Workflow_duration'] = workflow.duration
+        params_map_flattened['Workflow_complete'] = workflow.complete
+        params_map_flattened['Workflow_success'] = workflow.success
+        
+        def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
+        file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
+
+        println("Workflow completed")
+    }
 }
 
-//log.info paramsSummaryLog(workflow)
+/*
+Left here for now due to sometimes appearing error (unknown cause): 
+Variable `workflow` already defined in the process scope
+when this declaration is within workflow scope
+*/
+log.info paramsSummaryLog(workflow)
