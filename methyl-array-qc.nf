@@ -112,7 +112,6 @@ workflow {
 
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
     
-    /*
     idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
 
     idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
@@ -137,7 +136,6 @@ workflow {
     if(params.infer_sex) {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
-    */
 
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
