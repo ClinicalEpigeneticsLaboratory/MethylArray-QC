@@ -159,7 +159,7 @@ workflow {
     params_map_flattened.remove('container')
 
     /*
-    Assignment neccessary due to unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/5261
+    Assignment of a handler neccessary due to unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/5261
     https://github.com/nextflow-io/nextflow/issues/5445
     */
     workflow.onComplete = {
