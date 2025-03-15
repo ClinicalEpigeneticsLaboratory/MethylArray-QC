@@ -168,6 +168,9 @@ workflow {
         params_map_flattened['Workflow_complete'] = workflow.complete
         params_map_flattened['Workflow_success'] = workflow.success
         params_map_flattened['Workflow_errMsg'] = null
+        params_map_flattened['Workflow_errDetails'] = null
+        params_map_flattened['Workflow_exitStatus'] = workflow.exitStatus
+        params_map_flattened['Workflow_cmdLine'] = workflow.commandLine
 
         def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
         file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
@@ -180,6 +183,9 @@ workflow {
         params_map_flattened['Workflow_complete'] = workflow.complete
         params_map_flattened['Workflow_success'] = workflow.success
         params_map_flattened['Workflow_errMsg'] = workflow.errorMessage
+        params_map_flattened['Workflow_errDetails'] = workflow.errorReport
+        params_map_flattened['Workflow_exitStatus'] = workflow.exitStatus
+        params_map_flattened['Workflow_cmdLine'] = workflow.commandLine
 
         def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
         file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
