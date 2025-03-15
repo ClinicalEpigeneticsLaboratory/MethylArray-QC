@@ -112,6 +112,7 @@ workflow {
 
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
     
+    /*
     idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
 
     idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
@@ -136,6 +137,7 @@ workflow {
     if(params.infer_sex) {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
+    */
 
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
@@ -167,11 +169,24 @@ workflow {
         params_map_flattened['Workflow_duration'] = workflow.duration
         params_map_flattened['Workflow_complete'] = workflow.complete
         params_map_flattened['Workflow_success'] = workflow.success
-        
+        params_map_flattened['Workflow_errMsg'] = null
+
         def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
         file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
 
         println("Workflow completed")
+    }
+
+    workflow.onError = {
+        params_map_flattened['Workflow_duration'] = workflow.duration
+        params_map_flattened['Workflow_complete'] = workflow.complete
+        params_map_flattened['Workflow_success'] = workflow.success
+        params_map_flattened['Workflow_errMsg'] = workflow.errorMessage
+
+        def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
+        file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
+
+        println("Workflow completed with errors")
     }
 }
 
