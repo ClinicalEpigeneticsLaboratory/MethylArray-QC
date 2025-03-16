@@ -23,7 +23,7 @@ Function saving workflow parameters to JSON file (params.json) in an output dire
 @param nextflow_version     Nextflow version (property from Nextflow metadata object)
 @param idat_count           Number of IDAT files
 */
-def saveParamsJSON(passed_params_map, workflow_metadata, nextflow_version, idat_count) {
+def saveWorkflowParamsJSON(passed_params_map, workflow_metadata, nextflow_version, idat_count) {
     def params_map = paramsSummaryMap(workflow_metadata)
 
     def params_map_flattened = passed_params_map
@@ -37,9 +37,9 @@ def saveParamsJSON(passed_params_map, workflow_metadata, nextflow_version, idat_
     params_map_flattened['Workflow_duration'] = workflow_metadata.duration
     params_map_flattened['Workflow_complete'] = workflow_metadata.complete
     params_map_flattened['Workflow_success'] = workflow_metadata.success
-    params_map_flattened['Workflow_errMsg'] = workflow.errorMessage
-    params_map_flattened['Workflow_errDetails'] = workflow.errorReport
-    params_map_flattened['Workflow_exitStatus'] = workflow.exitStatus
+    params_map_flattened['Workflow_errMsg'] = workflow_metadata.errorMessage
+    params_map_flattened['Workflow_errDetails'] = workflow_metadata.errorReport
+    params_map_flattened['Workflow_exitStatus'] = workflow_metadata.exitStatus
     params_map_flattened['Workflow_cmdLine'] = workflow_metadata.commandLine
 
     def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
@@ -182,7 +182,7 @@ workflow {
     */
     workflow.onComplete = {
 
-        saveParamsJSON(
+        saveWorkflowParamsJSON(
             params,
             workflow,
             nextflow.version,
@@ -193,7 +193,7 @@ workflow {
     }
 
     workflow.onError = {
-        saveParamsJSON(
+        saveWorkflowParamsJSON(
             params,
             workflow,
             nextflow.version,
