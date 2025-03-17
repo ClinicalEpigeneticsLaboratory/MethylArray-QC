@@ -2,14 +2,14 @@
 
 import sys
 import pandas as pd
-import plotly as py
 import plotly.express as px 
-
-pd.options.plotting.backend = "plotly"
+from plotly.offline import plot, get_plotlyjs
 
 # TODO: reimplement using plain plotly and not plotly express - does not work!
 # TypeError: plot() missing 1 required positional argument: 'kind'
-def getFigUrl(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
+
+# or try to use: https://plotly.com/python/interactive-html-export/
+def getFigDiv(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
@@ -25,19 +25,20 @@ def getFigUrl(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: st
 
     fig = px.box(grouped)
     fig.update_layout(width=600, height=600)
-    return py.plot(fig, height = 600, width = 600, auto_open = False, filename = str("mean_beta_per_" + column))
+    return plot(fig, output_type='div', include_plotlyjs=False)
 
 def main():
     if len(sys.argv) != 3:
         print("Usage: python batch_effect.py <path_to_imputed_mynorm> <path_to_sample_sheet>")
         sys.exit(1)
 
-    urls = []
+    div_res = ""
 
     for col in ["Sentrix_ID", "Sentrix_Position"]:
-        url = getFigUrl(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = col)
-        print(url)
-        urls.append(url)
+        div = getFigDiv(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = col)
+        div_res = div_res + div
+
+    print(div_res)
 
 if __name__ == "__main__":
     main()

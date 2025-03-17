@@ -91,7 +91,7 @@ process sex_inference {
 }
 
 process batch_effect {
-    //publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'slide_plot.png'
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'fig_div.html'
     label 'python'
 
     input:
@@ -99,11 +99,10 @@ process batch_effect {
     path sample_sheet_path
 
     output:
-    val slide_url
-    val array_url
+    path "fig_div.html"
 
     script:
     """
-    batch_effect.py $imputed_mynorm_path $sample_sheet_path
+    batch_effect.py $imputed_mynorm_path $sample_sheet_path > fig_div.html
     """
 }
