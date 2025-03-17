@@ -89,3 +89,21 @@ process sex_inference {
     sex_inference.R $imputed_mynorm_path $cpus $sample_sheet_path
     """
 }
+
+process batch_effect {
+    //publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'slide_plot.png'
+    label 'python'
+
+    input:
+    path imputed_mynorm_path
+    path sample_sheet_path
+
+    output:
+    val slide_url
+    val array_url
+
+    script:
+    """
+    batch_effect.py $imputed_mynorm_path $sample_sheet_path
+    """
+}

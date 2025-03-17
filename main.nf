@@ -1,5 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference } from './modules.nf'
+include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect } from './modules.nf'
 workflow {
     validateParameters()
 
@@ -29,6 +29,8 @@ workflow {
     if(params.infer_sex) {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
+
+    batch_effect(imputed_mynorm, params.sample_sheet)
 
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
