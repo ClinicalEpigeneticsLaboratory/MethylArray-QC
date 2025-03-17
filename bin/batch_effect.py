@@ -9,6 +9,9 @@ from plotly.offline import plot, get_plotlyjs
 # TypeError: plot() missing 1 required positional argument: 'kind'
 
 # or try to use: https://plotly.com/python/interactive-html-export/
+
+# Solution that seems to work for now (to verify):
+# https://medium.com/@simovic.peter/learn-how-to-create-plotly-powered-reporting-supercharged-with-javascript-and-css-bede89d38d5e
 def getFigDiv(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
