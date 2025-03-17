@@ -69,7 +69,9 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 
 In case you need additional information on parameters, run the following command:
 
-`nextflow run methyl-array-qc.nf --help`
+```bash
+nextflow run main.nf --help
+```
 
 ### 2. Running the Pipeline
 Run the pipeline using the following command:
@@ -94,6 +96,9 @@ params {
     p_threshold = 0.2
     s_threshold = 0.2
     imputer_type = "knn"
+
+   //Sex inference
+    infer_sex = true
 }
 ```
 
