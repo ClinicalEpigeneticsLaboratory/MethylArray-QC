@@ -1,51 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
 
-// General
-//params.input = "/mnt/c/Users/jan.binkowski/Desktop/test/idats"
-//params.output = "/mnt/c/Users/jan.binkowski/Desktop/test/output"
-//params.cpus = 10
-
-// Sesame
-//params.prep_code = "QCDPB"
-//params.collapse_prefix = "TRUE"
-//params.collapse_prefix_method = "mean"
-
-// Imputation
-//params.p_threshold = 0.2
-//params.s_threshold = 0.2
-//params.imputer_type = "knn"
-
-/**
-Function saving workflow parameters to JSON file (params.json) in an output directory
-
-@param passed_params_map    map of parameters passed to a workflow by a user
-@param workflow_metadata    a WorkflowMetadata object (info: e.g. workflow duration)
-@param nextflow_version     Nextflow version (property from Nextflow metadata object)
-@param idat_count           Number of IDAT files
-*/
-def saveWorkflowParamsJSON(passed_params_map, workflow_metadata, nextflow_version, idat_count) {
-    def params_map = paramsSummaryMap(workflow_metadata)
-
-    def params_map_flattened = passed_params_map
-    params_map_flattened['Container_engine'] = params_map['Core Nextflow options']['containerEngine']
-    params_map_flattened['Container_R'] = params_map['Core Nextflow options']['container']['withLabel:r']
-    params_map_flattened['Container_Python'] = params_map['Core Nextflow options']['container']['withLabel:python']
-    params_map_flattened['Nextflow_version'] = nextflow_version
-    params_map_flattened['IDAT_count'] = idat_count
-    params_map_flattened['Workflow_start'] = workflow_metadata.start
-    params_map_flattened.remove('container')
-    params_map_flattened['Workflow_duration'] = workflow_metadata.duration
-    params_map_flattened['Workflow_complete'] = workflow_metadata.complete
-    params_map_flattened['Workflow_success'] = workflow_metadata.success
-    params_map_flattened['Workflow_errMsg'] = workflow_metadata.errorMessage
-    params_map_flattened['Workflow_errDetails'] = workflow_metadata.errorReport
-    params_map_flattened['Workflow_exitStatus'] = workflow_metadata.exitStatus
-    params_map_flattened['Workflow_cmdLine'] = workflow_metadata.commandLine
-
-    def json_params = groovy.json.JsonOutput.toJson(params_map_flattened)
-    file("${params_map_flattened.output}/params.json").text = groovy.json.JsonOutput.prettyPrint(json_params)
-}
-
 process QC {
     publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
     label 'r'
@@ -172,34 +126,25 @@ workflow {
     // (4) multiprocessing for
 
     /* 
-    Moved saveParams to the end of the workflow to add parameters such as workflow duration etc.
+    Moved saving params to the end of the workflow to add parameters such as workflow duration etc.
     
-    Temporary manual parameter map flattening (saveParamsJSON) - some of the options had to be removed as JSON conversion returned weird StackOverflow error when there were too many items in a map despite map flattening
+    Temporary manual parameter map flattening - some of the options had to be removed as JSON conversion returned weird StackOverflow error when there were too many items in a map despite map flattening
     Structure flattening neccessary because of unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/2815
     
     Assignment of a handler neccessary due to unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/5261
     https://github.com/nextflow-io/nextflow/issues/5445
     */
     workflow.onComplete = {
-
-        saveWorkflowParamsJSON(
-            params,
-            workflow,
-            nextflow.version,
-            idat_list_size
-        )
-
+        def params_map_all = paramsSummaryMap(workflow)
+        def paramExporter = new JsonWorkflowParamExporter()
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
         println("Workflow completed")
     }
 
     workflow.onError = {
-        saveWorkflowParamsJSON(
-            params,
-            workflow,
-            nextflow.version,
-            idat_list_size
-        )
-
+        def params_map_all = paramsSummaryMap(workflow)
+        def paramExporter = new JsonWorkflowParamExporter()
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
         println("Workflow completed with errors")
     }
 }
