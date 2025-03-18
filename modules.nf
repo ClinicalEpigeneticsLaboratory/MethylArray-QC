@@ -91,7 +91,7 @@ process sex_inference {
 }
 
 process batch_effect {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'fig_div.html'
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
     label 'python'
 
     input:
@@ -99,10 +99,11 @@ process batch_effect {
     path sample_sheet_path
 
     output:
-    path "fig_div.html"
+    path "mean_meth_per_Sentrix_ID.html"
+    path "mean_meth_per_Sentrix_Position.html"
 
     script:
     """
-    batch_effect.py $imputed_mynorm_path $sample_sheet_path > fig_div.html
+    batch_effect.py $imputed_mynorm_path $sample_sheet_path
     """
 }
