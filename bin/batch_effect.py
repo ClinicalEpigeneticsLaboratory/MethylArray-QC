@@ -25,9 +25,11 @@ def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
     # Create figure
     grouped = data.groupby(column).mean().T
 
-    fig = px.box(grouped)
+    fig = px.box(grouped, labels={
+                     "value": "Mean beta value"
+                 })
     fig.update_layout(width=600, height=600)
-    fig.write_html(file = str("mean_meth_per_" + column + ".html"), auto_open = False, include_plotlyjs = False, full_html = False)
+    fig.write_html(file = str("mean_meth_per_" + column + ".html"))
 
 def main():
     if len(sys.argv) != 3:
@@ -35,7 +37,7 @@ def main():
         sys.exit(1)
 
     for col in ["Sentrix_ID", "Sentrix_Position"]:
-        getFigHtml(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = col)
+        getFigHtml(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = str(col))
 
 if __name__ == "__main__":
     main()
