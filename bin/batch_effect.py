@@ -2,7 +2,6 @@
 
 import pandas as pd
 import plotly.express as px 
-import plotly.io as pio
 import sys
 
 def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
