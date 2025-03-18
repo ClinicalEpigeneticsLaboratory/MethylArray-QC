@@ -115,6 +115,8 @@ The pipeline produces the following outputs:
    - Anomaly scores and classifications for each sample.
 5. **Sex inference results (`inferred_sex.json`)**:
    - Declared sex, inferred sex and their comparison result for each sample.
+6. **Batch effect evaluation results (`mean_meth_per_Sentrix_ID.html`, `mean_meth_per_Sentrix_Position.html`)**:
+   - HTML code for figures
 
 ## Process Details
 
@@ -139,8 +141,13 @@ The pipeline produces the following outputs:
 - Uses a R script (`sex_inference.R`) to infer sex from imputed methylation beta values using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet for each sample.
 - Output: `inferred_sex.json`.
 
+### 6.Batch effect evaluation process
+- Uses a Python script (`batch_effect.py`) to generate figures with mean methylation per Slide (Senrix_ID) and per Array (Sentrix_Position).
+- Output: `mean_meth_per_Sentrix_ID.html`, `mean_meth_per_Sentrix_Position.html`.
+
 ## Known Issues and TODOs
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
 - Implement multiprocessing for additional analyses.
 - Implement tests for workflow and for specific processes
 - Add epigenetic age inference
+- Implement the output summary HTML report with embedded figures
