@@ -5,12 +5,6 @@ import plotly.express as px
 import plotly.io as pio
 import sys
 
-pio.renderers.default = "browser"
-
-# Function generating figure HTML to embed in HTML report:
-# https://plotly.com/python/v3/html-reports/
-#
-# Managed to generate figure HTML - we can try to embed them with iframe in the report
 def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
@@ -25,9 +19,7 @@ def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
     # Create figure
     grouped = data.groupby(column).mean().T
 
-    fig = px.box(grouped, labels={
-                     "value": "Mean beta value"
-                 })
+    fig = px.box(grouped, labels={"value": "Mean beta value"})
     fig.update_layout(width=600, height=600)
     fig.write_html(file = str("mean_meth_per_" + column + ".html"))
 
