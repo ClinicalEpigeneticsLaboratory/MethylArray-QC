@@ -45,7 +45,7 @@ def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
         plot_height = 600
         fig = px.box(grouped, labels={"value": "Mean beta value"})
 
-    fig.update_layout(width = 600, height = plot_height)
+    fig.update_layout(width = 600, height = plot_height, template = "ggplot2")
     fig.write_html(file = str("mean_meth_per_" + column + ".html"))
 
 def main():
