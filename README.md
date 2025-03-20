@@ -151,3 +151,4 @@ The pipeline produces the following outputs:
 - Implement tests for workflow and for specific processes
 - Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures
+- **mean per slide/array plot** is currently very memory inefficient for large numbers of Sentrix_IDs
