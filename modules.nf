@@ -107,3 +107,20 @@ process batch_effect {
     batch_effect.py $imputed_mynorm_path $sample_sheet_path
     """
 }
+
+process beta_distribution {
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
+    label 'python'
+
+    input:
+    path imputed_mynorm_path
+    val n_cpgs
+
+    output:
+    path "beta_distribution.html"
+
+    script:
+    """
+    beta_distribution.py $imputed_mynorm_path $n_cpgs
+    """
+}

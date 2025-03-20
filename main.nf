@@ -1,5 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect } from './modules.nf'
+include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution } from './modules.nf'
 workflow {
     validateParameters()
 
@@ -31,6 +31,14 @@ workflow {
     }
 
     batch_effect(imputed_mynorm, params.sample_sheet)
+
+    def n_cpgs
+    if(!params.n_cpgs) {
+        n_cpgs = 10000
+    } else {
+        n_cpgs = params.n_cpgs
+    }
+    beta_distribution(imputed_mynorm, n_cpgs)
 
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for
