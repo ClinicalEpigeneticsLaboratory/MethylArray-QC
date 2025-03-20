@@ -32,13 +32,13 @@ workflow {
 
     batch_effect(imputed_mynorm, params.sample_sheet)
 
-    def n_cpgs
-    if(!params.n_cpgs) {
-        n_cpgs = 10000
+    def n_cpgs_beta_distr
+    if(!params.n_cpgs_beta_distr) {
+        n_cpgs_beta_distr = 10000
     } else {
-        n_cpgs = params.n_cpgs
+        n_cpgs_beta_distr = params.n_cpgs_beta_distr
     }
-    beta_distribution(imputed_mynorm, n_cpgs)
+    beta_distribution(imputed_mynorm, n_cpgs_beta_distr)
 
     // TODO: (1) PCA (2) Beta distribution across slides/arrays/groups (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for

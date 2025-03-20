@@ -125,6 +125,12 @@
                     "type": "boolean",
                     "help_text": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
                     "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step"
+                },
+                "n_cpgs_beta_distr": {
+                    "type": "number",
+                    "default": 10000,
+                    "help_text": "Number of CpGs randomly selected for the kernel-density plot",
+                    "description": "Number of CpGs randomly selected for the kernel-density plot"
                 }
             },
             "required": [
