@@ -124,3 +124,19 @@ process beta_distribution {
     beta_distribution.py $imputed_mynorm_path $n_cpgs_beta_distr
     """
 }
+
+process nan_distribution {
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
+    label 'python'
+
+    input:
+    path qc_path
+
+    output:
+    path "nan_distribution.html"
+
+    script:
+    """
+    nan_distribution.py $qc_path
+    """
+}
