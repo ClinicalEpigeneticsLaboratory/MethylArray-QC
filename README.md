@@ -118,12 +118,12 @@ The pipeline produces the following outputs:
    - Anomaly scores and classifications for each sample.
 5. **Sex inference results (`inferred_sex.json`)**:
    - Declared sex, inferred sex and their comparison result for each sample.
-6. **Batch effect evaluation results (`mean_meth_per_Sentrix_ID.html`, `mean_meth_per_Sentrix_Position.html`)**:
-   - figures as HTML files.
-7. **Beta distribution plot (`beta_distribution.html`)**:
-   - figure as HTML file.   
-8. **NaN distribution plot (`nan_distribution.html`)**:
-   - figure as HTML file
+6. **Batch effect evaluation results (`mean_meth_per_Sentrix_ID.json`, `mean_meth_per_Sentrix_Position.json`)**:
+   - figures as JSON files.
+7. **Beta distribution plot (`beta_distribution.json`)**:
+   - figure as JSON file.   
+8. **NaN distribution plot (`nan_distribution.json`)**:
+   - figure as JSON file
 
 ## Process Details
 
@@ -150,15 +150,15 @@ The pipeline produces the following outputs:
 
 ### 6.Batch effect evaluation process
 - Uses a Python script (`batch_effect.py`) to generate figures with mean methylation per Slide (Senrix_ID) and per Array (Sentrix_Position).
-- Output: `mean_meth_per_Sentrix_ID.html`, `mean_meth_per_Sentrix_Position.html`.
+- Output: `mean_meth_per_Sentrix_ID.json`, `mean_meth_per_Sentrix_Position.json`.
 
 ### 7. Beta distribution process
 - Uses a Python script (`beta_distribution.py`) to generate a figure with KDE plot presenting the distribution of methylation beta values per sample.
-- Output: `beta_distribution.html`.
+- Output: `beta_distribution.json`.
 
 ### 8. NaN distribution process
 - Uses a Python script (`nan_distribution.py`) to generate a barplot representing the percentage of NaN probes per sample.
-- Output: `nan_distribution.html`.
+- Output: `nan_distribution.json`.
 
 ## Known Issues and TODOs
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
