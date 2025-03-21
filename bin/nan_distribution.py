@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 import plotly.express as px
 
+# TODO: add bar coloring by columns specified by the user
 # TODO: add logic for subplot generation when there are many samples! (> 10)
 def main():
     if len(sys.argv) != 2:
