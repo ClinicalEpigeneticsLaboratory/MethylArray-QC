@@ -11,7 +11,7 @@ import sys
 from plotly.subplots import make_subplots
 
 # TODO: think how to solve - this approach is very memory inefficient and can fail for large number of Sentrix_IDs! Tested on 67 Sentrix_IDs (result: failed with MemoryError)
-def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
+def getFigJson(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
@@ -63,7 +63,7 @@ def getFigHtml(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
         fig = px.box(grouped, labels={"value": "Mean beta value"})
 
     fig.update_layout(width = 600, height = plot_height, template = "ggplot2")
-    fig.write_html(file = str("mean_meth_per_" + column + ".html"))
+    fig.write_json(file = str("mean_meth_per_" + column + ".json"))
 
 def main():
     if len(sys.argv) != 3:
@@ -71,7 +71,7 @@ def main():
         sys.exit(1)
 
     for col in ["Sentrix_ID", "Sentrix_Position"]:
-        getFigHtml(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = str(col))
+        getFigJson(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = str(col))
 
 if __name__ == "__main__":
     main()

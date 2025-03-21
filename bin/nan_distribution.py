@@ -4,8 +4,6 @@ import sys
 import pandas as pd
 import plotly.express as px
 
-# TODO: add bar coloring by columns specified by the user
-# TODO: add logic for subplot generation when there are many samples! (> 10)
 def main():
     if len(sys.argv) != 2:
         print("Usage: python nan_distribution.py <path_to_qc_stats>")
@@ -27,7 +25,7 @@ def main():
 
     fig.update_yaxes(title = "% NaN", range = [0, 100])
     fig.update_layout(width = 600, height = 300, template = "ggplot2", title_text = "NaN% per sample", showlegend = False)
-    fig.write_html(file = "nan_distribution.html")
+    fig.write_json(file = "nan_distribution.json")
 
 if __name__ == "__main__":
     main()

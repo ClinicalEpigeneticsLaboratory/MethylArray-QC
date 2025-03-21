@@ -91,7 +91,7 @@ process sex_inference {
 }
 
 process batch_effect {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
@@ -99,8 +99,8 @@ process batch_effect {
     path sample_sheet_path
 
     output:
-    path "mean_meth_per_Sentrix_ID.html"
-    path "mean_meth_per_Sentrix_Position.html"
+    path "mean_meth_per_Sentrix_ID.json"
+    path "mean_meth_per_Sentrix_Position.json"
 
     script:
     """
@@ -109,7 +109,7 @@ process batch_effect {
 }
 
 process beta_distribution {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
@@ -117,7 +117,7 @@ process beta_distribution {
     val n_cpgs_beta_distr
 
     output:
-    path "beta_distribution.html"
+    path "beta_distribution.json"
 
     script:
     """
@@ -126,14 +126,14 @@ process beta_distribution {
 }
 
 process nan_distribution {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.html'
+    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
     path qc_path
 
     output:
-    path "nan_distribution.html"
+    path "nan_distribution.json"
 
     script:
     """

@@ -34,7 +34,7 @@ def main():
     fig.update_xaxes(range=[0, 1], title = "Beta")
     fig.update_yaxes(title = "Density")
     fig.update_layout(width = 600, height = 300, template = "ggplot2", title_text = plot_title, showlegend = False)
-    fig.write_html(file = "beta_distribution.html")
+    fig.write_json(file = "beta_distribution.json")
 
 if __name__ == "__main__":
     main()
