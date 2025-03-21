@@ -11,6 +11,7 @@ The pipeline performs the following steps:
 5. **Sex inference (optional)**: Optional, infers sex using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet.
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
+8. **NaN distribution plot**: shows the percentage of NaN probes per sample
 
 ## Prerequisites
 
@@ -121,6 +122,8 @@ The pipeline produces the following outputs:
    - figures as HTML files.
 7. **Beta distribution plot (`beta_distribution.html`)**:
    - figure as HTML file.   
+8. **NaN distribution plot (`nan_distribution.html`)**:
+   - figure as HTML file
 
 ## Process Details
 
@@ -152,6 +155,10 @@ The pipeline produces the following outputs:
 ### 7. Beta distribution process
 - Uses a Python script (`beta_distribution.py`) to generate a figure with KDE plot presenting the distribution of methylation beta values per sample.
 - Output: `beta_distribution.html`.
+
+### 8. NaN distribution process
+- Uses a Python script (`nan_distribution.py`) to generate a barplot representing the percentage of NaN probes per sample.
+- Output: `nan_distribution.html`.
 
 ## Known Issues and TODOs
 - Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
