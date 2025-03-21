@@ -19,7 +19,7 @@ def main():
     # Provide additional parameter PCA_cols to perform PCA on
     # funs: getFigHtml, performPCA - and do it on each column provided (allowed: Sample_Group - default, Sentrix_ID, Sentrix_Position)
 
-    # Load data
+    # Load data (TODO: re-check how to prepare data for PCA to be sure they are correct!)
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
 
@@ -37,6 +37,8 @@ def main():
     # Data scaling
     scaler = StandardScaler().set_output(transform="pandas")
     scaled_PCA_data = scaler.fit_transform(pca_data)
+
+    # Performing PCA
     PCA_res = PCA(n_components=2, random_state = 307).fit(scaled_PCA_data)
     
 
