@@ -9,6 +9,8 @@ import random
 # an idea: do we want a random seed to be provided by the user as an parameter?
 random.seed(123)
 
+# I cannot add customized hover to this type of plot, may require more work or impossible: 
+# https://stackoverflow.com/questions/62448872/plotly-how-to-modify-hovertemplate-of-a-histogram
 def main():
     if len(sys.argv) != 3:
         print("Usage: python beta_distribution.py <path_to_imputed_mynorm> <n_cpgs_beta_distr>")
