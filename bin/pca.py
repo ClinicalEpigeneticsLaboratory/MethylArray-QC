@@ -8,7 +8,7 @@ import sys
 # 3.	Pca dla N cpg z największą wariancją (domyślnie 10%) ale parametr do ustalenia przez usera, kolorowane po fenotypie, array, slide znów do wyboru przez usera domyślnie tylko po fenotypie o ile jest w podany w sample sheet
 
 def main():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 4:
         print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <n_cpgs>")
         sys.exit(1)
 
