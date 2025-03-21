@@ -39,7 +39,7 @@ workflow {
         n_cpgs_beta_distr = params.n_cpgs_beta_distr
     }
     beta_distribution(imputed_mynorm, n_cpgs_beta_distr)
-    nan_distribution(qc_path)
+    nan_distribution(qc_path, params.sample_sheet)
 
     // TODO: (1) PCA (3) NaN distribution across slides/arrays/groups
     // (4) multiprocessing for

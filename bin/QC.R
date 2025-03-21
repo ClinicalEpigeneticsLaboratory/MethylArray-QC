@@ -32,5 +32,5 @@ message("QC ...")
 quality_metrics <- do.call(rbind, lapply(qcs, as.data.frame))
 
 message("Dumping ...")
-quality_metrics$Sample <- rownames(quality_metrics)
+quality_metrics$Sample_Name <- rownames(quality_metrics)
 write_parquet(quality_metrics, glue("qc", ".parquet"))

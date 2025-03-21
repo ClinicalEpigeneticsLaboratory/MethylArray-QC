@@ -131,12 +131,13 @@ process nan_distribution {
 
     input:
     path qc_path
+    path sample_sheet_path
 
     output:
     path "nan_distribution.json"
 
     script:
     """
-    nan_distribution.py $qc_path
+    nan_distribution.py $qc_path $sample_sheet_path
     """
 }
