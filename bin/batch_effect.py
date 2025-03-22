@@ -5,7 +5,6 @@ from pathlib import Path
 import plotly.express as px 
 import sys
 
-# Haha
 def getFigJson(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
