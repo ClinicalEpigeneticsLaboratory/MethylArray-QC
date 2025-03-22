@@ -5,6 +5,7 @@ from pathlib import Path
 import plotly.express as px 
 import sys
 
+# Haha
 def getFigJson(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: str):
 
     # Load data
@@ -44,7 +45,7 @@ def getFigJson(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
 
             fig = px.box(grouped_row_melted, x = column, y = "Mean beta value")
             fig.update_layout(width = 600, height = plot_height, template = "ggplot2")
-            fig.write_json(file = f"./Mean_beta_per_{column}/{row_num}.json")
+            fig.write_json(file = f"Mean_beta_per_{column}/{row_num}.json", pretty = True)
         else:
             print(f"Warning: No {column}s found for row {row_num}.")
 
