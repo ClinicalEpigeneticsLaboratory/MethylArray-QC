@@ -32,13 +32,12 @@ workflow {
 
     batch_effect(imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
 
-    def n_cpgs_beta_distr
     if(!params.n_cpgs_beta_distr) {
-        n_cpgs_beta_distr = 10000
+        beta_distribution(imputed_mynorm, 10000)
     } else {
-        n_cpgs_beta_distr = params.n_cpgs_beta_distr
+        beta_distribution(imputed_mynorm, params.n_cpgs_beta_distr)
     }
-    beta_distribution(imputed_mynorm, n_cpgs_beta_distr)
+    
     nan_distribution(qc_path, params.sample_sheet)
 
     // TODO: (1) PCA (3) NaN distribution across slides/arrays/groups

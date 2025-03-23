@@ -53,7 +53,6 @@ def main():
         print("Usage: python batch_effect.py <path_to_imputed_mynorm> <path_to_sample_sheet> <column>")
         sys.exit(1)
 
-    #for col in ["Sentrix_ID", "Sentrix_Position"]:
     imputed_mynorm_path = sys.argv[1]
     sample_sheet_path = sys.argv[2]
     col = str(sys.argv[3])
