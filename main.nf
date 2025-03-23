@@ -30,7 +30,7 @@ workflow {
         sex_inference(imputed_mynorm, params.cpus, params.sample_sheet)
     }
 
-    batch_effect(imputed_mynorm, params.sample_sheet)
+    batch_effect(imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
 
     def n_cpgs_beta_distr
     if(!params.n_cpgs_beta_distr) {

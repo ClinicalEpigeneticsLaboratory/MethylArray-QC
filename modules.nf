@@ -91,20 +91,20 @@ process sex_inference {
 }
 
 process batch_effect {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
+    publishDir "$params.output", mode: 'copy', overwrite: true
     label 'python'
 
     input:
     path imputed_mynorm_path
     path sample_sheet_path
+    each column
 
     output:
-    path "mean_meth_per_Sentrix_ID.json"
-    path "mean_meth_per_Sentrix_Position.json"
+    path("Mean_beta_per_${column}/*.json", arity: "1..*")
 
     script:
     """
-    batch_effect.py $imputed_mynorm_path $sample_sheet_path
+    batch_effect.py $imputed_mynorm_path $sample_sheet_path $column
     """
 }
 

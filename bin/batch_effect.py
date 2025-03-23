@@ -49,16 +49,19 @@ def getFigJson(path_to_imputed_mynorm: str, path_to_sample_sheet: str, column: s
             print(f"Warning: No {column}s found for row {row_num}.")
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python batch_effect.py <path_to_imputed_mynorm> <path_to_sample_sheet>")
+    if len(sys.argv) != 4:
+        print("Usage: python batch_effect.py <path_to_imputed_mynorm> <path_to_sample_sheet> <column>")
         sys.exit(1)
 
-    for col in ["Sentrix_ID", "Sentrix_Position"]:
+    #for col in ["Sentrix_ID", "Sentrix_Position"]:
+    imputed_mynorm_path = sys.argv[1]
+    sample_sheet_path = sys.argv[2]
+    col = str(sys.argv[3])
 
-        # Create the directory
-        col_out_dir_path = Path(f"./Mean_beta_per_{col}")
-        col_out_dir_path.mkdir(exist_ok = True)
-        getFigJson(path_to_imputed_mynorm = sys.argv[1], path_to_sample_sheet = sys.argv[2], column = str(col))
+    # Create the directory
+    col_out_dir_path = Path(f"Mean_beta_per_{col}")
+    col_out_dir_path.mkdir(exist_ok = True)
+    getFigJson(path_to_imputed_mynorm = imputed_mynorm_path, path_to_sample_sheet = sample_sheet_path, column = col)
 
 if __name__ == "__main__":
     main()
