@@ -47,8 +47,8 @@ def main():
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
 
-    fig = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column, title = f"PCA - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance")
-    fig.update_layout(showlegend = False)
+    fig = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column)
+    fig.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
     fig.write_json(file = f"PCA_{column}.json", pretty = True)
 
 if __name__ == "__main__":
