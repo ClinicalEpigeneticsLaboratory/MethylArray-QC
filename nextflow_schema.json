@@ -151,6 +151,14 @@
                     "help_text": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
                     "description": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
                     "errorMessage": "Invalid columns for sample coloring in PCA analysis provided. Allowed: 1-3 columns - Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces"
+                },
+                "pca_number_of_components": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 10,
+                    "help_text": "Number of components for PCA analysis",
+                    "description": "Number of components for PCA analysis",
+                    "errorMessage": "Invalid number of components for PCA analysis. Must be an integer between 2 number of samples."
                 }
             },
             "required": [
