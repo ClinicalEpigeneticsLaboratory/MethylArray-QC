@@ -148,9 +148,9 @@
                     "type": "string",
                     "default": "Sentrix_ID,Sentrix_Position",
                     "pattern": "^(?:(Sentrix_ID|Sentrix_Position|Sample_Group)(?:,(?!\\1)(Sentrix_ID|Sentrix_Position|Sample_Group))*)$",
-                    "help_text": "Columns used in PCA analysis for sample coloring on a plot (Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces)",
-                    "description": "Columns used in PCA analysis for sample coloring on a plot (Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces)",
-                    "errorMessage": "Invalid columns for sample coloring in PCA analysis provided. Allowed: Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces"
+                    "help_text": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "description": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "errorMessage": "Invalid columns for sample coloring in PCA analysis provided. Allowed: 1-3 columns - Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces"
                 }
             },
             "required": [
