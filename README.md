@@ -178,8 +178,10 @@ The pipeline produces the following outputs:
 - Output: `nan_distribution.json`.
 
 ### 9. PCA process
-- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating figure(s) with sample coloring based on column(s) provided by the user.
-- Output: `PCA_Sentrix_ID.json`, `PCA_Sentrix_Position.json` and/or`PCA_Sample_Group.json`.
+- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating 2D dotplot(s) visualising first 2 components with sample coloring based on column(s) provided by the user and a scree plots for all components specified by the user.
+- Output: 
+   - PCA 2D dotplots for first 2 components: `PCA_2D_dot_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` and/or`PCA_2D_dot_Sample_Group.json`,
+   - PCA scree plot for all components specified by the user: `PCA_scree_Sentrix_ID.json`, `PCA_scree_Sentrix_Position.json` and/or`PCA_scree_Sample_Group.json`,
 
 ## Known Issues and TODOs
 - Generate additional statistics (e.g. NaN distribution across probes).
@@ -187,3 +189,4 @@ The pipeline produces the following outputs:
 - Implement tests for workflow and for specific processes
 - Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures
+- PCA: single scree plot as a separate process, single PCA as separate process (2D plots as separate process - ran 1 time per column)
