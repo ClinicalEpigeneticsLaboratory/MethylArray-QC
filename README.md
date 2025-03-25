@@ -12,6 +12,7 @@ The pipeline performs the following steps:
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
 8. **NaN distribution plot**: shows the percentage of NaN probes per sample
+9. **PCA analysis**: for the first 2 components, with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
 
 ## Prerequisites
 
@@ -70,6 +71,13 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **Sex inference**:
    - `params.infer_sex`: Boolean (`true` or `false`) stating whether sex inference will be performed
 
+- **Beta distribution**:
+   - `params.n_cpgs_beta_distr`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot
+
+- **PCA**:
+   - `params.perc_pca_cpgs`: Integer, percentage of CpGs with highest variance selected for PCA analysis (1 to 100%)
+   - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
+
 In case you need additional information on parameters, run the following command:
 
 ```bash
@@ -101,7 +109,14 @@ params {
     imputer_type = "knn"
 
    //Sex inference
-    infer_sex = true
+    infer_sex = true,
+
+    //Beta distribution
+    n_cpgs_beta_distr = 20000,
+
+    //PCA
+    perc_pca_cpgs = 20,
+    pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID"
 }
 ```
 
@@ -118,12 +133,14 @@ The pipeline produces the following outputs:
    - Anomaly scores and classifications for each sample.
 5. **Sex inference results (`inferred_sex.json`)**:
    - Declared sex, inferred sex and their comparison result for each sample.
-6. **Batch effect evaluation results (`mean_meth_per_Sentrix_ID.json`, `mean_meth_per_Sentrix_Position.json`)**:
-   - figures as JSON files.
+6. **Batch effect evaluation results (`1.json, 2.json etc...`)**:
+   - figures as JSON files (numbered from 1 to n...) in directories corresponding to columns (`Mean_beta_per_Sentrix_ID`, `Mean_beta_per_Sentrix_Position`) created automatically within output directory.
 7. **Beta distribution plot (`beta_distribution.json`)**:
    - figure as JSON file.   
 8. **NaN distribution plot (`nan_distribution.json`)**:
    - figure as JSON file
+9. **PCA (`PCA_Sentrix_ID.json`, `PCA_Sentrix_Position.json` and/or`PCA_Sample_Group.json`)**:
+   - figures as JSON file (generated only figures for columns provided as a parameter)
 
 ## Process Details
 
@@ -150,7 +167,7 @@ The pipeline produces the following outputs:
 
 ### 6.Batch effect evaluation process
 - Uses a Python script (`batch_effect.py`) to generate figures with mean methylation per Slide (Senrix_ID) and per Array (Sentrix_Position).
-- Output: `mean_meth_per_Sentrix_ID.json`, `mean_meth_per_Sentrix_Position.json`.
+- Output: directories `Mean_beta_per_Sentrix_ID` and `Mean_beta_per_Sentrix_Position` with figures (as JSON files) numbered from 1 to n, each presenting either 10 Sentrix_IDs or 10 Sentrix_Positions.
 
 ### 7. Beta distribution process
 - Uses a Python script (`beta_distribution.py`) to generate a figure with KDE plot presenting the distribution of methylation beta values per sample.
@@ -160,10 +177,13 @@ The pipeline produces the following outputs:
 - Uses a Python script (`nan_distribution.py`) to generate a barplot representing the percentage of NaN probes per sample.
 - Output: `nan_distribution.json`.
 
+### 9. PCA process
+- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating figure(s) with sample coloring based on column(s) provided by the user.
+- Output: `PCA_Sentrix_ID.json`, `PCA_Sentrix_Position.json` and/or`PCA_Sample_Group.json`.
+
 ## Known Issues and TODOs
-- Generate additional statistics (e.g., PCA, beta distribution, NaN distribution across groups).
+- Generate additional statistics (e.g. NaN distribution across probes).
 - Implement multiprocessing for additional analyses.
 - Implement tests for workflow and for specific processes
 - Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures
-- **mean per slide/array plot** is currently very memory inefficient for large numbers of Sentrix_IDs
