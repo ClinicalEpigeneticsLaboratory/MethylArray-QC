@@ -12,7 +12,7 @@ The pipeline performs the following steps:
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
 8. **NaN distribution plot**: shows the percentage of NaN probes per sample
-9. **PCA analysis**: for the first 2 components, with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
+9. **PCA analysis**: generates 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group) and a scree plot for number of components specified by the user
 
 ## Prerequisites
 
@@ -139,8 +139,8 @@ The pipeline produces the following outputs:
    - figure as JSON file.   
 8. **NaN distribution plot (`nan_distribution.json`)**:
    - figure as JSON file
-9. **PCA (`PCA_Sentrix_ID.json`, `PCA_Sentrix_Position.json` and/or`PCA_Sample_Group.json`)**:
-   - figures as JSON file (generated only figures for columns provided as a parameter)
+9. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_scree_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_scree_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_scree_Sample_Group.json`)**:
+   - figures (2D dot plots for first 2 components and scree plots for all components) as JSON files (generated only figures for columns provided as a parameter)
 
 ## Process Details
 
