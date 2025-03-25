@@ -165,7 +165,7 @@ The pipeline produces the following outputs:
 - Uses a R script (`sex_inference.R`) to infer sex from imputed methylation beta values using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet for each sample.
 - Output: `inferred_sex.json`.
 
-### 6.Batch effect evaluation process
+### 6. Batch effect evaluation process
 - Uses a Python script (`batch_effect.py`) to generate figures with mean methylation per Slide (Senrix_ID) and per Array (Sentrix_Position).
 - Output: directories `Mean_beta_per_Sentrix_ID` and `Mean_beta_per_Sentrix_Position` with figures (as JSON files) numbered from 1 to n, each presenting either 10 Sentrix_IDs or 10 Sentrix_Positions.
 
