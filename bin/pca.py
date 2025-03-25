@@ -8,8 +8,8 @@ from sklearn.decomposition import PCA
 import sys
 
 def main():
-    if len(sys.argv) != 6:
-        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column>")
+    if len(sys.argv) != 7:
+        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_scree>")
         sys.exit(1)
 
     path_to_imputed_mynorm = sys.argv[1]
@@ -17,6 +17,7 @@ def main():
     perc_pca_cpgs = int(sys.argv[3])
     pca_number_of_components = int(sys.argv[4])
     column = str(sys.argv[5])
+    draw_scree = str(sys.argv[6])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -52,18 +53,19 @@ def main():
     fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
     fig_dot.write_json(file = f"PCA_2D_dot_{column}.json", pretty = True)
 
-    scree_plot_data = {
-        "Component": range(1, pca_number_of_components + 1, 1),
-        "Explained_variance_%": pca_res.explained_variance_ratio_*100
-    }
+    if draw_scree == "true":
+        scree_plot_data = {
+            "Component": range(1, pca_number_of_components + 1, 1),
+            "Explained_variance_%": pca_res.explained_variance_ratio_*100
+        }
 
-    scree_plot_data_df = pd.DataFrame(scree_plot_data)
+        scree_plot_data_df = pd.DataFrame(scree_plot_data)
 
-    fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
-    fig_scree.update_xaxes(title = "Principal component")
-    fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
-    fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
-    fig_scree.write_json(file = f"PCA_scree_{column}.json", pretty = True)
+        fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
+        fig_scree.update_xaxes(title = "Principal component")
+        fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
+        fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
+        fig_scree.write_json(file = "PCA_scree.json", pretty = True)
 
 if __name__ == "__main__":
     main()

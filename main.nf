@@ -55,7 +55,13 @@ workflow {
         pca_columns = params.pca_columns?.split(',') as List
     }
 
-    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_number_of_components, pca_columns)
+    // ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
+    def draw_scree = pca_columns.collect{it -> it == pca_columns.getAt(0)}
+
+    def pca_param_ch = Channel.fromList(pca_columns)
+        .merge(Channel.fromList(draw_scree))
+
+    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_number_of_components, pca_param_ch)
 
     // TODO: (1) NaN distribution across probes (heatmap), samples (TODO: add parameter for a number of samples per plot)
     // (2) multiprocessing for analyses where possible

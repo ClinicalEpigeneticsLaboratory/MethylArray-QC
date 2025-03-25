@@ -151,14 +151,14 @@ process pca {
     path sample_sheet_path
     val perc_pca_cpgs
     val pca_number_of_components
-    each column
+    each pca_param_pair // each pair consists of a column for 2D dotplot and a boolean (true/false) stating whether a scree plot will be drawn in this iteration
 
     output:
-    path "PCA_2D_dot_${column}.json"
-    path "PCA_scree_${column}.json"
+    path "PCA_2D_dot_${pca_param_pair[0]}.json"
+    path "PCA_scree.json", optional: true
 
     script:
     """
-    pca.py $imputed_mynorm_path $sample_sheet_path $perc_pca_cpgs $pca_number_of_components $column
+    pca.py $imputed_mynorm_path $sample_sheet_path $perc_pca_cpgs $pca_number_of_components ${pca_param_pair[0]} ${pca_param_pair[1]}
     """
 }
