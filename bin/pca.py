@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import sys
 
+# TODO: add an export of a data frame with Kruskal-Wallis result p values comparing e.g. Sentrix_IDs for each principal component
 def main():
     if len(sys.argv) != 7:
         print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_scree>")
