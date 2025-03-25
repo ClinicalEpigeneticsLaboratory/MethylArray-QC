@@ -150,13 +150,15 @@ process pca {
     path imputed_mynorm_path
     path sample_sheet_path
     val perc_pca_cpgs
+    val pca_number_of_components
     each column
 
     output:
-    path "PCA_${column}.json"
+    path "PCA_2D_dot_${column}.json"
+    path "PCA_scree_${column}.json"
 
     script:
     """
-    pca.py $imputed_mynorm_path $sample_sheet_path $perc_pca_cpgs $column
+    pca.py $imputed_mynorm_path $sample_sheet_path $perc_pca_cpgs $pca_number_of_components $column
     """
 }

@@ -45,12 +45,17 @@ workflow {
         perc_pca_cpgs = params.perc_pca_cpgs
     } 
 
+    def pca_number_of_components = 10
+    if(params.pca_number_of_components) {
+        pca_number_of_components = params.pca_number_of_components
+    } 
+
     def pca_columns = ['Sentrix_ID', 'Sentrix_Position']
     if(params.pca_columns) {
         pca_columns = params.pca_columns?.split(',') as List
     }
 
-    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_columns)
+    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_number_of_components, pca_columns)
 
     // TODO: (1) NaN distribution across probes (heatmap), samples (TODO: add parameter for a number of samples per plot)
     // (2) multiprocessing for analyses where possible

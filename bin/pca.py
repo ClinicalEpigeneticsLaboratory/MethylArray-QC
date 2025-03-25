@@ -8,14 +8,15 @@ from sklearn.decomposition import PCA
 import sys
 
 def main():
-    if len(sys.argv) != 5:
-        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <column>")
+    if len(sys.argv) != 6:
+        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column>")
         sys.exit(1)
 
     path_to_imputed_mynorm = sys.argv[1]
     path_to_sample_sheet = sys.argv[2]
-    perc_pca_cpgs= int(sys.argv[3])
-    column = str(sys.argv[4])
+    perc_pca_cpgs = int(sys.argv[3])
+    pca_number_of_components = int(sys.argv[4])
+    column = str(sys.argv[5])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -35,7 +36,7 @@ def main():
 
     scaler = StandardScaler().set_output(transform="pandas")
     scaled_PCA_data = scaler.fit_transform(pca_data.drop(columns = [column, "Sample_Name"]))
-    pca_res = PCA(n_components=2, random_state = 307)
+    pca_res = PCA(n_components=pca_number_of_components, random_state = 307)
     components = pca_res.fit_transform(scaled_PCA_data)
     component_col_names = [
                 f"PC{cnt + 1} {int(var * 100)}%"
@@ -47,9 +48,22 @@ def main():
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
 
-    fig = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column)
-    fig.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
-    fig.write_json(file = f"PCA_{column}.json", pretty = True)
+    fig_dot = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column)
+    fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
+    fig_dot.write_json(file = f"PCA_2D_dot_{column}.json", pretty = True)
+
+    scree_plot_data = {
+        "Component": range(1, pca_number_of_components + 1, 1),
+        "Explained_variance_%": pca_res.explained_variance_ratio_*100
+    }
+
+    scree_plot_data_df = pd.DataFrame(scree_plot_data)
+
+    fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
+    fig_scree.update_xaxes(title = "Principal component")
+    fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
+    fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
+    fig_scree.write_json(file = f"PCA_scree_{column}.json", pretty = True)
 
 if __name__ == "__main__":
     main()
