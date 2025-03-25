@@ -1,14 +1,11 @@
+#!/usr/local/bin/python
+
 import math
 import pandas as pd
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import sys
-
-# Provide additional parameter PCA_cols to plot PCA  for selected columns
-# and do it on each column provided (allowed: Sample_Group - default, Sentrix_ID, Sentrix_Position)
-
-# TODO: figure out how to provide column list as parameter and validate this!
 
 def main():
     if len(sys.argv) != 5:
@@ -17,8 +14,8 @@ def main():
 
     path_to_imputed_mynorm = sys.argv[1]
     path_to_sample_sheet = sys.argv[2]
-    perc_pca_cpgs= sys.argv[3]
-    column = sys.argv[4]
+    perc_pca_cpgs= int(sys.argv[3])
+    column = str(sys.argv[4])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -50,7 +47,7 @@ def main():
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
 
-    fig = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column, title = f"PCA - {column} for top {perc_pca_cpgs}% CpGs with highest variance")
+    fig = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column, title = f"PCA - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance")
     fig.update_layout(showlegend = False)
     fig.write_json(file = f"PCA_{column}.json", pretty = True)
 

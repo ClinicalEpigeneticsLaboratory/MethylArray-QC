@@ -141,3 +141,22 @@ process nan_distribution {
     nan_distribution.py $qc_path $sample_sheet_path
     """
 }
+
+process pca {
+    publishDir "$params.output", mode: 'copy', overwrite: true
+    label 'python'
+
+    input:
+    path imputed_mynorm_path
+    path sample_sheet_path
+    val perc_pca_cpgs
+    each column
+
+    output:
+    path "PCA_${column}.json"
+
+    script:
+    """
+    pca.py $imputed_mynorm_path $sample_sheet_path $perc_pca_cpgs $column
+    """
+}

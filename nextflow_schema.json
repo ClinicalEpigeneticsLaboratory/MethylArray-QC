@@ -124,13 +124,33 @@
                 "infer_sex": {
                     "type": "boolean",
                     "help_text": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
-                    "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step"
+                    "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
+                    "errorMessage": "infer_sex must be set to true or false"
                 },
                 "n_cpgs_beta_distr": {
                     "type": "number",
+                    "minimum": 1,
                     "default": 10000,
                     "help_text": "Number of CpGs randomly selected for the kernel-density plot",
-                    "description": "Number of CpGs randomly selected for the kernel-density plot"
+                    "description": "Number of CpGs randomly selected for the kernel-density plot",
+                    "errorMessage": "n_cpgs_beta_distr must be an integer equal or larger than 1"
+                },
+                "perc_pca_cpgs": {
+                    "type": "number",
+                    "minimum": 1,
+                    "default": 10,
+                    "maximum": 100,
+                    "help_text": "Percentage of CpGs with highest variance selected for PCA analysis",
+                    "description": "Percentage of CpGs with highest variance selected for PCA analysis",
+                    "errorMessage": "perc_pca_cpgs must be between 1 and 100%"
+                },
+                "pca_columns": {
+                    "type": "string",
+                    "default": "Sentrix_ID,Sentrix_Position",
+                    "pattern": "^(?:(Sentrix_ID|Sentrix_Position|Sample_Group)(?:,(?!\\1)(Sentrix_ID|Sentrix_Position|Sample_Group))*)$",
+                    "help_text": "Columns used in PCA analysis for sample coloring on a plot (Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces)",
+                    "description": "Columns used in PCA analysis for sample coloring on a plot (Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces)",
+                    "errorMessage": "Invalid columns for sample coloring in PCA analysis provided. Allowed: Sentrix_ID, Sentrix_Position and/or Sample_Group, separated by commas without spaces"
                 }
             },
             "required": [

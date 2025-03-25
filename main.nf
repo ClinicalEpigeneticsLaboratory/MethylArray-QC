@@ -1,5 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution } from './modules.nf'
+include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution; pca } from './modules.nf'
 workflow {
     validateParameters()
 
@@ -21,7 +21,7 @@ workflow {
 
     raw_mynorm = preprocess(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
     imputed_mynorm = impute(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
-    // TODO: export stats from imputation as JSON file ...
+    // TODO: export stats from imputation as JSON file (%NaN per sample/per CpG)...
 
     anomaly_detection(imputed_mynorm)
 
@@ -32,16 +32,28 @@ workflow {
 
     batch_effect(imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
 
-    if(!params.n_cpgs_beta_distr) {
-        beta_distribution(imputed_mynorm, 10000)
-    } else {
+    if(params.n_cpgs_beta_distr) {
         beta_distribution(imputed_mynorm, params.n_cpgs_beta_distr)
+    } else {
+        beta_distribution(imputed_mynorm, 10000)
     }
     
     nan_distribution(qc_path, params.sample_sheet)
 
-    // TODO: (1) PCA (3) NaN distribution across slides/arrays/groups
-    // (4) multiprocessing for
+    def perc_pca_cpgs = 10
+    if(params.perc_pca_cpgs) {
+        perc_pca_cpgs = params.perc_pca_cpgs
+    } 
+
+    def pca_columns = ['Sentrix_ID', 'Sentrix_Position']
+    if(params.pca_columns) {
+        pca_columns = params.pca_columns?.split(',') as List
+    }
+
+    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_columns)
+
+    // TODO: (1) NaN distribution across probes (heatmap), samples (TODO: add parameter for a number of samples per plot)
+    // (2) multiprocessing for analyses where possible
 
     /* 
     Moved saving params to the end of the workflow to add parameters such as workflow duration etc.
