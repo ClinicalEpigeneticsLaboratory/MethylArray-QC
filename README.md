@@ -12,7 +12,7 @@ The pipeline performs the following steps:
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
 8. **NaN distribution per sample plot**: shows the percentage of NaN probes per sample
-. **NaN distribution per probe plot**: shows a heatmap showing the distribution of NaN values across probes and samples
+9. **NaN distribution per probe plot**: shows a heatmap showing the distribution of NaN values across probes and samples
 10. **PCA analysis**: generates:
    - 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
    - a scree plot for number of components specified by the user
