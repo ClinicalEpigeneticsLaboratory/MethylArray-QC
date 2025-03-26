@@ -3,6 +3,7 @@
 import math
 import pandas as pd
 import plotly.express as px
+from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import sys
@@ -49,6 +50,24 @@ def main():
                 index=sample_sheet.index.to_list(),    # 1st column as index
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
+
+    kruskal_pvals = []
+    test_method = []
+
+    for component in component_col_names:
+        df = components_df[[component, column]]
+        kruskal_res = stats.kruskal(*[group[column].values for name, group in df.groupby(column)])
+        kruskal_pvals.append(kruskal_res.pvalue)
+        test_method.append("Kruskal-Wallis test")
+
+    kruskal_col_res = pd.DataFrame(
+        data = {
+            f"{column}_p_value": kruskal_pvals,
+            "Method": test_method
+        },
+        index=component_col_names
+    )
+    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
 
     fig_dot = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column)
     fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)

@@ -156,6 +156,7 @@ process pca {
     output:
     path "PCA_2D_dot_${pca_param_pair[0]}.json"
     path "PCA_scree.json", optional: true
+    path "PCA_PC_KW_test_${pca_param_pair[0]}.json"
 
     script:
     """
