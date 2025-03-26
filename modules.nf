@@ -125,7 +125,7 @@ process beta_distribution {
     """
 }
 
-process nan_distribution {
+process nan_distribution_per_sample {
     publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
@@ -134,11 +134,11 @@ process nan_distribution {
     path sample_sheet_path
 
     output:
-    path "nan_distribution.json"
+    path "nan_distribution_per_sample.json"
 
     script:
     """
-    nan_distribution.py $qc_path $sample_sheet_path
+    nan_distribution_per_sample.py $qc_path $sample_sheet_path
     """
 }
 

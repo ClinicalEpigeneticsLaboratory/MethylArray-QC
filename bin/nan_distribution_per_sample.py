@@ -6,7 +6,7 @@ import plotly.express as px
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python nan_distribution.py <path_to_qc_stats> <path_to_sample_sheet>")
+        print("Usage: python nan_distribution_per_sample.py <path_to_qc_stats> <path_to_sample_sheet>")
         sys.exit(1)
 
     path_to_qc_stats = sys.argv[1]
@@ -28,7 +28,7 @@ def main():
 
     fig.update_yaxes(title = "% NaN", range = [0, 100])
     fig.update_layout(width = 600, height = 300, template = "ggplot2", title_text = "NaN% per sample", showlegend = False)
-    fig.write_json(file = "nan_distribution.json", pretty = True)
+    fig.write_json(file = "nan_distribution_per_sample.json", pretty = True)
 
 if __name__ == "__main__":
     main()

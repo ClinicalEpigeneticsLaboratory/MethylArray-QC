@@ -1,5 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution; pca } from './modules.nf'
+include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution_per_sample; pca } from './modules.nf'
 workflow {
     validateParameters()
 
@@ -38,7 +38,7 @@ workflow {
         beta_distribution(imputed_mynorm, 10000)
     }
     
-    nan_distribution(qc_path, params.sample_sheet)
+    nan_distribution_per_sample(qc_path, params.sample_sheet)
 
     def perc_pca_cpgs = 10
     if(params.perc_pca_cpgs) {
@@ -55,7 +55,7 @@ workflow {
         pca_columns = params.pca_columns?.split(',') as List
     }
 
-    // ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
+    // draw_scree passed together with column ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
     def draw_scree = pca_columns.collect{it -> it == pca_columns.getAt(0)}
 
     def pca_param_ch = Channel.fromList(pca_columns)
