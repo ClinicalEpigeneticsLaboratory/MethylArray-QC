@@ -135,6 +135,14 @@
                     "description": "Number of CpGs randomly selected for the kernel-density plot",
                     "errorMessage": "n_cpgs_beta_distr must be an integer equal or larger than 1"
                 },
+                "top_nan_per_probe_cpgs": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 1000,
+                    "help_text": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
+                    "description": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
+                    "errorMessage": "Invalid number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap. Must be an integer between 2 and number of probes."
+                },
                 "perc_pca_cpgs": {
                     "type": "number",
                     "minimum": 1,

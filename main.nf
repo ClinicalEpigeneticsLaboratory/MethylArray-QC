@@ -1,5 +1,5 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution_per_sample; pca } from './modules.nf'
+include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution_per_sample; nan_distribution_per_probe; pca } from './modules.nf'
 workflow {
     validateParameters()
 
@@ -39,6 +39,12 @@ workflow {
     }
     
     nan_distribution_per_sample(qc_path, params.sample_sheet)
+    
+    def top_nan_per_probe_cpgs = 1000
+    if(params.top_nan_per_probe_cpgs) {
+        top_nan_per_probe_cpgs = params.top_nan_per_probe_cpgs
+    }
+    nan_distribution_per_probe(raw_mynorm, top_nan_per_probe_cpgs)
 
     def perc_pca_cpgs = 10
     if(params.perc_pca_cpgs) {

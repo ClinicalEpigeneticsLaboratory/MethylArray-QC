@@ -11,8 +11,9 @@ The pipeline performs the following steps:
 5. **Sex inference (optional)**: Optional, infers sex using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet.
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
-8. **NaN distribution plot**: shows the percentage of NaN probes per sample
-9. **PCA analysis**: generates:
+8. **NaN distribution per sample plot**: shows the percentage of NaN probes per sample
+. **NaN distribution per probe plot**: shows a heatmap showing the distribution of NaN values across probes and samples
+10. **PCA analysis**: generates:
    - 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
    - a scree plot for number of components specified by the user
    - Kruskal-Wallis test results for each principal component and column specified by the user
@@ -77,6 +78,9 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **Beta distribution**:
    - `params.n_cpgs_beta_distr`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot
 
+- **NaN distribution per probe**:
+   - `params.top_nan_per_probe_cpgs`: Integer (default: 1000) specifying the number of CpGs with highest number of NaN values selected for NaN distribution per probe plot
+
 - **PCA**:
    - `params.perc_pca_cpgs`: Integer, percentage of CpGs with highest variance selected for PCA analysis (1 to 100%)
    - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a plot and for Kruskal-Wallis test (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
@@ -117,6 +121,9 @@ params {
     //Beta distribution
     n_cpgs_beta_distr = 20000,
 
+    //NaN distribution per probe
+    top_nan_per_probe_cpgs = 1000,
+
     //PCA
     perc_pca_cpgs = 20,
     pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID"
@@ -140,9 +147,11 @@ The pipeline produces the following outputs:
    - figures as JSON files (numbered from 1 to n...) in directories corresponding to columns (`Mean_beta_per_Sentrix_ID`, `Mean_beta_per_Sentrix_Position`) created automatically within output directory.
 7. **Beta distribution plot (`beta_distribution.json`)**:
    - figure as JSON file.   
-8. **NaN distribution plot (`nan_distribution.json`)**:
+8. **NaN distribution per sample plot (`nan_distribution_per_sample.json`)**:
    - figure as JSON file
-9. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_scree.json`)**:
+9. **NaN distribution per probe plot (`nan_distribution_per_probe.json`)**:
+   - figure as JSON file
+10. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_scree.json`)**:
    - 2D dot plots for first 2 components, as JSON files (generated only figures for columns provided as a parameter)
    - results of Kruskal-Wallis test for each principal component, as JSON files (generated only for columns provided as parameter)
    - a scree plot for all principal components, as JSON file
@@ -178,11 +187,15 @@ The pipeline produces the following outputs:
 - Uses a Python script (`beta_distribution.py`) to generate a figure with KDE plot presenting the distribution of methylation beta values per sample.
 - Output: `beta_distribution.json`.
 
-### 8. NaN distribution process
-- Uses a Python script (`nan_distribution.py`) to generate a barplot representing the percentage of NaN probes per sample.
-- Output: `nan_distribution.json`.
+### 8. NaN distribution per sample process
+- Uses a Python script (`nan_distribution_per_sample.py`) to generate a barplot representing the percentage of NaN probes per sample.
+- Output: `nan_distribution_per_sample.json`.
 
-### 9. PCA process
+### 9. NaN distribution per probe process
+- Uses a Python script (`nan_distribution_per_probe.py`) to generate a heatmap representing the distribution of NaN values across samples and top n probes with highest count of NaN values.
+- Output: `nan_distribution_per_probe.json`.
+
+### 10. PCA process
 - Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating:
    - 2D dotplot(s) visualising first 2 components with sample coloring based on column(s) provided by the user,
    - results of Kruskal-Wallis test for all components and column(s) specified by the user,
@@ -194,8 +207,8 @@ The pipeline produces the following outputs:
    - PCA scree plot for all components specified by the user: `PCA_scree.json`.
 
 ## Known Issues and TODOs
-- Generate additional statistics (e.g. NaN distribution across probes).
-- Implement multiprocessing for additional analyses.
+- Implement multiprocessing for additional analyses where possible
 - Implement tests for workflow and for specific processes
+- Export imputation statistics (NaN count per sample/probe) as JSON
 - Add epigenetic age inference
-- Implement the output summary HTML report with embedded figures
+- Implement the output summary HTML report with embedded figures and tables
