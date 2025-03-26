@@ -2,11 +2,51 @@
 
 import math
 import pandas as pd
+import numpy as np
 import plotly.express as px
 from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import sys
+
+# Computes Kruskal-Wallis results for a specific column and saves to JSON
+def testKWToJSON(components_data: pd.DataFrame, component_names: list, column: str):
+    kruskal_pvals = []
+    test_method = []
+
+    for component in component_names:
+        df = components_data[[component, column]]
+        kruskal_res = stats.kruskal(*[group[column].values for name, group in df.groupby(column)])
+        kruskal_pvals.append(kruskal_res.pvalue)
+        test_method.append("Kruskal-Wallis test")
+
+    kruskal_col_res = pd.DataFrame(
+        data = {
+            f"{column}_p_value": kruskal_pvals,
+            "Method": test_method
+        },
+        index=component_names
+    )
+    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
+
+def screePlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, explained_var_ratio: np.ndarray, col: str):
+        scree_plot_data = {
+            "Component": range(1, number_of_pcs + 1, 1),
+            "Explained_variance_%": explained_var_ratio*100
+        }
+
+        scree_plot_data_df = pd.DataFrame(scree_plot_data)
+
+        fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
+        fig_scree.update_xaxes(title = "Principal component")
+        fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
+        fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance", showlegend = False)
+        fig_scree.write_json(file = "PCA_scree.json", pretty = True)
+
+def dot2DToJSON(components_data: pd.DataFrame, component_names: list, number_of_cpgs: int, perc_of_cpgs: int, column: str):
+    fig_dot = px.scatter(components_data, x=component_names[0], y=component_names[1], color = column)
+    fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance", showlegend = False)
+    fig_dot.write_json(file = f"PCA_2D_dot_{column}.json", pretty = True)
 
 def main():
     if len(sys.argv) != 7:
@@ -50,41 +90,28 @@ def main():
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
 
-    kruskal_pvals = []
-    test_method = []
-
-    for component in component_col_names:
-        df = components_df[[component, column]]
-        kruskal_res = stats.kruskal(*[group[column].values for name, group in df.groupby(column)])
-        kruskal_pvals.append(kruskal_res.pvalue)
-        test_method.append("Kruskal-Wallis test")
-
-    kruskal_col_res = pd.DataFrame(
-        data = {
-            f"{column}_p_value": kruskal_pvals,
-            "Method": test_method
-        },
-        index=component_col_names
+    dot2DToJSON(
+        components_data = components_df, 
+        column = column, 
+        component_names = component_col_names, 
+        number_of_cpgs = n_cpgs, 
+        perc_of_cpgs = perc_pca_cpgs
     )
-    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
 
-    fig_dot = px.scatter(components_df, x=component_col_names[0], y=component_col_names[1], color = column)
-    fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
-    fig_dot.write_json(file = f"PCA_2D_dot_{column}.json", pretty = True)
+    testKWToJSON(
+        components_data = components_df, 
+        column = column, 
+        component_names = component_col_names
+    )
 
     if draw_scree == "true":
-        scree_plot_data = {
-            "Component": range(1, pca_number_of_components + 1, 1),
-            "Explained_variance_%": pca_res.explained_variance_ratio_*100
-        }
-
-        scree_plot_data_df = pd.DataFrame(scree_plot_data)
-
-        fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
-        fig_scree.update_xaxes(title = "Principal component")
-        fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
-        fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {column}<br>Top {perc_pca_cpgs}% CpGs with highest variance", showlegend = False)
-        fig_scree.write_json(file = "PCA_scree.json", pretty = True)
+        screePlotToJSON(
+             col = column, 
+             explained_var_ratio = pca_res.explained_variance_ratio_,
+             number_of_cpgs = n_cpgs,
+             number_of_pcs = pca_number_of_components,
+             perc_of_cpgs = perc_pca_cpgs
+        )
 
 if __name__ == "__main__":
     main()
