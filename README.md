@@ -12,7 +12,10 @@ The pipeline performs the following steps:
 6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
 7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
 8. **NaN distribution plot**: shows the percentage of NaN probes per sample
-9. **PCA analysis**: generates 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group) and a scree plot for number of components specified by the user
+9. **PCA analysis**: generates:
+   - 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
+   - a scree plot for number of components specified by the user
+   - Kruskal-Wallis test results for each principal component and column specified by the user
 
 ## Prerequisites
 
@@ -76,7 +79,7 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 
 - **PCA**:
    - `params.perc_pca_cpgs`: Integer, percentage of CpGs with highest variance selected for PCA analysis (1 to 100%)
-   - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
+   - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a plot and for Kruskal-Wallis test (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
 
 In case you need additional information on parameters, run the following command:
 
@@ -139,8 +142,10 @@ The pipeline produces the following outputs:
    - figure as JSON file.   
 8. **NaN distribution plot (`nan_distribution.json`)**:
    - figure as JSON file
-9. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_scree_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_scree_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_scree_Sample_Group.json`)**:
-   - figures (2D dot plots for first 2 components and scree plots for all components) as JSON files (generated only figures for columns provided as a parameter)
+9. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_scree.json`)**:
+   - 2D dot plots for first 2 components, as JSON files (generated only figures for columns provided as a parameter)
+   - results of Kruskal-Wallis test for each principal component, as JSON files (generated only for columns provided as parameter)
+   - a scree plot for all principal components, as JSON file
 
 ## Process Details
 
@@ -178,10 +183,15 @@ The pipeline produces the following outputs:
 - Output: `nan_distribution.json`.
 
 ### 9. PCA process
-- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating 2D dotplot(s) visualising first 2 components with sample coloring based on column(s) provided by the user and a scree plots for all components specified by the user.
+- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating:
+   - 2D dotplot(s) visualising first 2 components with sample coloring based on column(s) provided by the user,
+   - results of Kruskal-Wallis test for all components and column(s) specified by the user,
+   - a scree plot for all components specified by the user.
 - Output: 
    - PCA 2D dotplots for first 2 components: `PCA_2D_dot_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` and/or`PCA_2D_dot_Sample_Group.json`,
-   - PCA scree plot for all components specified by the user: `PCA_scree_Sentrix_ID.json`, `PCA_scree_Sentrix_Position.json` and/or`PCA_scree_Sample_Group.json`,
+   - results of Kruskal-Wallis test for all components:
+   `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_PC_KW_test_Sentrix_Position.json` and/or`PCA_PCA_PC_KW_test_Sample_Group.json`,
+   - PCA scree plot for all components specified by the user: `PCA_scree.json`.
 
 ## Known Issues and TODOs
 - Generate additional statistics (e.g. NaN distribution across probes).
@@ -189,4 +199,3 @@ The pipeline produces the following outputs:
 - Implement tests for workflow and for specific processes
 - Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures
-- PCA: single scree plot as a separate process, single PCA as separate process (2D plots as separate process - ran 1 time per column)
