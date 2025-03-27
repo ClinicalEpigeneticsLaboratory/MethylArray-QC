@@ -1,13 +1,10 @@
 #!/usr/local/bin/python
 
+import numpy as np
 import pandas as pd
 from pathlib import Path
 import plotly.figure_factory as ff
 import sys
-import random
-
-# an idea: do we want a random seed to be provided by the user as an parameter?
-random.seed(123)
 
 # I cannot add customized hover to this type of plot, may require more work or impossible: 
 # https://stackoverflow.com/questions/62448872/plotly-how-to-modify-hovertemplate-of-a-histogram
@@ -24,8 +21,10 @@ def main():
     if "CpG" in imputed_mynorm.columns:
         imputed_mynorm.set_index("CpG", inplace = True)
 
+    rng = np.random.RandomState(seed = 123)
+
     # Get the list of randomly selected CpGs and filter data
-    cpgs_to_plot = random.sample(imputed_mynorm.index.to_list(), n_cpgs_beta_distr)
+    cpgs_to_plot = rng.choice(a = imputed_mynorm.index.to_list(), size = n_cpgs_beta_distr, replace = False)
     plot_data = imputed_mynorm.loc[cpgs_to_plot]
     plot_data = plot_data.T
 
