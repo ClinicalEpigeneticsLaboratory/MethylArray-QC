@@ -1,6 +1,10 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
 include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution_per_sample; nan_distribution_per_probe; pca } from './modules.nf'
+
+//Default values for parameters stored in nextflow.config (ref. https://www.nextflow.io/docs/latest/cli.html#cli-params)
+
 workflow {
+
     validateParameters()
 
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
@@ -32,34 +36,11 @@ workflow {
 
     batch_effect(imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
 
-    if(params.n_cpgs_beta_distr) {
-        beta_distribution(imputed_mynorm, params.n_cpgs_beta_distr)
-    } else {
-        beta_distribution(imputed_mynorm, 10000)
-    }
-    
+    beta_distribution(imputed_mynorm, params.n_cpgs_beta_distr)
     nan_distribution_per_sample(qc_path, params.sample_sheet)
+    nan_distribution_per_probe(raw_mynorm, params.top_nan_per_probe_cpgs)
     
-    def top_nan_per_probe_cpgs = 1000
-    if(params.top_nan_per_probe_cpgs) {
-        top_nan_per_probe_cpgs = params.top_nan_per_probe_cpgs
-    }
-    nan_distribution_per_probe(raw_mynorm, top_nan_per_probe_cpgs)
-
-    def perc_pca_cpgs = 10
-    if(params.perc_pca_cpgs) {
-        perc_pca_cpgs = params.perc_pca_cpgs
-    } 
-
-    def pca_number_of_components = 10
-    if(params.pca_number_of_components) {
-        pca_number_of_components = params.pca_number_of_components
-    } 
-
-    def pca_columns = ['Sentrix_ID', 'Sentrix_Position']
-    if(params.pca_columns) {
-        pca_columns = params.pca_columns?.split(',') as List
-    }
+    def pca_columns = params.pca_columns?.split(',') as List
 
     // draw_scree passed together with column ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
     def draw_scree = pca_columns.collect{it -> it == pca_columns.getAt(0)}
@@ -67,10 +48,7 @@ workflow {
     def pca_param_ch = Channel.fromList(pca_columns)
         .merge(Channel.fromList(draw_scree))
 
-    pca(imputed_mynorm, params.sample_sheet, perc_pca_cpgs, pca_number_of_components, pca_param_ch)
-
-    // TODO: (1) NaN distribution across probes (heatmap), samples (TODO: add parameter for a number of samples per plot)
-    // (2) multiprocessing for analyses where possible
+    pca(imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch)
 
     /* 
     Moved saving params to the end of the workflow to add parameters such as workflow duration etc.
