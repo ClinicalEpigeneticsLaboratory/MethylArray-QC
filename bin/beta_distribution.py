@@ -26,7 +26,7 @@ def main():
 
     # Get the list of randomly selected CpGs and filter data
     cpgs_to_plot = random.sample(imputed_mynorm.index.to_list(), n_cpgs_beta_distr)
-    plot_data = imputed_mynorm.filter(items = cpgs_to_plot, axis = 0)
+    plot_data = imputed_mynorm.loc[cpgs_to_plot]
     plot_data = plot_data.T
 
     # Prepare figure
