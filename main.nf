@@ -51,11 +51,11 @@ workflow {
 
     def pca_columns = params.pca_columns?.split(',') as List
 
-    // draw_scree passed together with column ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
-    def draw_scree = pca_columns.collect{it -> it == pca_columns.getAt(0)}
+    // draw_area passed together with column ensures that area plot for PCA cumulative variance will be drawn only once - for the first execution of a PCA process
+    def draw_area = pca_columns.collect{it -> it == pca_columns.getAt(0)}
 
     def pca_param_ch = Channel.fromList(pca_columns)
-        .merge(Channel.fromList(draw_scree))
+        .merge(Channel.fromList(draw_area))
 
     pca(imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch)
 

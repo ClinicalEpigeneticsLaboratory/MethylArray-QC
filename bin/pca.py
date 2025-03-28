@@ -29,6 +29,26 @@ def testKWToJSON(components_data: pd.DataFrame, component_names: list, column: s
     )
     kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
 
+def areaPlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, explained_var_ratio: np.ndarray, col: str) -> None:
+    area_plot_data = {
+        "Component": range(1, number_of_pcs + 1, 1),
+        "Cumulative_explained_variance_%": np.cumsum(explained_var_ratio*100)
+    }
+
+    area_plot_data_df = pd.DataFrame(area_plot_data)
+
+    fig_area = px.area(
+        data_frame = area_plot_data_df,
+        x = "Component",
+        y = "Cumulative_explained_variance_%"
+    )
+
+    fig_area.update_xaxes(title = "Principal component")
+    fig_area.update_yaxes(title = "Cumulative explained variance (%)")
+    fig_area.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance", showlegend = False)
+    fig_area.write_json(file = "PCA_area.json", pretty = True)
+
+#' @Deprecated
 def screePlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, explained_var_ratio: np.ndarray, col: str) -> None:
         scree_plot_data = {
             "Component": range(1, number_of_pcs + 1, 1),
@@ -50,7 +70,7 @@ def dot2DToJSON(components_data: pd.DataFrame, component_names: list, number_of_
 
 def main():
     if len(sys.argv) != 7:
-        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_scree>")
+        print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_area>")
         sys.exit(1)
 
     path_to_imputed_mynorm = sys.argv[1]
@@ -58,7 +78,7 @@ def main():
     perc_pca_cpgs = int(sys.argv[3])
     pca_number_of_components = int(sys.argv[4])
     column = str(sys.argv[5])
-    draw_scree = str(sys.argv[6])
+    draw_area = str(sys.argv[6])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -104,14 +124,21 @@ def main():
         component_names = component_col_names
     )
 
-    if draw_scree == "true":
-        screePlotToJSON(
-             col = column, 
-             explained_var_ratio = pca_res.explained_variance_ratio_,
-             number_of_cpgs = n_cpgs,
-             number_of_pcs = pca_number_of_components,
-             perc_of_cpgs = perc_pca_cpgs
+    if draw_area == "true":
+        areaPlotToJSON(
+            col = column, 
+            explained_var_ratio = pca_res.explained_variance_ratio_,
+            number_of_cpgs = n_cpgs,
+            number_of_pcs = pca_number_of_components,
+            perc_of_cpgs = perc_pca_cpgs
         )
+        # screePlotToJSON(
+        #      col = column, 
+        #      explained_var_ratio = pca_res.explained_variance_ratio_,
+        #      number_of_cpgs = n_cpgs,
+        #      number_of_pcs = pca_number_of_components,
+        #      perc_of_cpgs = perc_pca_cpgs
+        # )
 
 if __name__ == "__main__":
     main()
