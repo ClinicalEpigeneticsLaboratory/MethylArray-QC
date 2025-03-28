@@ -14,6 +14,9 @@
                 "type": "string",
                 "pattern": "^[0-9]{12}_R0[0-9]{1}C0[0-9]{1}$"
             },
+            "Sample_Group": {
+                "type": "string"
+            },
             "Sex": {
                 "type": "string",
                 "enum": [

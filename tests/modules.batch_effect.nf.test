@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process preprocess"
-    script "methyl-array-qc.nf"
-    process "preprocess"
+    name "Test Process batch_effect"
+    script "modules.nf"
+    process "batch_effect"
 
     test("Should run without failures") {
 

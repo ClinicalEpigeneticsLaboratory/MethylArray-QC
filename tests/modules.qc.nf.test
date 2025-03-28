@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process impute"
-    script "methyl-array-qc.nf"
-    process "impute"
+    name "Test Process QC"
+    script "modules.nf"
+    process "QC"
 
     test("Should run without failures") {
 

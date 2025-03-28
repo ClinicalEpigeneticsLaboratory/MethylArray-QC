@@ -39,7 +39,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "schema": "sample_sheet_schema.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.\n\nSample sheet fields:\n 1) Sample_Name (unique, mandatory), \n 2) Array_Position (unique, mandatory, denotes position of a sample on a microarray in a form Sentrix ID_Sentrix Position, \n3) Sex (optional, but required for sex inference analysis - denotes declared sample sex [allowed values: FEMALE, MALE])",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.\n\nSample sheet fields:\n 1) Sample_Name (unique, mandatory), \n 2) Array_Position (unique, mandatory, denotes position of a sample on a microarray in a form Sentrix ID_Sentrix Position, \n3) Sex (optional, but required for sex inference analysis - denotes declared sample sex [allowed values: FEMALE, MALE])\n4) Sample_Group (optional) - sample phenotype (e.g. Treated/Cancer)",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns, and a header row",
                     "fa_icon": "fas fa-file-csv"
                 }
@@ -124,7 +124,57 @@
                 "infer_sex": {
                     "type": "boolean",
                     "help_text": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
-                    "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step"
+                    "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
+                    "errorMessage": "infer_sex must be set to true or false"
+                },
+                "n_cpgs_beta_distr": {
+                    "type": "number",
+                    "minimum": 1,
+                    "default": 10000,
+                    "help_text": "Number of CpGs randomly selected for the kernel-density plot",
+                    "description": "Number of CpGs randomly selected for the kernel-density plot",
+                    "errorMessage": "n_cpgs_beta_distr must be an integer equal or larger than 1"
+                },
+                "top_nan_per_probe_cpgs": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 1000,
+                    "help_text": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
+                    "description": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
+                    "errorMessage": "Invalid number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap. Must be an integer between 2 and number of probes."
+                },
+                "perc_pca_cpgs": {
+                    "type": "number",
+                    "minimum": 1,
+                    "default": 10,
+                    "maximum": 100,
+                    "help_text": "Percentage of CpGs with highest variance selected for PCA analysis",
+                    "description": "Percentage of CpGs with highest variance selected for PCA analysis",
+                    "errorMessage": "perc_pca_cpgs must be between 1 and 100%"
+                },
+                "pca_columns": {
+                    "type": "string",
+                    "default": "Sentrix_ID,Sentrix_Position",
+                    "pattern": "^(?:(Sentrix_ID|Sentrix_Position|Sample_Group)(?:,(?!\\1)(Sentrix_ID|Sentrix_Position|Sample_Group))*)$",
+                    "help_text": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "description": "Columns used in PCA analysis for sample coloring on a plot (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "errorMessage": "Invalid columns for sample coloring in PCA analysis provided. Allowed: 1-3 columns - Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces"
+                },
+                "pca_number_of_components": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 10,
+                    "help_text": "Number of components for PCA analysis",
+                    "description": "Number of components for PCA analysis",
+                    "errorMessage": "Invalid number of components for PCA analysis. Must be an integer between 2 and number of samples."
+                },
+                "pca_matrix_PC_count": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 2,
+                    "help_text": "Number of components for PCA scatter matrix plot",
+                    "description": "Number of components for PCA scatter matrix plot",
+                    "errorMessage": "Invalid number of components for PCA scatter matrix plot. Must be an integer between 2 and number of samples."
                 }
             },
             "required": [

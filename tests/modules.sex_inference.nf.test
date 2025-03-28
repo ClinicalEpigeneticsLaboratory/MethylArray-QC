@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process QC"
-    script "methyl-array-qc.nf"
-    process "QC"
+    name "Test Process sex_inference"
+    script "modules.nf"
+    process "sex_inference"
 
     test("Should run without failures") {
 
