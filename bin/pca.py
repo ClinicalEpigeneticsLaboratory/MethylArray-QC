@@ -48,13 +48,25 @@ def areaPlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, e
     fig_area.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance", showlegend = False)
     fig_area.write_json(file = "PCA_area.json", pretty = True)
 
+def scatterMatrixToJSON(components_data: pd.DataFrame, component_names: list, number_of_cpgs: int, perc_of_cpgs: int, column: str, scatter_matrix_component_count: int) -> None:
+    fig_scatter = px.scatter_matrix(
+        components_data,
+        color = column,
+        dimensions= component_names,
+        labels = component_names
+    )
+    fig_scatter.update_traces(diagonal_visible=False)
+    fig_scatter.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance", showlegend = False)
+    fig_scatter.write_json(file = f"PCA_scatter_matrix_{column}.json", pretty = True)
+
+#'@ Deprecated
 def dot2DToJSON(components_data: pd.DataFrame, component_names: list, number_of_cpgs: int, perc_of_cpgs: int, column: str) -> None:
     fig_dot = px.scatter(components_data, x=component_names[0], y=component_names[1], color = column)
     fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance", showlegend = False)
     fig_dot.write_json(file = f"PCA_2D_dot_{column}.json", pretty = True)
 
 def main():
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 8:
         print("Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_area>")
         sys.exit(1)
 
@@ -64,6 +76,7 @@ def main():
     pca_number_of_components = int(sys.argv[4])
     column = str(sys.argv[5])
     draw_area = str(sys.argv[6])
+    pca_matrix_PC_count = int(sys.argv[7])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -95,13 +108,22 @@ def main():
                 columns=component_col_names)
     components_df = components_df.join(sample_sheet[column])
 
-    dot2DToJSON(
+    scatterMatrixToJSON(
         components_data = components_df, 
         column = column, 
-        component_names = component_col_names, 
+        component_names = component_col_names[0:pca_matrix_PC_count:1], 
         number_of_cpgs = n_cpgs, 
-        perc_of_cpgs = perc_pca_cpgs
+        perc_of_cpgs = perc_pca_cpgs,
+        scatter_matrix_component_count = pca_matrix_PC_count
     )
+
+    # dot2DToJSON(
+    #     components_data = components_df, 
+    #     column = column, 
+    #     component_names = component_col_names, 
+    #     number_of_cpgs = n_cpgs, 
+    #     perc_of_cpgs = perc_pca_cpgs
+    # )
 
     testKWToJSON(
         components_data = components_df, 

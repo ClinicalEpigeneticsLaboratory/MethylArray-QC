@@ -57,7 +57,7 @@ workflow {
     def pca_param_ch = Channel.fromList(pca_columns)
         .merge(Channel.fromList(draw_area))
 
-    pca(imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch)
+    pca(imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch, params.pca_matrix_PC_count)
 
     /* 
     Moved saving params to the end of the workflow to add parameters such as workflow duration etc.

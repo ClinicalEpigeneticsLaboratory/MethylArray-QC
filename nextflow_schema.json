@@ -166,7 +166,15 @@
                     "default": 10,
                     "help_text": "Number of components for PCA analysis",
                     "description": "Number of components for PCA analysis",
-                    "errorMessage": "Invalid number of components for PCA analysis. Must be an integer between 2 number of samples."
+                    "errorMessage": "Invalid number of components for PCA analysis. Must be an integer between 2 and number of samples."
+                },
+                "pca_matrix_PC_count": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "default": 2,
+                    "help_text": "Number of components for PCA scatter matrix plot",
+                    "description": "Number of components for PCA scatter matrix plot",
+                    "errorMessage": "Invalid number of components for PCA scatter matrix plot. Must be an integer between 2 and number of samples."
                 }
             },
             "required": [
