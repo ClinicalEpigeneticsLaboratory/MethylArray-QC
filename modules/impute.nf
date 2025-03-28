@@ -1,5 +1,5 @@
 process impute {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'imputed_mynorm.parquet'
+    publishDir "$params.output", mode: 'copy', overwrite: true
     label 'python'
 
     input:
@@ -10,6 +10,8 @@ process impute {
 
     output:
     path "imputed_mynorm.parquet"
+    path "impute_nan_per_sample.json"
+    path "impute_nan_per_probe.json"
 
     script:
     """

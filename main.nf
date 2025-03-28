@@ -33,8 +33,7 @@ workflow {
     qc_path = QC(params.input, params.cpus, params.sample_sheet)
 
     raw_mynorm = preprocess(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
-    imputed_mynorm = impute(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
-    // TODO: export stats from imputation as JSON file (%NaN per sample/per CpG)...
+    (imputed_mynorm, nan_per_sample, nan_per_probe) = impute(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
 
     anomaly_detection(imputed_mynorm)
 
