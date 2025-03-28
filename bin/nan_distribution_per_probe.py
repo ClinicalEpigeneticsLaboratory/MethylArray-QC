@@ -29,10 +29,10 @@ def main():
         z=raw_mynorm_nan,
         x = raw_mynorm_nan.columns,
         y = raw_mynorm_nan.index,
-        colorscale = [[0, 'rgb(0,0,0)'], [1, 'rgb(255,255,255)']],
+        colorscale = [[0, 'rgb(0,0,0)'], [1, 'rgb(255,255,0)']],
         zmin=0,
         zmax=1,
-        colorbar=dict(title="NaN Distribution<br>(0 - no NaN, 1 - NaN)"),
+        colorbar=dict(title="NaN Distribution<br>(0 - no NaN, 1 - NaN)")
     ))
 
     fig.update_layout(
