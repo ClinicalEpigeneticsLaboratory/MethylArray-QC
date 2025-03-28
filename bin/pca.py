@@ -48,21 +48,6 @@ def areaPlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, e
     fig_area.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance", showlegend = False)
     fig_area.write_json(file = "PCA_area.json", pretty = True)
 
-#' @Deprecated
-def screePlotToJSON(number_of_pcs: int, number_of_cpgs: int, perc_of_cpgs: int, explained_var_ratio: np.ndarray, col: str) -> None:
-        scree_plot_data = {
-            "Component": range(1, number_of_pcs + 1, 1),
-            "Explained_variance_%": explained_var_ratio*100
-        }
-
-        scree_plot_data_df = pd.DataFrame(scree_plot_data)
-
-        fig_scree = px.line(scree_plot_data_df, x = "Component", y = "Explained_variance_%")
-        fig_scree.update_xaxes(title = "Principal component")
-        fig_scree.update_yaxes(title = "Cumulative explained variance (%)")
-        fig_scree.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA scree plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance", showlegend = False)
-        fig_scree.write_json(file = "PCA_scree.json", pretty = True)
-
 def dot2DToJSON(components_data: pd.DataFrame, component_names: list, number_of_cpgs: int, perc_of_cpgs: int, column: str) -> None:
     fig_dot = px.scatter(components_data, x=component_names[0], y=component_names[1], color = column)
     fig_dot.update_layout(width = 600, height = 600, template = "ggplot2", title_text = f"PCA 2D dot plot- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance", showlegend = False)
@@ -132,13 +117,6 @@ def main():
             number_of_pcs = pca_number_of_components,
             perc_of_cpgs = perc_pca_cpgs
         )
-        # screePlotToJSON(
-        #      col = column, 
-        #      explained_var_ratio = pca_res.explained_variance_ratio_,
-        #      number_of_cpgs = n_cpgs,
-        #      number_of_pcs = pca_number_of_components,
-        #      perc_of_cpgs = perc_pca_cpgs
-        # )
 
 if __name__ == "__main__":
     main()
