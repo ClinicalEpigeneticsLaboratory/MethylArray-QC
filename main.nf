@@ -1,5 +1,14 @@
 include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
-include { QC; preprocess; impute; anomaly_detection; sex_inference; batch_effect; beta_distribution; nan_distribution_per_sample; nan_distribution_per_probe; pca } from './modules.nf'
+include { QC } from './modules/QC.nf'
+include { preprocess } from './modules/preprocess.nf'
+include { impute } from './modules/impute.nf'
+include { anomaly_detection } from './modules/anomaly_detection.nf'
+include { sex_inference } from './modules/sex_inference.nf'
+include { batch_effect } from './modules/batch_effect.nf'
+include { beta_distribution } from './modules/beta_distribution.nf'
+include { nan_distribution_per_sample } from './modules/nan_distribution_per_sample.nf'
+include { nan_distribution_per_probe } from './modules/nan_distribution_per_probe.nf'
+include { pca } from './modules/pca.nf'
 
 //Default values for parameters stored in nextflow.config (ref. https://www.nextflow.io/docs/latest/cli.html#cli-params)
 
@@ -39,7 +48,7 @@ workflow {
     beta_distribution(imputed_mynorm, params.n_cpgs_beta_distr)
     nan_distribution_per_sample(qc_path, params.sample_sheet)
     nan_distribution_per_probe(raw_mynorm, params.top_nan_per_probe_cpgs)
-    
+
     def pca_columns = params.pca_columns?.split(',') as List
 
     // draw_scree passed together with column ensures that scree plot for PCA will be drawn only once - for the first execution of a PCA process
