@@ -7,7 +7,9 @@ from sklearn.impute import SimpleImputer, KNNImputer
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: python imputation.py <path_to_mynorm> <p_threshold> <s_threshold> <imputer_type>")
+        print(
+            "Usage: python imputation.py <path_to_mynorm> <p_threshold> <s_threshold> <imputer_type>"
+        )
         sys.exit(1)
 
     path_to_mynorm = sys.argv[1]
@@ -19,10 +21,10 @@ def main():
     mynorm = pd.read_parquet(path_to_mynorm)
     mynorm.set_index("CpG", inplace=True)
 
-    nan_per_sample = (mynorm.isna().sum(axis = 0)/mynorm.index.size)*100
+    nan_per_sample = (mynorm.isna().sum(axis=0) / mynorm.index.size) * 100
     nan_per_sample.to_json("impute_nan_per_sample.json")
 
-    nan_per_cpg = (mynorm.isna().sum(axis = 1)/mynorm.columns.size)*100
+    nan_per_cpg = (mynorm.isna().sum(axis=1) / mynorm.columns.size) * 100
     nan_per_cpg.to_json("impute_nan_per_probe.json")
 
     # Remove probes with too many NaN values
@@ -43,9 +45,7 @@ def main():
         sys.exit(1)
 
     mynorm_imputed = pd.DataFrame(
-        imputer.fit_transform(mynorm),
-        index=mynorm.index,
-        columns=mynorm.columns
+        imputer.fit_transform(mynorm), index=mynorm.index, columns=mynorm.columns
     )
 
     # Save the imputed data

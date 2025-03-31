@@ -23,14 +23,16 @@ def main():
     algorithms = {
         "LOF": LocalOutlierFactor(novelty=True),
         "IsolationForest": IsolationForest(random_state=101),
-        "OneClassSVM": OneClassSVM()
+        "OneClassSVM": OneClassSVM(),
     }
 
     anomaly_results = pd.DataFrame(index=imputed_mynorm.columns)
     for name, algorithm in algorithms.items():
         if hasattr(algorithm, "fit_predict"):
             algorithm.fit(imputed_mynorm.T)
-            anomaly_results[f"{name}_scores"] = algorithm.decision_function(imputed_mynorm.T)
+            anomaly_results[f"{name}_scores"] = algorithm.decision_function(
+                imputed_mynorm.T
+            )
             anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
 
     # Save the results
