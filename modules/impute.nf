@@ -10,8 +10,8 @@ process IMPUTE {
 
     output:
     path "imputed_mynorm.parquet"
-    path "impute_nan_per_sample.json"
-    path "impute_nan_per_probe.json"
+    path "impute_nan_per_sample.parquet"
+    path "impute_nan_per_probe.parquet"
 
     script:
     """

@@ -141,7 +141,7 @@ The pipeline produces the following outputs:
    - Quality metrics for the samples.
 2. **Raw Normalized Data (`raw_mynorm.parquet`)**:
    - Preprocessed methylation data.
-3. **Imputed Data (`imputed_mynorm.parquet`, `impute_nan_per_probe.json`, `impute_nan_per_sample.json`)**:
+3. **Imputed Data (`imputed_mynorm.parquet`, `impute_nan_per_probe.parquet`, `impute_nan_per_sample.parquet`)**:
    - Data with missing values imputed.
    - Imputation statistics: %NaN per sample, %NaN per probe.
 4. **Anomaly Detection Results (`ao_results.parquet`)**:
@@ -174,7 +174,7 @@ The pipeline produces the following outputs:
 ### 3. Imputation Process
 - Uses a Python script (`imputation.py`) to remove corrupted probes/samples and impute missing values.
 - Supported imputers: `mean`, `median`, `knn`.
-- Output: `imputed_mynorm.parquet`, `impute_nan_per_probe.json`, `impute_nan_per_sample.json`.
+- Output: `imputed_mynorm.parquet`, `impute_nan_per_probe.parquet`, `impute_nan_per_sample.parquet`.
 
 ### 4. Anomaly Detection Process
 - Uses a Python script (`anomaly_detection.py`) with algorithms such as LOF, Isolation Forest, and One-Class SVM to detect anomalies in the imputed data.

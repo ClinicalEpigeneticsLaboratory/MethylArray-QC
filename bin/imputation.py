@@ -22,10 +22,22 @@ def main():
     mynorm.set_index("CpG", inplace=True)
 
     nan_per_sample = (mynorm.isna().sum(axis=0) / mynorm.index.size) * 100
-    nan_per_sample.to_json("impute_nan_per_sample.json")
+    nan_per_sample_df = pd.DataFrame(
+        {
+            'Sample_Name': nan_per_sample.index,
+            'NaN_percent': nan_per_sample.values
+        }
+    )
+    nan_per_sample_df.to_parquet("impute_nan_per_sample.parquet")
 
     nan_per_cpg = (mynorm.isna().sum(axis=1) / mynorm.columns.size) * 100
-    nan_per_cpg.to_json("impute_nan_per_probe.json")
+    nan_per_cpg_df = pd.DataFrame(
+        {
+            'CpG': nan_per_cpg.index,
+            'NaN_percent': nan_per_cpg.values
+        }
+    )
+    nan_per_cpg_df.to_parquet("impute_nan_per_probe.parquet")
 
     # Remove probes with too many NaN values
     mynorm = mynorm.loc[mynorm.isnull().mean(axis=1) < p_threshold]
