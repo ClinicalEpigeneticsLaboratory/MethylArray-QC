@@ -73,15 +73,15 @@ def scatterMatrixToJSON(
         components_data,
         color=column,
         dimensions=component_names,
-        labels=component_names,
+        labels=component_names
     )
-    fig_scatter.update_traces(diagonal_visible=False)
+    fig_scatter.update_traces(diagonal_visible=False, showupperhalf = False)
     fig_scatter.update_layout(
         width=600,
         height=600,
         template="ggplot2",
         title_text=f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance",
-        showlegend=False,
+        showlegend=False
     )
     fig_scatter.write_json(file=f"PCA_scatter_matrix_{column}.json", pretty=True)
 
