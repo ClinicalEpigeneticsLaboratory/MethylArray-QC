@@ -1,5 +1,5 @@
-process sex_inference {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'inferred_sex.json'
+process SEX_INFERENCE {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'inferred_sex.json'
     label 'r'
 
     input:
@@ -12,6 +12,6 @@ process sex_inference {
 
     script:
     """
-    sex_inference.R $imputed_mynorm_path $cpus $sample_sheet_path
+    sex_inference.R ${imputed_mynorm_path} ${cpus} ${sample_sheet_path}
     """
 }

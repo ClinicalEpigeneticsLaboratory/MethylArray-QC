@@ -1,5 +1,5 @@
-process nan_distribution_per_sample {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
+process NAN_DISTRIBUTION_PER_SAMPLE {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
@@ -11,6 +11,6 @@ process nan_distribution_per_sample {
 
     script:
     """
-    nan_distribution_per_sample.py $qc_path $sample_sheet_path
+    nan_distribution_per_sample.py ${qc_path} ${sample_sheet_path}
     """
 }

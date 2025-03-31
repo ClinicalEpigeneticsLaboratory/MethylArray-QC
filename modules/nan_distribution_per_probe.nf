@@ -1,4 +1,4 @@
-process nan_distribution_per_probe {
+process NAN_DISTRIBUTION_PER_PROBE {
     publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 

@@ -1,5 +1,5 @@
-process impute {
-    publishDir "$params.output", mode: 'copy', overwrite: true
+process IMPUTE {
+    publishDir "${params.output}", mode: 'copy', overwrite: true
     label 'python'
 
     input:
@@ -15,6 +15,6 @@ process impute {
 
     script:
     """
-    imputation.py $mynorm $p_threshold $s_threshold $imputer_type
+    imputation.py ${mynorm} ${p_threshold} ${s_threshold} ${imputer_type}
     """
 }

@@ -1,5 +1,5 @@
 process QC {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
     label 'r'
 
     input:
@@ -12,6 +12,6 @@ process QC {
 
     script:
     """
-    QC.R $idats $cpus $sample_sheet_path
+    QC.R ${idats} ${cpus} ${sample_sheet_path}
     """
 }
