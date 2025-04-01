@@ -41,18 +41,30 @@ def main():
             z=raw_mynorm_nan,
             x=raw_mynorm_nan.columns,
             y=raw_mynorm_nan.index,
-            colorscale=[[0, "rgb(0,0,0)"], [1, "rgb(255,255,0)"]],
+            colorscale=[[0, "rgb(0,0,0)"], [1, "rgb(135,206,250)"]],
             zmin=0,
             zmax=1,
-            colorbar=dict(title="NaN Distribution<br>(0 - no NaN, 1 - NaN)"),
+            colorbar=dict(
+                title="NaN Distribution",
+                tickvals=[0, 1],  
+                ticktext=['No NaN', 'NaN'],  
+                tickmode='array', 
+                ticks='outside',  
+                lenmode="pixels",  
+                ticklen=10,  
+                tickwidth=2,  
+                tickangle=0  
+            )
         )
     )
 
     fig.update_layout(
         title=f"NaN distribution across {top_nan_per_probe_cpgs} CpGs with highest NaN count",
         xaxis_title="Sample_Name",
-        yaxis_title="CpG",
+        yaxis_title="CpG"
     )
+
+    fig.update_traces(coloraxis=None)
 
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
