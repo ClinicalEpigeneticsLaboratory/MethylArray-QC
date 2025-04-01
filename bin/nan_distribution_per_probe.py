@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import numpy as np
 import sys
 import plotly.graph_objects as go
 import pandas as pd
@@ -13,28 +14,35 @@ def main():
         sys.exit(1)
 
     path_to_raw_mynorm = sys.argv[1]
-    top_nan_per_probe_cpgs = int(sys.argv[2])
+    nan_per_probe_n_cpgs = int(sys.argv[2])
 
     raw_mynorm = pd.read_parquet(path_to_raw_mynorm)
     raw_mynorm.set_index("CpG", inplace=True)
 
-    if top_nan_per_probe_cpgs > len(raw_mynorm.index):
+    if nan_per_probe_n_cpgs > len(raw_mynorm.index):
         raise Exception(
-            "top_nan_per_probe_cpgs parameter cannot be larger than the number of rows in raw_mynorm!"
+            "nan_per_probe_n_cpgs parameter cannot be larger than the number of rows in raw_mynorm!"
         )
 
-    top_n_nan_probes = (
-        raw_mynorm.isna()
-        .sum(axis=1)
-        .sort_values(ascending=False)
-        .head(top_nan_per_probe_cpgs)
-        .index
+    # top_n_nan_probes = (
+    #     raw_mynorm.isna()
+    #     .sum(axis=1)
+    #     .sort_values(ascending=False)
+    #     .head(nan_per_probe_n_cpgs)
+    #     .index
+    # )
+
+    rng = np.random.RandomState(seed=123)
+
+    # Get the list of randomly selected CpGs and filter data
+    cpgs_to_plot = rng.choice(
+        a=raw_mynorm.index.to_list(), size=nan_per_probe_n_cpgs, replace=False
     )
 
-    raw_mynorm_top_n_nan = raw_mynorm.loc[top_n_nan_probes]
+    raw_mynorm_n_nan = raw_mynorm.loc[cpgs_to_plot]
 
     # Convert the data into a binary matrix where 1 represents NaN, 0 represents non-NaN
-    raw_mynorm_nan = raw_mynorm_top_n_nan.isna().astype(int)
+    raw_mynorm_nan = raw_mynorm_n_nan.isna().astype(int)
 
     fig = go.Figure(
         data=go.Heatmap(
@@ -59,15 +67,15 @@ def main():
     )
 
     fig.update_layout(
-        title=f"NaN distribution across {top_nan_per_probe_cpgs} CpGs with highest NaN count",
+        title=f"NaN distribution across {nan_per_probe_n_cpgs} randomly selected CpGs",
         xaxis_title="Sample_Name",
         yaxis_title="CpG"
     )
 
     fig.update_traces(coloraxis=None)
 
-    fig.update_xaxes(showticklabels=False)
-    fig.update_yaxes(showticklabels=False)
+    fig.update_xaxes(showticklabels=False, visible = False)
+    fig.update_yaxes(showticklabels=False, visible = False)
     fig.update_layout(width=600, height=600, template="ggplot2")
     fig.write_json(file="nan_distribution_per_probe.json", pretty=True)
 

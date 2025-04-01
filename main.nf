@@ -46,7 +46,7 @@ workflow {
 
     BETA_DISTRIBUTION(imputed_mynorm, params.n_cpgs_beta_distr)
     NAN_DISTRIBUTION_PER_SAMPLE(qc_path, params.sample_sheet)
-    NAN_DISTRIBUTION_PER_PROBE(raw_mynorm, params.top_nan_per_probe_cpgs)
+    NAN_DISTRIBUTION_PER_PROBE(raw_mynorm, params.nan_per_probe_n_cpgs)
 
     def pca_columns = params.pca_columns?.split(',') as List
 

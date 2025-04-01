@@ -4,13 +4,13 @@ process NAN_DISTRIBUTION_PER_PROBE {
 
     input:
     path raw_mynorm_path
-    val top_nan_per_probe_cpgs
+    val nan_per_probe_n_cpgs
 
     output:
     path "nan_distribution_per_probe.json"
 
     script:
     """
-    nan_distribution_per_probe.py $raw_mynorm_path $top_nan_per_probe_cpgs
+    nan_distribution_per_probe.py $raw_mynorm_path $nan_per_probe_n_cpgs
     """
 }
