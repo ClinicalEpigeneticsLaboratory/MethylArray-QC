@@ -24,14 +24,6 @@ def main():
             "nan_per_probe_n_cpgs parameter cannot be larger than the number of rows in raw_mynorm!"
         )
 
-    # top_n_nan_probes = (
-    #     raw_mynorm.isna()
-    #     .sum(axis=1)
-    #     .sort_values(ascending=False)
-    #     .head(nan_per_probe_n_cpgs)
-    #     .index
-    # )
-
     rng = np.random.RandomState(seed=123)
 
     # Get the list of randomly selected CpGs and filter data
