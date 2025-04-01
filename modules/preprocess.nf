@@ -1,6 +1,6 @@
 process PREPROCESS {
     publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'raw_mynorm.parquet'
-    label 'r'
+    label 'r_sesame'
 
     input:
     path idats
