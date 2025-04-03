@@ -9,9 +9,9 @@ process IMPUTE {
     val imputer_type
 
     output:
-    path "imputed_mynorm.parquet"
-    path "impute_nan_per_sample.parquet"
-    path "impute_nan_per_probe.parquet"
+    path "imputed_mynorm.parquet", emit: imputed_mynorm
+    path "impute_nan_per_sample.parquet", emit: nan_per_sample
+    path "impute_nan_per_probe.parquet", emit: nan_per_probe
 
     script:
     """

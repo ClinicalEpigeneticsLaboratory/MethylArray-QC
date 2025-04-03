@@ -12,9 +12,9 @@ process PCA {
     val pca_matrix_PC_count
 
     output:
-    path "PCA_scatter_matrix_${pca_param_pair[0]}.json"
-    path "PCA_area.json", optional: true
-    path "PCA_PC_KW_test_${pca_param_pair[0]}.json"
+    path "PCA_scatter_matrix_${pca_param_pair[0]}.json", emit: scatter
+    path "PCA_area.json", optional: true, emit: area
+    path "PCA_PC_KW_test_${pca_param_pair[0]}.json", emit: kruskal
 
     script:
     """
