@@ -175,6 +175,21 @@
                     "help_text": "Number of components for PCA scatter matrix plot",
                     "description": "Number of components for PCA scatter matrix plot",
                     "errorMessage": "Invalid number of components for PCA scatter matrix plot. Must be an integer between 2 and number of samples."
+                },
+                "infer_epi_age": {
+                    "type": "boolean",
+                    "default": true,
+                    "help_text": "Set to true if you want to infer epigenetic age for given samples or to false if you want to omit this step",
+                    "description": "Set to true if you want to infer epigenetic age for given samples or to false if you want to omit this step",
+                    "errorMessage": "infer_epi_age must be set to true or false"
+                },
+                "epi_clocks": {
+                    "type": "string",
+                    "default": "HannumG2013,HorvathS2013,HorvathS2018,LevineM2018,DunedinPACE,PCHorvathS2013,PCHannumG2013,PCHorvathS2018,PCPhenoAge,PCGrimAge",
+                    "pattern": "^(?:(HannumG2013|HorvathS2013|LevineM2018|ZhangQ2019|ShirebyG2020|YangZ2016|ZhangY2017|LuA2019|HorvathS2018|DunedinPACE|McEwenL2019|CBL_specific|PCGrimAge|PCHorvathS2013|PCHannumG2013|PCHorvathS2018|PCPhenoAge|CBL_common|Cortex_common|epiTOC2|BernabeuE2023c|LuA2023p1|LuA2023p2|LuA2023p3)(?:,(?!\\1)(HannumG2013|HorvathS2013|LevineM2018|ZhangQ2019|ShirebyG2020|YangZ2016|ZhangY2017|LuA2019|HorvathS2018|DunedinPACE|McEwenL2019|CBL_specific|PCGrimAge|PCHorvathS2013|PCHannumG2013|PCHorvathS2018|PCPhenoAge|CBL_common|Cortex_common|epiTOC2|BernabeuE2023c|LuA2023p1|LuA2023p2|LuA2023p3))*)$",
+                    "help_text": "Epigenetic clocks used in epigenetic age analysis supported by dnaMethyAge R package (HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces)",
+                    "description": "Epigenetic clocks used in epigenetic age analysis supported by dnaMethyAge R package (HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces)",
+                    "errorMessage": "Invalid epigenetic clocks for epigenetic age analysis provided. Allowed only clocks supported by dnaMethyAge R package: HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces"
                 }
             },
             "required": [

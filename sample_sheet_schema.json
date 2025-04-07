@@ -23,6 +23,11 @@
                     "FEMALE",
                     "MALE"
                 ]
+            },
+            "Age": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 100
             }
         },
         "required": ["Sample_Name", "Array_Position"]
