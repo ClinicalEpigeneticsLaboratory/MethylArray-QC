@@ -66,4 +66,4 @@ res_df <- res_df %>%
         names_from = c("clock")
     )
 
-data.table::fwrite(res_df, "epi_clocks_res.csv", sep = ",", dec = ".")
+arrow::write_parquet(res_df, "epi_clocks_res.parquet")

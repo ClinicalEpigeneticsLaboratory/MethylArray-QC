@@ -8,7 +8,7 @@ process EPIGENETIC_AGE_INFERENCE{
     val epi_clocks
 
     output:
-    path "epi_clocks_res.csv"
+    path "epi_clocks_res.parquet"
 
     script:
     """
