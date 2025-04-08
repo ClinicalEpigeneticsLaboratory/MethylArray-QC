@@ -45,6 +45,24 @@ def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: lis
         
         # Add the overall trendline trace to the figure
         fig.add_trace(trendline_trace)
+
+        for group in data["Sample_Group"].unique():
+            group_data = data[data["Sample_Group"] == group]
+
+            group_medae = getMedAE(
+                x = group_data["Age"].values, 
+                y = group_data[f"mAge_{epi_clock}"].values
+            )
+
+            # Identify the trace for this group
+            group_trace_index = [i for i, trace in enumerate(fig.data) if trace.name == group][1]
+            group_trace = fig.data[group_trace_index]
+
+            # Update the hovertemplate for this group's trace
+            group_trace.hovertemplate = addMedAEToTrendlineHover(
+                hovertemplate=group_trace.hovertemplate,
+                medae=group_medae
+            )
     else:
         fig = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", hover_data=hover_cols)
         
