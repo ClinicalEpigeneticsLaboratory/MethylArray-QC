@@ -73,7 +73,7 @@ def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: lis
             medae=overall_medae
         )
 
-    fig.update_layout(width=600, height=600, template="ggplot2")
+    fig.update_layout(width=600, height=600, template="ggplot2", yaxis={"title": epi_clock}, legend = {"title": None})
     fig.write_json(file=f"Regression/Regr_Age_vs_Epi_Age_{epi_clock}.json", pretty=True)
 
 def main():
