@@ -20,10 +20,29 @@ def getMedAE(x: list, y: list) -> float:
 
 def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: list) -> None:
     
+    overall_medae = getMedAE(
+        x = data["Age"].values, 
+        y = data[f"mAge_{epi_clock}"].values
+    )
+
     if "Sample_Group" in data:
         fig = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", color = "Sample_Group", trendline="ols", hover_data=hover_cols)
-        overall_trendline = px.scatter(data, x = "Age", y=f"mAge_{epi_clock}", trendline="ols", trendline_scope="overall", trendline_color_override="black")
-        fig.add_trace(overall_trendline.data[1])
+        
+        # Overall trendline for all data points
+        overall_trendline = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", trendline_scope="overall", trendline_color_override="black")
+        
+        # Identify the trendline trace for the overall trendline (the second trace in the figure)
+        trendline_trace = overall_trendline.data[1]
+        
+        # Get the current hovertemplate for the overall trendline trace
+        current_hovertemplate_ot = trendline_trace.hovertemplate
+        new_hovertemplate_ot = current_hovertemplate_ot + f"<br>Median Absolute Error: {overall_medae:.2f}"
+        
+        # Update the hovertemplate for the overall trendline
+        trendline_trace.update(hovertemplate=new_hovertemplate_ot)
+        
+        # Add the overall trendline trace to the figure
+        fig.add_trace(trendline_trace)
     else:
         fig = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", hover_data=hover_cols)
     fig.update_layout(width=600, height=600, template="ggplot2")
