@@ -17,6 +17,8 @@ def getMedAE(x: list, y: list) -> float:
     medae = median_absolute_error(y, y_pred)
     return medae
 
+def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
+    return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
 def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: list) -> None:
     
@@ -31,20 +33,28 @@ def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: lis
         # Overall trendline for all data points
         overall_trendline = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", trendline_scope="overall", trendline_color_override="black")
         
-        # Identify the trendline trace for the overall trendline (the second trace in the figure)
         trendline_trace = overall_trendline.data[1]
         
-        # Get the current hovertemplate for the overall trendline trace
-        current_hovertemplate_ot = trendline_trace.hovertemplate
-        new_hovertemplate_ot = current_hovertemplate_ot + f"<br>Median Absolute Error: {overall_medae:.2f}"
-        
         # Update the hovertemplate for the overall trendline
-        trendline_trace.update(hovertemplate=new_hovertemplate_ot)
+        trendline_trace.update(
+            hovertemplate = addMedAEToTrendlineHover(
+                hovertemplate = trendline_trace.hovertemplate,
+                medae = overall_medae
+            )
+        )
         
         # Add the overall trendline trace to the figure
         fig.add_trace(trendline_trace)
     else:
         fig = px.scatter(data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", hover_data=hover_cols)
+        
+        trendline_trace = fig.data[1]  # The trendline trace is usually the second trace
+        
+        trendline_trace.hovertemplate = addMedAEToTrendlineHover(
+            hovertemplate=trendline_trace.hovertemplate,
+            medae=overall_medae
+        )
+
     fig.update_layout(width=600, height=600, template="ggplot2")
     fig.write_json(file=f"Regression/Regr_Age_vs_Epi_Age_{epi_clock}.json", pretty=True)
 
