@@ -3,7 +3,20 @@
 import pandas as pd
 from pathlib import Path
 import plotly.express as px
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import median_absolute_error
 import sys
+
+def getMedAE(x: list, y: list) -> float:
+    model = LinearRegression()
+    x = x.reshape(-1, 1)
+    model.fit(x, y)
+    y_pred = model.predict(x)
+    
+    # Compute Median Absolute Error for this group
+    medae = median_absolute_error(y, y_pred)
+    return medae
+
 
 def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: list) -> None:
     
