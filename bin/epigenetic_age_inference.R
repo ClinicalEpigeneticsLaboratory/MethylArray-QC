@@ -49,8 +49,11 @@ for (clock in epi_clocks) {
     res_list[[clock]] <- res_list[[clock]] %>%
         dplyr::mutate(clock = rep(clock, times = nrow(.)))
 }
-res_list[["PCGrimAge"]] <- res_list[["PCGrimAge"]] %>%
-    dplyr::select(-is_Female)
+
+if("PCGrimAge" %in% epi_clocks) {
+    res_list[["PCGrimAge"]] <- res_list[["PCGrimAge"]] %>%
+        dplyr::select(-is_Female)
+}
 
 id_columns <- c()
 id_columns <- c("Sample", "Age")
