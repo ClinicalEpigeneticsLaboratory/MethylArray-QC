@@ -9,8 +9,7 @@ process EPIGENETIC_AGE_PLOTS {
 
     output:
     path "Regression/Regr_Age_vs_Epi_Age_${epi_clock}.json", arity: "1..*", emit: regr
-    //path "Correlation_matrix/Cor_Age_vs_Epi_Age_${epi_clock}.json", emit: cor
-    //path "EAA/Epi_Age_Accel_${epi_clock}.json", optional: true, emit: eaa
+    path "EAA/Epi_Age_Accel_${epi_clock}.json", optional: true, emit: eaa
 
     script:
     """

@@ -11,14 +11,18 @@ def getMedAE(x: list, y: list) -> float:
     model = LinearRegression()
     x = x.reshape(-1, 1)
     model.fit(x, y)
-    y_pred = model.predict(x)
-    
-    # Compute Median Absolute Error for this group
+    y_pred = model.predict(x)    
     medae = median_absolute_error(y, y_pred)
     return medae
 
 def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
+
+# think what to do when sample group is missing!
+def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
+    fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all")
+    fig.update_layout(width=600, height=600, template="ggplot2", yaxis={"title": epi_clock}, legend = {"title": None})
+    fig.write_json(file=f"EAA/Epi_Age_Accel_{epi_clock}.json", pretty=True)
 
 def getEpivsChronAgeRegrPlot(data: pd.DataFrame, epi_clock: str, hover_cols: list) -> None:
     
@@ -95,11 +99,15 @@ def main():
     epi_clock_res.rename(columns={"Sample": "Sample_Name"}, inplace=True)
     data = epi_clock_res.merge(sample_sheet, on = "Sample_Name")
 
-    # Create the directory
-    regr_out_dir_path = Path("Regression")
-    regr_out_dir_path.mkdir(exist_ok=True)
+    # Create the directories
+    for dir in ["Regression", "EAA"]:
+        out_dir_path = Path(dir)
+        out_dir_path.mkdir(exist_ok=True)
 
     getEpivsChronAgeRegrPlot(data = data, epi_clock = epi_clock, hover_cols = sample_sheet.columns.to_list())
+    
+    if "Sample_Group" in sample_sheet:
+        getEAABoxplot(data = data, epi_clock = epi_clock)
 
 if __name__ == "__main__":
     main()
