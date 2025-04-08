@@ -10,6 +10,7 @@ include { NAN_DISTRIBUTION_PER_SAMPLE } from './modules/nan_distribution_per_sam
 include { NAN_DISTRIBUTION_PER_PROBE } from './modules/nan_distribution_per_probe.nf'
 include { PCA } from './modules/pca.nf'
 include { EPIGENETIC_AGE_INFERENCE } from './modules/epigenetic_age_inference.nf'
+include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 
 //Default values for parameters stored in nextflow.config (ref. https://www.nextflow.io/docs/latest/cli.html#cli-params)
 
@@ -78,7 +79,8 @@ workflow {
     pca_ch_out = PCA(impute_ch_out.imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch, params.pca_matrix_PC_count)
 
     if(params.infer_epi_age) {
-        EPIGENETIC_AGE_INFERENCE(params.sample_sheet, impute_ch_out.imputed_mynorm, params.epi_clocks)
+        epi_age_res_path = EPIGENETIC_AGE_INFERENCE(params.sample_sheet, impute_ch_out.imputed_mynorm, params.epi_clocks)
+        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_path, params.sample_sheet, params.epi_clocks?.split(',') as List)
     }
 
     /* 

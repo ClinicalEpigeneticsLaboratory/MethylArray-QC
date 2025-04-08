@@ -73,7 +73,7 @@ def main():
     getFigJson(
         path_to_imputed_mynorm=imputed_mynorm_path,
         path_to_sample_sheet=sample_sheet_path,
-        column=col,
+        column=col
     )
 
 
