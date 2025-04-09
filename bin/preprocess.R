@@ -8,7 +8,7 @@ if (length(args)!=6) {
   idats = args[1]
   cpus = args[2]
   prep_code = args[3]
-  collapse_prefix = args[4]
+  collapse_prefix = ifelse(args[4] == "true", TRUE, FALSE)
   collapse_method = args[5]
   sample_sheet_path = args[6]
 }
@@ -29,7 +29,6 @@ library(arrow)
 library(glue)
 
 message("Parsing ...")
-collapse_prefix <- toupper(collapse_prefix) == "TRUE"
 
 sample_sheet <- data.frame()
 sample_sheet <- read.csv(file = sample_sheet_path, sep = ",", dec = ".", quote = "")

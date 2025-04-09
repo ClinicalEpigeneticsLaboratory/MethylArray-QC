@@ -72,15 +72,11 @@
                     "help_text": "Provide SeSAME-recommended prep code matching your array version and organism"
                 },
                 "collapse_prefix": {
-                    "type": "string",
-                    "enum": [
-                        "TRUE",
-                        "FALSE"
-                    ],
-                    "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to TRUE if you want to have CpG suffixes collapsed or to FALSE if you want to have CpG suffixes preserved",
-                    "errorMessage": "collapsePrefix must be set to TRUE or FALSE",
-                    "help_text": "Decide if you want to have CpG suffixes collapsed (TRUE) or not (FALSE)",
-                    "default": "FALSE"
+                    "type": "boolean",
+                    "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to true if you want to have CpG suffixes collapsed or to false if you want to have CpG suffixes preserved",
+                    "errorMessage": "collapsePrefix must be set to true or false",
+                    "help_text": "Decide if you want to have CpG suffixes collapsed (false) or not (false)",
+                    "default": false
                 },
                 "collapse_prefix_method": {
                     "type": "string",

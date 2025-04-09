@@ -118,7 +118,7 @@ params {
 
     // Sesame
     prep_code = "QCDPB"
-    collapse_prefix = "TRUE"
+    collapse_prefix = true
     collapse_prefix_method = "mean"
 
     // Imputation
