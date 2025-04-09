@@ -65,7 +65,10 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **General**:
   - `params.input`: Path to the directory containing IDAT files.
   - `params.output`: Path to the output directory.
-  - `params.sample_sheet`: Path to sample sheet containing at least Sample_Name and Array_Position fields (& Sex field in case sex inference will be performed).
+  - `params.sample_sheet`: Path to sample sheet containing at least Sample_Name and Array_Position fields and in case additional analyses will be performed:
+      - Sex (sex inference),
+      - Age (epigenetic age inference),
+      - Sample_Group (PCA - if needed for sample coloring, epigenetic age inference - epigenetic age acceleration comparison)
   - `params.cpus`: Number of CPUs to use.
 
 - **Preprocessing (Sesame)**:
