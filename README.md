@@ -173,6 +173,10 @@ The pipeline produces the following outputs:
    - scatter matrix plots for first n components (n specified by the user), as JSON files (generated only figures for columns provided as a parameter)
    - results of Kruskal-Wallis test for each principal component, as JSON files (generated only for columns provided as parameter)
    - an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user), as JSON file
+11. **Epigenetic age inference** (`epi_clocks_res.parquet`, `Regr_Age_vs_Epi_Age_${epi_clock}.json`, `Epi_Age_Accel_${epi_clock}.json`):
+   - results of epigenetic age inference and epigenetic age accelereation for all selected clocks, as parquet file,
+   - linear regression trendline plot for each clock (`Regression` subdirectory), as JSON file,
+   - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory), as JSON file.
 
 ## Process Details
 
