@@ -18,6 +18,8 @@ workflow {
 
     validateParameters()
 
+    //add assert process here
+
     // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
     
     idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)

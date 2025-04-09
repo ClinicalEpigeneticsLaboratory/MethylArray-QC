@@ -18,7 +18,6 @@ def getMedAE(x: list, y: list) -> float:
 def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
-# think what to do when sample group is missing!
 def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
     fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all", hover_data = data.columns.to_list())
     fig.update_layout(width=600, height=600, template="ggplot2", yaxis={"title": epi_clock}, legend = {"title": None})
