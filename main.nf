@@ -1,4 +1,5 @@
-include { validateParameters; paramsSummaryLog; paramsHelp; paramsSummaryMap; samplesheetToList} from 'plugin/nf-schema'
+include { validateParameters; paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-schema'
+include { ADDITIONAL_VALIDATORS_INIT } from './modules/additional_validators_init.nf'
 include { QC } from './modules/QC.nf'
 include { PREPROCESS } from './modules/preprocess.nf'
 include { IMPUTE } from './modules/impute.nf'
@@ -23,22 +24,7 @@ workflow {
     }
 
     validateParameters()
-
-    //add assert process here
-
-    // Parameter validation left if-based: explanation - https://stackoverflow.com/questions/13832487/why-should-assertions-not-be-used-for-argument-checking-in-public-methods
-    
-    idats = file("${params.input}", checkIfExists: true, checkIfEmpty: true)
-
-    idat_list_size = file("$idats/{*.idat,*.idat.gz}").size()
-
-    if(idat_list_size == 0) {
-        error "Input directory does not contain IDAT files!"
-    } else {
-        if(idat_list_size % 2 != 0) {
-            error "Number of IDAT files is not a multiplication of 2 and there should be 2 IDATs per one sample - did you forget to copy some files?"
-        }
-    }
+    ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
 
     qc_path = QC(params.input, cpus, params.sample_sheet)
 
@@ -94,6 +80,7 @@ workflow {
     */
     workflow.onComplete = {
         def params_map_all = paramsSummaryMap(workflow)
+        def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
         file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
         println("Workflow completed")
@@ -101,6 +88,7 @@ workflow {
 
     workflow.onError = {
         def params_map_all = paramsSummaryMap(workflow)
+        def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
         file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
         println("Workflow completed with errors")
