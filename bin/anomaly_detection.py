@@ -34,7 +34,8 @@ def main():
                 imputed_mynorm.T
             )
             anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
-
+            anomaly_results[f"{name}_classes"] = anomaly_results[f"{name}_classes"].astype(str).map({"-1": "Anomaly", "1": "non-Anomaly"})
+            anomaly_results[f"{name}_threshold"] = abs(algorithm.offset_)
     # Save the results
     anomaly_results.to_parquet("ao_results.parquet")
 
