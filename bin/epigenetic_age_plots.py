@@ -3,6 +3,7 @@
 import pandas as pd
 from pathlib import Path
 import plotly.express as px
+from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import median_absolute_error
 import sys
@@ -19,7 +20,10 @@ def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
 def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
-    fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all", hover_data = data.columns.to_list())
+    kruskal_res = stats.kruskal(
+            *[group[f"Age_Acceleration_{epi_clock}"].values for name, group in data.groupby("Sample_Group")]
+        )
+    fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all", hover_data = data.columns.to_list(), title = f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}")
     fig.update_layout(width=600, height=600, template="ggplot2", yaxis={"title": epi_clock}, legend = {"title": None})
     fig.write_json(file=f"EAA/Epi_Age_Accel_{epi_clock}.json", pretty=True)
 
