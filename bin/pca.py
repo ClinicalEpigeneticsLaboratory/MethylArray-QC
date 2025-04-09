@@ -149,7 +149,7 @@ def main():
             column=column,
             component_names=component_col_names[0:pca_matrix_PC_count:1],
             number_of_cpgs=n_cpgs,
-            perc_of_cpgs=perc_pca_cpgs
+            perc_of_cpgs=perc_pca_cpgs,
         )
 
         testKWToJSON(
