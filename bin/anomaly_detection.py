@@ -35,7 +35,14 @@ def main():
             )
             anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
             anomaly_results[f"{name}_classes"] = anomaly_results[f"{name}_classes"].astype(str).map({"-1": "Anomaly", "1": "non-Anomaly"})
-            anomaly_results[f"{name}_threshold"] = abs(algorithm.offset_)
+            #anomaly_results[f"{name}_threshold"] = abs(algorithm.offset_)
+
+        # Check if the algorithm has the 'offset_' attribute and handle accordingly
+        if hasattr(algorithm, 'offset_'):
+            anomaly_results[f"{name}_threshold"] = [abs(algorithm.offset_)]*len(anomaly_results[f"{name}_classes"])
+        else:
+            # For algorithms that don't have the 'offset_' attribute, set threshold to NaN or a custom value
+            anomaly_results[f"{name}_threshold"] = None  # or you could use np.nan for NaN
     # Save the results
     anomaly_results.to_parquet("ao_results.parquet")
 
