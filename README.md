@@ -17,7 +17,11 @@ The pipeline performs the following steps:
    - scatter matrix for the first n components (specified by the user) with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
    - an area plot visualising cumulative variance explained by all principal components in PCA (number of components specified by the user)
    - Kruskal-Wallis test results for each principal component and column specified by the user
-
+11. **Epigenetic age inference (optional)**: Optional, allows to infer epigenetic age of samples using one or more of epigenetic clocks supported by `dnaMethyAge` R package (default: HannumG2013 & HorvathS2013, for full clock list see: https://github.com/yiluyucheng/dnaMethyAge) and for each clock generates:
+   - a regression trendline of chronological and epigenetic age  
+      - general
+      - if Sample_Group column present in sample sheet - trendlines for specific groups and general trendline
+   - boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)
 ## Prerequisites
 
 ### Software Requirements
@@ -48,7 +52,9 @@ mv nextflow $HOME/.local/bin/
 
 ### Configuration
 The pipeline is preconfigured to use Docker containers for R and Python environments:
-- R container: `janbinkowski96/methyl-array-qc-r`
+- R containers: 
+   - `janbinkowski96/methyl-array-qc-r`
+   - `methyl-array-qc-other`
 - Python container: `janbinkowski96/methyl-array-qc-python`
 
 ## Usage
@@ -86,6 +92,9 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
    - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a scatter matrix plot and for Kruskal-Wallis test (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
    - `params.pca_number_of_components`: Number of all principal components for PCA analysis
    - `params.pca_matrix_PC_count`: Number of top principal components shown on PCA scatter matrix plot
+- **Epigenetic age inference**:
+   - `params.infer_epi_age`: Boolean (`true` or `false`, default: `true`) stating whether epigenetic age inference will be performed
+   - `params.epi_clocks`: Epigenetic clocks used for epigenetic age inference (>= 1 clock, in any order, separated by commas without spaces; for full list of supported clocks use a function`dnaMethyAge::availableClock()` from `dnaMethyAge` R package)
 
 In case you need additional information on parameters, run the following command:
 
@@ -130,7 +139,11 @@ params {
     perc_pca_cpgs = 20,
     pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID",
     pca_number_of_components = 6,
-    pca_matrix_PC_count = 5
+    pca_matrix_PC_count = 5,
+
+    //Epigenetic age
+    infer_epi_age = true,
+    epi_clocks = "HannumG2013,HorvathS2013"
 }
 ```
 
@@ -197,7 +210,7 @@ The pipeline produces the following outputs:
 - Output: `nan_distribution_per_sample.json`.
 
 ### 9. NaN distribution per probe process
-- Uses a Python script (`nan_distribution_per_probe.py`) to generate a heatmap representing the distribution of NaN values across samples and top n probes with highest count of NaN values.
+- Uses a Python script (`nan_distribution_per_probe.py`) to generate a heatmap representing the distribution of NaN values across samples and randomly selected n probes.
 - Output: `nan_distribution_per_probe.json`.
 
 ### 10. PCA process
@@ -210,8 +223,15 @@ The pipeline produces the following outputs:
    - results of Kruskal-Wallis test for all components:
    `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_PC_KW_test_Sentrix_Position.json` and/or`PCA_PCA_PC_KW_test_Sample_Group.json`,
    - PCA area plot for all components in the analysis: `PCA_area.json`.
+### 11. Epigenetic age inference
+- Uses an R script `epigenetic_age_inference.R` to infer epigenetic age using `dnaMethyAge` R package and a Python script `epigenetic_age_plots.py` to generate figures for each epigenetic clock:
+   - linear regression trendline between chronological and epigenetic age (overall and per group, if this information provided)
+   - (optional, if Sample_Group present in sample sheet) boxplots for epigenetic age acceleration
+- Output:
+   - results of epigenetic age inference and epigenetic age accelereation for all selected clocks: `epi_clocks_res.parquet`,
+   - linear regression trendline plot for each clock (`Regression` subdirectory): `Regr_Age_vs_Epi_Age_${epi_clock}.json`,
+   - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory): `Epi_Age_Accel_${epi_clock}.json`
 
 ## Known Issues and TODOs
 - Implement tests for workflow and for specific processes
-- Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures and tables
