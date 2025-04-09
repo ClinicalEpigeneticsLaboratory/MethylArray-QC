@@ -1,9 +1,11 @@
 FROM python:3.12-slim
+ENV DEBIAN_FRONTEND=noninteractive
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt update && apt upgrade -y &&  \
+    apt install -y procps && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
