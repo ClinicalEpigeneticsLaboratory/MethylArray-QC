@@ -20,7 +20,7 @@ def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
 
 # think what to do when sample group is missing!
 def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
-    fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all")
+    fig = px.box(data, x="Sample_Group", y=f"Age_Acceleration_{epi_clock}", color = "Sample_Group", points = "all", hover_data = data.columns.to_list())
     fig.update_layout(width=600, height=600, template="ggplot2", yaxis={"title": epi_clock}, legend = {"title": None})
     fig.write_json(file=f"EAA/Epi_Age_Accel_{epi_clock}.json", pretty=True)
 
