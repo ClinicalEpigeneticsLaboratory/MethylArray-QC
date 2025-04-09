@@ -55,7 +55,7 @@
                     "type": "integer",
                     "description": "Number of CPUs to use for analysis",
                     "help_text": "Provide the number of CPUs that will be used by the pipeline",
-                    "default": 1
+                    "default": -1
                 },
                 "prep_code": {
                     "type": "string",
