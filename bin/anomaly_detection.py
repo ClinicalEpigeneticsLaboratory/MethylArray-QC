@@ -35,7 +35,6 @@ def main():
             )
             anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
             anomaly_results[f"{name}_classes"] = anomaly_results[f"{name}_classes"].astype(str).map({"-1": "Anomaly", "1": "non-Anomaly"})
-            #anomaly_results[f"{name}_threshold"] = abs(algorithm.offset_)
 
         # Check if the algorithm has the 'offset_' attribute and handle accordingly
         if hasattr(algorithm, 'offset_'):
