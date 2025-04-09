@@ -239,3 +239,4 @@ The pipeline produces the following outputs:
 ## Known Issues and TODOs
 - Implement tests for workflow and for specific processes
 - Implement the output summary HTML report with embedded figures and tables
+- Add ps to Python container
