@@ -88,7 +88,7 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
    - `params.n_cpgs_beta_distr`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot
 
 - **NaN distribution per probe**:
-   - `params.top_nan_per_probe_cpgs`: Integer (default: 1000) specifying the number of CpGs with highest number of NaN values selected for NaN distribution per probe plot
+   - `params.nan_per_probe_n_cpgs`: Integer (default: 1000) specifying the number of CpGs randomly selected for NaN distribution per probe plot
 
 - **PCA**:
    - `params.perc_pca_cpgs`: Integer, percentage of CpGs with highest variance selected for PCA analysis (1 to 100%)
@@ -136,7 +136,7 @@ params {
     n_cpgs_beta_distr = 20000,
 
     //NaN distribution per probe
-    top_nan_per_probe_cpgs = 1000,
+    nan_per_probe_n_cpgs = 1000,
 
     //PCA
     perc_pca_cpgs = 20,
