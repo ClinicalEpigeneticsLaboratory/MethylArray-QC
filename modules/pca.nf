@@ -7,17 +7,16 @@ process PCA {
     path sample_sheet_path
     val perc_pca_cpgs
     val pca_number_of_components
-    each pca_param_pair
-    // each pair consists of a column for 2D dotplot and a boolean (true/false) stating whether a scree plot will be drawn in this iteration
+    val pca_columns
     val pca_matrix_PC_count
 
     output:
-    path "PCA_scatter_matrix_${pca_param_pair[0]}.json", emit: scatter
+    path "PCA_scatter_matrix_*.json", arity: "1..*", emit: scatter
     path "PCA_area.json", optional: true, emit: area
-    path "PCA_PC_KW_test_${pca_param_pair[0]}.json", emit: kruskal
+    path "PCA_PC_KW_test_*.json", arity: "1..*", emit: kruskal
 
     script:
     """
-    pca.py ${imputed_mynorm_path} ${sample_sheet_path} ${perc_pca_cpgs} ${pca_number_of_components} ${pca_param_pair[0]} ${pca_param_pair[1]} ${pca_matrix_PC_count}
+    pca.py ${imputed_mynorm_path} ${sample_sheet_path} ${perc_pca_cpgs} ${pca_number_of_components} ${pca_columns} ${pca_matrix_PC_count}
     """
 }

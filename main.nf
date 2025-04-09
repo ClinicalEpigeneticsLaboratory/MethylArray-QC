@@ -73,18 +73,18 @@ workflow {
     nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_path, params.sample_sheet)
     nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(raw_mynorm, params.nan_per_probe_n_cpgs)
 
-    def pca_columns = params.pca_columns?.split(',') as List
+    // def pca_columns = params.pca_columns?.split(',') as List
 
     // draw_area passed together with column ensures that area plot for PCA cumulative variance will be drawn only once - likely for the first execution of a PCA process
-    def draw_area = pca_columns.collect{it -> it == pca_columns.getAt(0)}
+    // def draw_area = pca_columns.collect{it -> it == pca_columns.getAt(0)}
 
-    def pca_param_ch = Channel.fromList(pca_columns)
-        .merge(Channel.fromList(draw_area))
+    // def pca_param_ch = Channel.fromList(pca_columns)
+    //     .merge(Channel.fromList(draw_area))
 
     // pca_ch_out.area: area plot path
     // pca_ch_out.scatter: scatter matrix plot paths
     // pca_ch_out.kruskal: Kruskal-Wallis test results
-    pca_ch_out = PCA(impute_ch_out.imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, pca_param_ch, params.pca_matrix_PC_count)
+    pca_ch_out = PCA(impute_ch_out.imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
 
     if(params.infer_epi_age) {
         epi_age_res_path = EPIGENETIC_AGE_INFERENCE(params.sample_sheet, impute_ch_out.imputed_mynorm, params.epi_clocks)

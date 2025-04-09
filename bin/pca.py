@@ -66,8 +66,7 @@ def scatterMatrixToJSON(
     component_names: list,
     number_of_cpgs: int,
     perc_of_cpgs: int,
-    column: str,
-    scatter_matrix_component_count: int,
+    column: str
 ) -> None:
     fig_scatter = px.scatter_matrix(
         components_data,
@@ -87,9 +86,9 @@ def scatterMatrixToJSON(
 
 
 def main():
-    if len(sys.argv) != 8:
+    if len(sys.argv) != 7:
         print(
-            "Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <column> <draw_area>"
+            "Usage: python pca.py <path_to_imputed_mynorm> <path_to_sample_sheet> <perc_pca_cpgs> <pca_number_of_components> <pca_columns> <pca_matrix_PC_count>"
         )
         sys.exit(1)
 
@@ -97,9 +96,8 @@ def main():
     path_to_sample_sheet = sys.argv[2]
     perc_pca_cpgs = int(sys.argv[3])
     pca_number_of_components = int(sys.argv[4])
-    column = str(sys.argv[5])
-    draw_area = str(sys.argv[6])
-    pca_matrix_PC_count = int(sys.argv[7])
+    pca_columns = str(sys.argv[5]).split(sep = ",")
+    pca_matrix_PC_count = int(sys.argv[6])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -109,65 +107,65 @@ def main():
         "Array_Position"
     ].str.split("_", expand=True)
 
-    if column not in sample_sheet.columns:
-        raise Exception(
-            f"{column} not provided in sample sheet - PCA cannot be performed!"
+    for i, column in enumerate(pca_columns):
+        if column not in sample_sheet.columns:
+            raise Exception(
+                f"{column} not provided in sample sheet - PCA cannot be performed!"
+            )
+
+        n_cpgs = math.ceil(imputed_mynorm.index.size * (perc_pca_cpgs / 100))
+
+        top_variances = (
+            imputed_mynorm.var(axis=1).sort_values(ascending=False).nlargest(n_cpgs)
         )
 
-    n_cpgs = math.ceil(imputed_mynorm.index.size * (perc_pca_cpgs / 100))
+        transposed_data = imputed_mynorm[
+            imputed_mynorm.index.isin(top_variances.index.to_list())
+        ].T
+        pca_data = transposed_data.reset_index(names="Sample_Name").merge(
+            sample_sheet.loc[:, column], on="Sample_Name"
+        )
 
-    top_variances = (
-        imputed_mynorm.var(axis=1).sort_values(ascending=False).nlargest(n_cpgs)
-    )
+        scaler = StandardScaler().set_output(transform="pandas")
+        scaled_PCA_data = scaler.fit_transform(
+            pca_data.drop(columns=[column, "Sample_Name"])
+        )
+        pca_res = PCA(n_components=pca_number_of_components, random_state=307)
+        components = pca_res.fit_transform(scaled_PCA_data)
+        component_col_names = [
+            f"PC{cnt + 1} {int(var * 100)}%"
+            for cnt, var in enumerate(pca_res.explained_variance_ratio_)
+        ]
 
-    transposed_data = imputed_mynorm[
-        imputed_mynorm.index.isin(top_variances.index.to_list())
-    ].T
-    pca_data = transposed_data.reset_index(names="Sample_Name").merge(
-        sample_sheet.loc[:, column], on="Sample_Name"
-    )
+        components_df = pd.DataFrame(
+            data=components,  # values
+            index=sample_sheet.index.to_list(),  # 1st column as index
+            columns=component_col_names,
+        )
+        components_df = components_df.join(sample_sheet[column])
 
-    scaler = StandardScaler().set_output(transform="pandas")
-    scaled_PCA_data = scaler.fit_transform(
-        pca_data.drop(columns=[column, "Sample_Name"])
-    )
-    pca_res = PCA(n_components=pca_number_of_components, random_state=307)
-    components = pca_res.fit_transform(scaled_PCA_data)
-    component_col_names = [
-        f"PC{cnt + 1} {int(var * 100)}%"
-        for cnt, var in enumerate(pca_res.explained_variance_ratio_)
-    ]
-
-    components_df = pd.DataFrame(
-        data=components,  # values
-        index=sample_sheet.index.to_list(),  # 1st column as index
-        columns=component_col_names,
-    )
-    components_df = components_df.join(sample_sheet[column])
-
-    scatterMatrixToJSON(
-        components_data=components_df,
-        column=column,
-        component_names=component_col_names[0:pca_matrix_PC_count:1],
-        number_of_cpgs=n_cpgs,
-        perc_of_cpgs=perc_pca_cpgs,
-        scatter_matrix_component_count=pca_matrix_PC_count,
-    )
-
-    testKWToJSON(
-        components_data=components_df,
-        column=column,
-        component_names=component_col_names,
-    )
-
-    if draw_area == "true":
-        areaPlotToJSON(
-            col=column,
-            explained_var_ratio=pca_res.explained_variance_ratio_,
+        scatterMatrixToJSON(
+            components_data=components_df,
+            column=column,
+            component_names=component_col_names[0:pca_matrix_PC_count:1],
             number_of_cpgs=n_cpgs,
-            number_of_pcs=pca_number_of_components,
-            perc_of_cpgs=perc_pca_cpgs,
+            perc_of_cpgs=perc_pca_cpgs
         )
+
+        testKWToJSON(
+            components_data=components_df,
+            column=column,
+            component_names=component_col_names,
+        )
+
+        if i == 0:
+            areaPlotToJSON(
+                col=column,
+                explained_var_ratio=pca_res.explained_variance_ratio_,
+                number_of_cpgs=n_cpgs,
+                number_of_pcs=pca_number_of_components,
+                perc_of_cpgs=perc_pca_cpgs,
+            )
 
 
 if __name__ == "__main__":
