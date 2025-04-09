@@ -16,6 +16,12 @@ include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 
 workflow {
 
+    def cpus = params.cpus
+    if(params.cpus == -1) {
+        cpus = Runtime.runtime.availableProcessors() - 1
+        println("cpus parameter set to -1 - ${cpus} CPUs will be used")
+    }
+
     validateParameters()
 
     //add assert process here
@@ -34,9 +40,9 @@ workflow {
         }
     }
 
-    qc_path = QC(params.input, params.cpus, params.sample_sheet)
+    qc_path = QC(params.input, cpus, params.sample_sheet)
 
-    raw_mynorm = PREPROCESS(params.input, params.cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
+    raw_mynorm = PREPROCESS(params.input, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
     
     // impute_ch_out.imputed_mynorm: imputed mynorm path
     // impute_ch_out.nan_per_sample: path to file with %NaN per sample stats
@@ -47,7 +53,7 @@ workflow {
 
     // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {
-        sex_inference_path = SEX_INFERENCE(impute_ch_out.imputed_mynorm, params.cpus, params.sample_sheet)
+        sex_inference_path = SEX_INFERENCE(impute_ch_out.imputed_mynorm, cpus, params.sample_sheet)
     }
 
     batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
