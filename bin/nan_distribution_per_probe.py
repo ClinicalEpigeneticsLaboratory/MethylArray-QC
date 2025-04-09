@@ -66,7 +66,6 @@ def main():
 
     fig.update_traces(coloraxis=None)
 
-    fig.update_xaxes(showticklabels=False, visible = False)
     fig.update_yaxes(showticklabels=False, visible = False)
     fig.update_layout(width=600, height=600, template="ggplot2")
     fig.write_json(file="nan_distribution_per_probe.json", pretty=True)
