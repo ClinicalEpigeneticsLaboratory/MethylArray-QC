@@ -1,9 +1,10 @@
 #!/usr/local/bin/python
 
+import json
+from pathlib import Path
 import sys
 import pandas as pd
 from sklearn.impute import SimpleImputer, KNNImputer
-
 
 def main():
     if len(sys.argv) != 5:
@@ -63,7 +64,12 @@ def main():
     # Save the imputed data
     mynorm_imputed = mynorm_imputed.reset_index()
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
-
+    with open("mynorm_imputed_n_cpgs.json", "w") as f:
+        json.dump(
+            obj = {"mynorm_imputed_n_cpgs": mynorm_imputed.index.size},
+            fp = f,
+            indent = 4
+        )
 
 if __name__ == "__main__":
     main()

@@ -3,6 +3,7 @@ include { ADDITIONAL_VALIDATORS_INIT } from './modules/additional_validators_ini
 include { QC } from './modules/QC.nf'
 include { PREPROCESS } from './modules/preprocess.nf'
 include { IMPUTE } from './modules/impute.nf'
+include { ADDITIONAL_VALIDATORS_AFTER_IMPUTE } from './modules/additional_validators_after_impute.nf'
 include { ANOMALY_DETECTION } from './modules/anomaly_detection.nf'
 include { SEX_INFERENCE } from './modules/sex_inference.nf'
 include { BATCH_EFFECT } from './modules/batch_effect.nf'
@@ -17,14 +18,14 @@ include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 
 workflow {
 
+    validateParameters()
+    ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
+
     def cpus = params.cpus
     if(params.cpus == -1) {
         cpus = Runtime.runtime.availableProcessors() - 1
         println("cpus parameter set to -1 - ${cpus} CPUs will be used")
     }
-
-    validateParameters()
-    ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
 
     qc_path = QC(params.input, cpus, params.sample_sheet)
 
@@ -32,8 +33,14 @@ workflow {
     
     // impute_ch_out.imputed_mynorm: imputed mynorm path
     // impute_ch_out.nan_per_sample: path to file with %NaN per sample stats
-    // impute_ch_out.nan_pep_probe: path to file with %NaN per probe stats
+    // impute_ch_out.nan_per_probe: path to file with %NaN per probe stats
+    // impute_ch_out.mynorm_imputed_n_cpgs: number of CpGs in imputed mynorm
+
     impute_ch_out = IMPUTE(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
+
+    if(impute_ch_out) {
+        ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.mynorm_imputed_n_cpgs)
+    }
 
     ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm)
 
@@ -82,7 +89,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
         println("Workflow completed")
     }
 
@@ -90,7 +97,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size)
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
         println("Workflow completed with errors")
     }
 }

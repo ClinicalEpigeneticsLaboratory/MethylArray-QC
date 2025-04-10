@@ -12,6 +12,7 @@ process IMPUTE {
     path "imputed_mynorm.parquet", emit: imputed_mynorm
     path "impute_nan_per_sample.parquet", emit: nan_per_sample
     path "impute_nan_per_probe.parquet", emit: nan_per_probe
+    path "mynorm_imputed_n_cpgs.json", emit: mynorm_imputed_n_cpgs
 
     script:
     """
