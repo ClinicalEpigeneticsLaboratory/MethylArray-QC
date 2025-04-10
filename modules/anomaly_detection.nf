@@ -1,5 +1,5 @@
-process anomaly_detection {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
+process ANOMALY_DETECTION {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
     label 'python'
 
     input:
@@ -10,6 +10,6 @@ process anomaly_detection {
 
     script:
     """
-    anomaly_detection.py $mynorm
+    anomaly_detection.py ${mynorm}
     """
 }

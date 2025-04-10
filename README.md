@@ -14,10 +14,14 @@ The pipeline performs the following steps:
 8. **NaN distribution per sample plot**: shows the percentage of NaN probes per sample
 9. **NaN distribution per probe plot**: shows a heatmap showing the distribution of NaN values across probes and samples
 10. **PCA analysis**: generates:
-   - 2D dotplot for the first 2 components with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
-   - a scree plot for number of components specified by the user
+   - scatter matrix for the first n components (specified by the user) with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
+   - an area plot visualising cumulative variance explained by all principal components in PCA (number of components specified by the user)
    - Kruskal-Wallis test results for each principal component and column specified by the user
-
+11. **Epigenetic age inference (optional)**: Optional, allows to infer epigenetic age of samples using one or more of epigenetic clocks supported by `dnaMethyAge` R package (default: HannumG2013 & HorvathS2013, for full clock list see: https://github.com/yiluyucheng/dnaMethyAge) and for each clock generates:
+   - a regression trendline of chronological and epigenetic age  
+      - general
+      - if Sample_Group column present in sample sheet - trendlines for specific groups and general trendline
+   - boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)
 ## Prerequisites
 
 ### Software Requirements
@@ -48,7 +52,9 @@ mv nextflow $HOME/.local/bin/
 
 ### Configuration
 The pipeline is preconfigured to use Docker containers for R and Python environments:
-- R container: `janbinkowski96/methyl-array-qc-r`
+- R containers: 
+   - `janbinkowski96/methyl-array-qc-r`
+   - `methyl-array-qc-other`
 - Python container: `janbinkowski96/methyl-array-qc-python`
 
 ## Usage
@@ -59,7 +65,10 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **General**:
   - `params.input`: Path to the directory containing IDAT files.
   - `params.output`: Path to the output directory.
-  - `params.sample_sheet`: Path to sample sheet containing at least Sample_Name and Array_Position fields (& Sex field in case sex inference will be performed).
+  - `params.sample_sheet`: Path to sample sheet containing at least Sample_Name and Array_Position fields and in case additional analyses will be performed:
+      - Sex (sex inference),
+      - Age (epigenetic age inference),
+      - Sample_Group (PCA - if needed for sample coloring, epigenetic age inference - epigenetic age acceleration comparison)
   - `params.cpus`: Number of CPUs to use.
 
 - **Preprocessing (Sesame)**:
@@ -79,11 +88,16 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
    - `params.n_cpgs_beta_distr`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot
 
 - **NaN distribution per probe**:
-   - `params.top_nan_per_probe_cpgs`: Integer (default: 1000) specifying the number of CpGs with highest number of NaN values selected for NaN distribution per probe plot
+   - `params.nan_per_probe_n_cpgs`: Integer (default: 1000) specifying the number of CpGs randomly selected for NaN distribution per probe plot
 
 - **PCA**:
    - `params.perc_pca_cpgs`: Integer, percentage of CpGs with highest variance selected for PCA analysis (1 to 100%)
-   - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a plot and for Kruskal-Wallis test (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
+   - `params.pca_columns`: Columns used in PCA analysis for sample coloring on a scatter matrix plot and for Kruskal-Wallis test (1-3 columns: Sentrix_ID, Sentrix_Position and/or Sample_Group, in any order, separated by commas without spaces)
+   - `params.pca_number_of_components`: Number of all principal components for PCA analysis
+   - `params.pca_matrix_PC_count`: Number of top principal components shown on PCA scatter matrix plot
+- **Epigenetic age inference**:
+   - `params.infer_epi_age`: Boolean (`true` or `false`, default: `true`) stating whether epigenetic age inference will be performed
+   - `params.epi_clocks`: Epigenetic clocks used for epigenetic age inference (>= 1 clock, in any order, separated by commas without spaces; for full list of supported clocks use a function`dnaMethyAge::availableClock()` from `dnaMethyAge` R package)
 
 In case you need additional information on parameters, run the following command:
 
@@ -107,7 +121,7 @@ params {
 
     // Sesame
     prep_code = "QCDPB"
-    collapse_prefix = "TRUE"
+    collapse_prefix = true
     collapse_prefix_method = "mean"
 
     // Imputation
@@ -122,11 +136,17 @@ params {
     n_cpgs_beta_distr = 20000,
 
     //NaN distribution per probe
-    top_nan_per_probe_cpgs = 1000,
+    nan_per_probe_n_cpgs = 1000,
 
     //PCA
     perc_pca_cpgs = 20,
-    pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID"
+    pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID",
+    pca_number_of_components = 6,
+    pca_matrix_PC_count = 5,
+
+    //Epigenetic age
+    infer_epi_age = true,
+    epi_clocks = "HannumG2013,HorvathS2013"
 }
 ```
 
@@ -137,8 +157,9 @@ The pipeline produces the following outputs:
    - Quality metrics for the samples.
 2. **Raw Normalized Data (`raw_mynorm.parquet`)**:
    - Preprocessed methylation data.
-3. **Imputed Data (`imputed_mynorm.parquet`)**:
+3. **Imputed Data (`imputed_mynorm.parquet`, `impute_nan_per_probe.parquet`, `impute_nan_per_sample.parquet`)**:
    - Data with missing values imputed.
+   - Imputation statistics: %NaN per sample, %NaN per probe.
 4. **Anomaly Detection Results (`ao_results.parquet`)**:
    - Anomaly scores and classifications for each sample.
 5. **Sex inference results (`inferred_sex.json`)**:
@@ -151,10 +172,14 @@ The pipeline produces the following outputs:
    - figure as JSON file
 9. **NaN distribution per probe plot (`nan_distribution_per_probe.json`)**:
    - figure as JSON file
-10. **PCA (`PCA_2D_dot_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_2D_dot_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_scree.json`)**:
-   - 2D dot plots for first 2 components, as JSON files (generated only figures for columns provided as a parameter)
+10. **PCA (`PCA_scatter_matrix_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_scatter_matrix_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_scatter_matrix_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_area.json`)**:
+   - scatter matrix plots for first n components (n specified by the user), as JSON files (generated only figures for columns provided as a parameter)
    - results of Kruskal-Wallis test for each principal component, as JSON files (generated only for columns provided as parameter)
-   - a scree plot for all principal components, as JSON file
+   - an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user), as JSON file
+11. **Epigenetic age inference** (`epi_clocks_res.parquet`, `Regr_Age_vs_Epi_Age_${epi_clock}.json`, `Epi_Age_Accel_${epi_clock}.json`):
+   - results of epigenetic age inference and epigenetic age accelereation for all selected clocks, as parquet file,
+   - linear regression trendline plot for each clock (`Regression` subdirectory), as JSON file,
+   - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory), as JSON file.
 
 ## Process Details
 
@@ -169,7 +194,7 @@ The pipeline produces the following outputs:
 ### 3. Imputation Process
 - Uses a Python script (`imputation.py`) to remove corrupted probes/samples and impute missing values.
 - Supported imputers: `mean`, `median`, `knn`.
-- Output: `imputed_mynorm.parquet`.
+- Output: `imputed_mynorm.parquet`, `impute_nan_per_probe.parquet`, `impute_nan_per_sample.parquet`.
 
 ### 4. Anomaly Detection Process
 - Uses a Python script (`anomaly_detection.py`) with algorithms such as LOF, Isolation Forest, and One-Class SVM to detect anomalies in the imputed data.
@@ -192,23 +217,28 @@ The pipeline produces the following outputs:
 - Output: `nan_distribution_per_sample.json`.
 
 ### 9. NaN distribution per probe process
-- Uses a Python script (`nan_distribution_per_probe.py`) to generate a heatmap representing the distribution of NaN values across samples and top n probes with highest count of NaN values.
+- Uses a Python script (`nan_distribution_per_probe.py`) to generate a heatmap representing the distribution of NaN values across samples and randomly selected n probes.
 - Output: `nan_distribution_per_probe.json`.
 
 ### 10. PCA process
-- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using the first two components and generating:
-   - 2D dotplot(s) visualising first 2 components with sample coloring based on column(s) provided by the user,
+- Uses a Python script (`pca.py`) to perform PCA on CpGs from imputed mynorm as features using number of components specified by the user and generating:
+   - scatter matrix (matrices) visualising first n components (n: user-provided) with sample coloring based on column(s) provided by the user,
    - results of Kruskal-Wallis test for all components and column(s) specified by the user,
-   - a scree plot for all components specified by the user.
+   - an area plot for all components in PCA specified by the user.
 - Output: 
-   - PCA 2D dotplots for first 2 components: `PCA_2D_dot_Sentrix_ID.json`, `PCA_2D_dot_Sentrix_Position.json` and/or`PCA_2D_dot_Sample_Group.json`,
+   - PCA scatter matrix plots for first n components: `PCA_scatter_matrix_Sentrix_ID.json`, `PCA_scatter_matrix_Sentrix_Position.json` and/or`PCA_scatter_matrix_Sample_Group.json`,
    - results of Kruskal-Wallis test for all components:
    `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_PC_KW_test_Sentrix_Position.json` and/or`PCA_PCA_PC_KW_test_Sample_Group.json`,
-   - PCA scree plot for all components specified by the user: `PCA_scree.json`.
+   - PCA area plot for all components in the analysis: `PCA_area.json`.
+### 11. Epigenetic age inference
+- Uses an R script `epigenetic_age_inference.R` to infer epigenetic age using `dnaMethyAge` R package and a Python script `epigenetic_age_plots.py` to generate figures for each epigenetic clock:
+   - linear regression trendline between chronological and epigenetic age (overall and per group, if this information provided)
+   - (optional, if Sample_Group present in sample sheet) boxplots for epigenetic age acceleration
+- Output:
+   - results of epigenetic age inference and epigenetic age accelereation for all selected clocks: `epi_clocks_res.parquet`,
+   - linear regression trendline plot for each clock (`Regression` subdirectory): `Regr_Age_vs_Epi_Age_${epi_clock}.json`,
+   - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory): `Epi_Age_Accel_${epi_clock}.json`
 
 ## Known Issues and TODOs
-- Implement multiprocessing for additional analyses where possible
 - Implement tests for workflow and for specific processes
-- Export imputation statistics (NaN count per sample/probe) as JSON
-- Add epigenetic age inference
 - Implement the output summary HTML report with embedded figures and tables

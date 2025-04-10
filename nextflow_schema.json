@@ -39,7 +39,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "schema": "sample_sheet_schema.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.\n\nSample sheet fields:\n 1) Sample_Name (unique, mandatory), \n 2) Array_Position (unique, mandatory, denotes position of a sample on a microarray in a form Sentrix ID_Sentrix Position, \n3) Sex (optional, but required for sex inference analysis - denotes declared sample sex [allowed values: FEMALE, MALE])\n4) Sample_Group (optional) - sample phenotype (e.g. Treated/Cancer)",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.\n\nSample sheet fields:\n 1) Sample_Name (unique, mandatory), \n 2) Array_Position (unique, mandatory, denotes position of a sample on a microarray in a form Sentrix ID_Sentrix Position, \n3) Sex (optional, but required for sex inference analysis - denotes declared sample sex [allowed values: FEMALE, MALE])\n4) Sample_Group (optional) - sample phenotype (e.g. Treated/Cancer)\n5) Age",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns, and a header row",
                     "fa_icon": "fas fa-file-csv"
                 }
@@ -55,7 +55,8 @@
                     "type": "integer",
                     "description": "Number of CPUs to use for analysis",
                     "help_text": "Provide the number of CPUs that will be used by the pipeline",
-                    "default": 1
+                    "default": -1,
+                    "minimum": -1
                 },
                 "prep_code": {
                     "type": "string",
@@ -72,15 +73,11 @@
                     "help_text": "Provide SeSAME-recommended prep code matching your array version and organism"
                 },
                 "collapse_prefix": {
-                    "type": "string",
-                    "enum": [
-                        "TRUE",
-                        "FALSE"
-                    ],
-                    "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to TRUE if you want to have CpG suffixes collapsed or to FALSE if you want to have CpG suffixes preserved",
-                    "errorMessage": "collapsePrefix must be set to TRUE or FALSE",
-                    "help_text": "Decide if you want to have CpG suffixes collapsed (TRUE) or not (FALSE)",
-                    "default": "FALSE"
+                    "type": "boolean",
+                    "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to true if you want to have CpG suffixes collapsed or to false if you want to have CpG suffixes preserved",
+                    "errorMessage": "collapsePrefix must be set to true or false",
+                    "help_text": "Decide if you want to have CpG suffixes collapsed (false) or not (false)",
+                    "default": false
                 },
                 "collapse_prefix_method": {
                     "type": "string",
@@ -135,13 +132,13 @@
                     "description": "Number of CpGs randomly selected for the kernel-density plot",
                     "errorMessage": "n_cpgs_beta_distr must be an integer equal or larger than 1"
                 },
-                "top_nan_per_probe_cpgs": {
+                "nan_per_probe_n_cpgs": {
                     "type": "integer",
                     "minimum": 2,
                     "default": 1000,
-                    "help_text": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
-                    "description": "Number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap",
-                    "errorMessage": "Invalid number of top CpGs with highest number of NaN values selected for NaN distribution per probe heatmap. Must be an integer between 2 and number of probes."
+                    "help_text": "Number of CpGs randomly selected for NaN distribution per probe heatmap",
+                    "description": "Number of CpGs randomly selected for NaN distribution per probe heatmap",
+                    "errorMessage": "Invalid number of CpGs randomly selected for NaN distribution per probe heatmap. Must be an integer between 2 and number of probes."
                 },
                 "perc_pca_cpgs": {
                     "type": "number",
@@ -175,6 +172,21 @@
                     "help_text": "Number of components for PCA scatter matrix plot",
                     "description": "Number of components for PCA scatter matrix plot",
                     "errorMessage": "Invalid number of components for PCA scatter matrix plot. Must be an integer between 2 and number of samples."
+                },
+                "infer_epi_age": {
+                    "type": "boolean",
+                    "default": true,
+                    "help_text": "Set to true if you want to infer epigenetic age for given samples or to false if you want to omit this step",
+                    "description": "Set to true if you want to infer epigenetic age for given samples or to false if you want to omit this step",
+                    "errorMessage": "infer_epi_age must be set to true or false"
+                },
+                "epi_clocks": {
+                    "type": "string",
+                    "default": "HannumG2013,HorvathS2013",
+                    "pattern": "^(?:(HannumG2013|HorvathS2013|LevineM2018|ZhangQ2019|ShirebyG2020|YangZ2016|ZhangY2017|LuA2019|HorvathS2018|DunedinPACE|McEwenL2019|CBL_specific|PCGrimAge|PCHorvathS2013|PCHannumG2013|PCHorvathS2018|PCPhenoAge|CBL_common|Cortex_common|epiTOC2|BernabeuE2023c|LuA2023p1|LuA2023p2|LuA2023p3)(?:,(?!\\1)(HannumG2013|HorvathS2013|LevineM2018|ZhangQ2019|ShirebyG2020|YangZ2016|ZhangY2017|LuA2019|HorvathS2018|DunedinPACE|McEwenL2019|CBL_specific|PCGrimAge|PCHorvathS2013|PCHannumG2013|PCHorvathS2018|PCPhenoAge|CBL_common|Cortex_common|epiTOC2|BernabeuE2023c|LuA2023p1|LuA2023p2|LuA2023p3))*)$",
+                    "help_text": "Epigenetic clocks used in epigenetic age analysis supported by dnaMethyAge R package (HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces)",
+                    "description": "Epigenetic clocks used in epigenetic age analysis supported by dnaMethyAge R package (HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces)",
+                    "errorMessage": "Invalid epigenetic clocks for epigenetic age analysis provided. Allowed only clocks supported by dnaMethyAge R package: HannumG2013, HorvathS2013, LevineM2018, ZhangQ2019, ShirebyG2020, YangZ2016, ZhangY2017, LuA2019, HorvathS2018, DunedinPACE, McEwenL2019, CBL_specific, PCGrimAge, PCHorvathS2013, PCHannumG2013, PCHorvathS2018, PCPhenoAge, CBL_common, Cortex_common, epiTOC2, BernabeuE2023c, LuA2023p1, LuA2023p2 and/or LuA2023p3, in any order, separated by commas without spaces"
                 }
             },
             "required": [

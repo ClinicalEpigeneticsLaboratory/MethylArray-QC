@@ -1,6 +1,6 @@
-process preprocess {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: 'raw_mynorm.parquet'
-    label 'r'
+process PREPROCESS {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'raw_mynorm.parquet'
+    label 'r_sesame'
 
     input:
     path idats
@@ -11,10 +11,11 @@ process preprocess {
     path sample_sheet_path
 
     output:
-    path "raw_mynorm.parquet"
+    path "raw_mynorm.parquet", emit: raw_mynorm_path
+    path "raw_mynorm_probe_count.json", emit: raw_mynorm_probe_count_path
 
     script:
     """
-    preprocess.R $idats $cpus $prep_code $collapse_prefix $collapse_prefix_method $sample_sheet_path
+    preprocess.R ${idats} ${cpus} ${prep_code} ${collapse_prefix} ${collapse_prefix_method} ${sample_sheet_path}
     """
 }

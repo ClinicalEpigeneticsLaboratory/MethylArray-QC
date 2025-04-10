@@ -1,5 +1,5 @@
-process beta_distribution {
-    publishDir "$params.output", mode: 'copy', overwrite: true, pattern: '*.json'
+process BETA_DISTRIBUTION {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
@@ -11,6 +11,6 @@ process beta_distribution {
 
     script:
     """
-    beta_distribution.py $imputed_mynorm_path $n_cpgs_beta_distr
+    beta_distribution.py ${imputed_mynorm_path} ${n_cpgs_beta_distr}
     """
 }

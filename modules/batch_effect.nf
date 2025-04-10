@@ -1,5 +1,5 @@
-process batch_effect {
-    publishDir "$params.output", mode: 'copy', overwrite: true
+process BATCH_EFFECT {
+    publishDir "${params.output}", mode: 'copy', overwrite: true
     label 'python'
 
     input:
@@ -8,10 +8,10 @@ process batch_effect {
     each column
 
     output:
-    path("Mean_beta_per_${column}/*.json", arity: "1..*")
+    path "Mean_beta_per_${column}/*.json", arity: "1..*"
 
     script:
     """
-    batch_effect.py $imputed_mynorm_path $sample_sheet_path $column
+    batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column}
     """
 }
