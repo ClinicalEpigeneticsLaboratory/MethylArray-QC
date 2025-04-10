@@ -11,7 +11,8 @@ process PREPROCESS {
     path sample_sheet_path
 
     output:
-    path "raw_mynorm.parquet"
+    path "raw_mynorm.parquet", emit: raw_mynorm_path
+    path "raw_mynorm_probe_count.json", emit: raw_mynorm_probe_count_path
 
     script:
     """

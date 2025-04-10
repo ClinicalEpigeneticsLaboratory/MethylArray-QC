@@ -1,16 +1,16 @@
 #!/bin/Rscript
 
-args = commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args)!=6) {
-  stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code> <sample_sheet_path>")
+if (length(args) != 6) {
+    stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code> <sample_sheet_path>")
 } else {
-  idats = args[1]
-  cpus = args[2]
-  prep_code = args[3]
-  collapse_prefix = ifelse(args[4] == "true", TRUE, FALSE)
-  collapse_method = args[5]
-  sample_sheet_path = args[6]
+    idats <- args[1]
+    cpus <- args[2]
+    prep_code <- args[3]
+    collapse_prefix <- ifelse(args[4] == "true", TRUE, FALSE)
+    collapse_method <- args[5]
+    sample_sheet_path <- args[6]
 }
 
 # To discuss: remove redundant parameter validation?
@@ -27,6 +27,7 @@ if (!(collapse_method %in% known_collapse_methods)) {
 library(sesame)
 library(arrow)
 library(glue)
+library(jsonlite)
 
 message("Parsing ...")
 
@@ -37,19 +38,23 @@ sample_list_dir <- list()
 sample_list_dir <- file.path(idats, sample_sheet$Array_Position)
 
 sdfs <- lapply(sample_list_dir, FUN = readIDATpair, manifest = NULL, platform = "", min_beads = NULL, controls = NULL, verbose = FALSE)
-if(length(sdfs) < nrow(sample_sheet)) stop(paste0("IDATs for ", nrow(sample_sheet) - length(sdfs)), " samples are missing!")
+if (length(sdfs) < nrow(sample_sheet)) stop(paste0("IDATs for ", nrow(sample_sheet) - length(sdfs)), " samples are missing!")
 names(sdfs) <- sample_sheet$Sample_Name
 
 # A bug: sample names not preserved in mynorm (TO FIX)
 mynorm <- openSesame(sdfs,
-                     prep=prep_code,
-                     func=getBetas,
-                     collapseToPfx=collapse_prefix,
-                     collapseMethod=collapse_method,
-                     BPPARAM = BiocParallel::MulticoreParam(cpus)
-                     )
+    prep = prep_code,
+    func = getBetas,
+    collapseToPfx = collapse_prefix,
+    collapseMethod = collapse_method,
+    BPPARAM = BiocParallel::MulticoreParam(cpus)
+)
 
 message("Dumping ...")
 mynorm <- as.data.frame(mynorm)
 mynorm$CpG <- rownames(mynorm)
 write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
+
+raw_probe_count_json <- character()
+raw_probe_count_json <- toJSON(nrow(mynorm))
+write(raw_probe_count_json, "raw_mynorm_probe_count.json")

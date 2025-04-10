@@ -29,14 +29,16 @@ workflow {
 
     qc_path = QC(params.input, cpus, params.sample_sheet)
 
-    raw_mynorm = PREPROCESS(params.input, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
+    // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
+    // preprocess_ch_out.raw_mynorm_probe_count_path: raw mynorm probe count JSON file path
+    preprocess_ch_out = PREPROCESS(params.input, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
     
     // impute_ch_out.imputed_mynorm: imputed mynorm path
     // impute_ch_out.nan_per_sample: path to file with %NaN per sample stats
     // impute_ch_out.nan_per_probe: path to file with %NaN per probe stats
     // impute_ch_out.mynorm_imputed_n_cpgs: number of CpGs in imputed mynorm
 
-    impute_ch_out = IMPUTE(raw_mynorm, params.p_threshold, params.s_threshold, params.imputer_type)
+    impute_ch_out = IMPUTE(preprocess_ch_out.raw_mynorm_path, params.p_threshold, params.s_threshold, params.imputer_type)
 
     if(impute_ch_out) {
         ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.mynorm_imputed_n_cpgs)
@@ -64,7 +66,7 @@ workflow {
 
     beta_distr_plot = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_cpgs_beta_distr)
     nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_path, params.sample_sheet)
-    nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(raw_mynorm, params.nan_per_probe_n_cpgs)
+    nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
 
     // pca_ch_out.area: area plot path
     // pca_ch_out.scatter: scatter matrix plot paths
@@ -89,7 +91,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed")
     }
 
@@ -97,7 +99,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed with errors")
     }
 }
