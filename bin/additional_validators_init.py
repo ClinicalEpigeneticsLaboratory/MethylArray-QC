@@ -6,6 +6,7 @@ import pandas as pd
 from pathlib import Path
 
 def validateParamsInput(dir: Path) -> None:
+    assert dir.exists(), "Input does not exists!"
     assert dir.is_dir(), "Input is not a directory!"
     
     idat_files = [file for file in dir.iterdir() if file.suffix in ['.idat', '.idat.gz']]
