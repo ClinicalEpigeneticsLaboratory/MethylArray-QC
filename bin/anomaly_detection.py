@@ -1,49 +1,64 @@
 #!/usr/local/bin/python
 
+import plotly.express as px
+
 import sys
 import pandas as pd
 from sklearn.ensemble import IsolationForest
-from sklearn.svm import OneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.preprocessing import StandardScaler
+
+from decorators import update_and_export_plot
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python cli2.py <path_to_imputed_mynorm>")
-        sys.exit(1)
-
-    path_to_imputed_mynorm = sys.argv[1]
-
-    # Load data
+def ao(path_to_imputed_mynorm: str, contamination: str | float) -> (pd.DataFrame, float):
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
+
     if "CpG" in imputed_mynorm.columns:
         imputed_mynorm = imputed_mynorm.set_index("CpG")
 
-    # Anomaly detection
+    scaled_data = StandardScaler().fit_transform(imputed_mynorm.T)
+    samples, cpgs = imputed_mynorm.columns, imputed_mynorm.index 
+    scaled_data = pd.DataFrame(scaled_data, index=samples, columns=cpgs)
+
     algorithms = {
-        "LOF": LocalOutlierFactor(novelty=True),
-        "IsolationForest": IsolationForest(random_state=101),
-        "OneClassSVM": OneClassSVM(),
+        "IsolationForest": IsolationForest(random_state=101, contamination=contamination),
     }
 
-    anomaly_results = pd.DataFrame(index=imputed_mynorm.columns)
-    for name, algorithm in algorithms.items():
-        if hasattr(algorithm, "fit_predict"):
-            algorithm.fit(imputed_mynorm.T)
-            anomaly_results[f"{name}_scores"] = algorithm.decision_function(
-                imputed_mynorm.T
-            )
-            anomaly_results[f"{name}_classes"] = algorithm.predict(imputed_mynorm.T)
-            anomaly_results[f"{name}_classes"] = anomaly_results[f"{name}_classes"].astype(str).map({"-1": "Anomaly", "1": "non-Anomaly"})
+    anomaly_results = pd.DataFrame(index=samples)
+    anomaly_results.index.name = "sample"
 
-        # Check if the algorithm has the 'offset_' attribute and handle accordingly
-        if hasattr(algorithm, 'offset_'):
-            anomaly_results[f"{name}_threshold"] = [abs(algorithm.offset_)]*len(anomaly_results[f"{name}_classes"])
-        else:
-            # For algorithms that don't have the 'offset_' attribute, set threshold to NaN or a custom value
-            anomaly_results[f"{name}_threshold"] = None  # or you could use np.nan for NaN
-    # Save the results
+    for name, algorithm_instance in algorithms.items():
+        algorithm_instance.fit(scaled_data)
+        
+        anomaly_results[f"|scores|"] = list(map(abs, algorithm_instance.score_samples(scaled_data)))
+        anomaly_results[f"classes"] =  list(map(lambda x: {"-1": "Anomaly", "1": "non-Anomaly"}.get(str(x)), algorithm_instance.predict(scaled_data)))
+        anomaly_results[f"threshold"] = [abs(algorithm_instance.offset_) for _ in range(len(samples))] 
+
     anomaly_results.to_parquet("ao_results.parquet")
+    return anomaly_results, abs(algorithm_instance.offset_)
+
+
+@update_and_export_plot("ao_plot.json")
+def ao_plot(anomaly_results: str, offset: float):
+    fig = px.bar(anomaly_results, y=anomaly_results.index, x="|scores|", color="classes", color_discrete_map={"Anomaly": "red", "non-Anomaly": "blue"}) 
+    fig.add_vline(x=offset, line_width=1, line_dash="dash", line_color="red")
+    return fig 
+
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python cli2.py <path_to_imputed_mynorm: str> <contamination: str | float>")
+        sys.exit(1)
+
+    path_to_imputed_mynorm, contamination = sys.argv[1:]
+    
+    try:
+        contamination = float(contamination)
+    except ValueError:
+        pass
+
+    results, offset = ao(path_to_imputed_mynorm, contamination)
+    ao_plot(results, offset)
 
 
 if __name__ == "__main__":
