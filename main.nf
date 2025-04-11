@@ -18,7 +18,7 @@ include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 
 workflow {
 
-    validateParameters()
+    // validateParameters() TODO: add --contamination: auto to validation schema
     ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
 
     def cpus = params.cpus
@@ -44,7 +44,7 @@ workflow {
         ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.mynorm_imputed_n_cpgs)
     }
 
-    ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm)
+    ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
 
     // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {

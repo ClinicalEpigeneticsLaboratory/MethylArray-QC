@@ -36,15 +36,14 @@ The pipeline performs the following steps:
 # Java
 curl -s https://get.sdkman.io | bash
 sdk install java 17.0.10-tem
-echo java -version
+echo $(java -version)
 
 # Nextflow
 curl -s https://get.nextflow.io | bash
 
+# Add Nextflow executable to bin/
 chmod +x nextflow
-mkdir -p $HOME/.local/bin/
-
-mv nextflow $HOME/.local/bin/
+mv nextflow $HOME/bin/
 ```
 
 ### Input Data
@@ -109,44 +108,38 @@ nextflow run main.nf --help
 Run the pipeline using the following command:
 
 ```bash
-nextflow run main.nf -params-file params.config
+nextflow run main.nf --input <path> --sample_sheet <path> --output <path>
 ```
 
-### Example `params.config`:
-```groovy
-params {
-    input = "/path/to/idats"
-    output = "/path/to/output"
-    cpus = 10
+or using `params.json` file containing at least `input`, `sample_sheet` and `output` fields.
 
-    // Sesame
-    prep_code = "QCDPB"
-    collapse_prefix = true
-    collapse_prefix_method = "mean"
+```bash
+nextflow run main.nf -params-file params.json
+```
 
-    // Imputation
-    p_threshold = 0.2
-    s_threshold = 0.2
-    imputer_type = "knn"
-
-   //Sex inference
-    infer_sex = true,
-
-    //Beta distribution
-    n_cpgs_beta_distr = 20000,
-
-    //NaN distribution per probe
-    nan_per_probe_n_cpgs = 1000,
-
-    //PCA
-    perc_pca_cpgs = 20,
-    pca_columns = "Sentrix_Position,Sample_Group,Sentrix_ID",
-    pca_number_of_components = 6,
-    pca_matrix_PC_count = 5,
-
-    //Epigenetic age
-    infer_epi_age = true,
-    epi_clocks = "HannumG2013,HorvathS2013"
+### Examplary `params.json` file:
+```json
+{
+  "input": "/path/to/idats",
+  "output": "/path/to/output",
+  "sample_sheet": "/path/to/sample_sheet.csv",
+  "prep_code": "QCDPB",
+  "cpus": -1,
+  "collapse_prefix": false,
+  "collapse_prefix_method": "mean",
+  "p_threshold": 0.2,
+  "s_threshold": 0.2,
+  "imputer_type": "knn",
+  "contamination": "auto",
+  "n_cpgs_beta_distr": 10000,
+  "nan_per_probe_n_cpgs": 1000,
+  "perc_pca_cpgs": 10,
+  "pca_number_of_components": 5,
+  "pca_columns": "Sentrix_ID,Sentrix_Position",
+  "pca_matrix_PC_count": 5,
+  "infer_sex": true,
+  "infer_epi_age": true,
+  "epi_clocks": "HannumG2013,HorvathS2013"
 }
 ```
 
