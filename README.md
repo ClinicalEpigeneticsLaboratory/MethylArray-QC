@@ -235,9 +235,7 @@ The pipeline produces the following outputs:
 ## Known Issues and TODOs
 - Implement tests for workflow and for specific processes
 - Implement the output summary HTML report with embedded figures and tables
-- anomaly detection:
-1) implement more models
-2) add parameter `contamination` to `anomaly_detection.nf`
+- anomaly detection: implement more models
 - fix path(s) issue, when input/output are relative
 - add exemplary workflow (or other way to run a tool with exemplary data)
 - define figures' common properties in `bin/decorators.py`
