@@ -18,7 +18,7 @@ include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 
 workflow {
 
-    // validateParameters() TODO: add --contamination: auto to validation schema
+    validateParameters()
     ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
 
     def cpus = params.cpus
