@@ -124,6 +124,14 @@
                     "description": "Set to true if you want to infer sex for given samples or to false if you want to omit this step",
                     "errorMessage": "infer_sex must be set to true or false"
                 },
+                "contamination": {
+                    "type": "string",
+                    "help_text": "A threshold parameter for anomaly detection scoring function. Must be supplied in quotes, as string. Values: either auto or float (0, 0.5] (in quotes, to 2 decimal places), for more info see https://scikit-learn.org/stable/modules/outlier_detection.html#",
+                    "description": "A threshold parameter for anomaly detection scoring function. Must be supplied in quotes, as string. Values: either auto or float (0, 0.5] (in quotes, to 2 decimal places), for more info see https://scikit-learn.org/stable/modules/outlier_detection.html#",
+                    "errorMessage": "Incorrect contamination value. Must be supplied in quotes, as string. Values: either auto or float (0, 0.5] (in quotes, to 2 decimal places), for more info see https://scikit-learn.org/stable/modules/outlier_detection.html#",
+                    "default": "auto",
+                    "pattern": "^(auto|0\\.[0-4]{1,2}|0\\.5)$"
+                },
                 "n_cpgs_beta_distr": {
                     "type": "number",
                     "minimum": 1,
