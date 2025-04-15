@@ -1,9 +1,10 @@
 #!/usr/local/bin/python
 
-import pandas as pd
-from pathlib import Path
-import plotly.express as px
 import sys
+from pathlib import Path
+
+import pandas as pd
+import plotly.express as px
 
 
 def getFigJson(
@@ -73,7 +74,7 @@ def main():
     getFigJson(
         path_to_imputed_mynorm=imputed_mynorm_path,
         path_to_sample_sheet=sample_sheet_path,
-        column=col
+        column=col,
     )
 
 

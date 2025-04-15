@@ -1,13 +1,15 @@
 #!/usr/local/bin/python
 
 import math
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 import plotly.express as px
 from scipy import stats
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-import sys
+from sklearn.preprocessing import StandardScaler
+
 
 # Computes Kruskal-Wallis results for a specific column and saves to JSON
 def testKWToJSON(
@@ -66,21 +68,21 @@ def scatterMatrixToJSON(
     component_names: list,
     number_of_cpgs: int,
     perc_of_cpgs: int,
-    column: str
+    column: str,
 ) -> None:
     fig_scatter = px.scatter_matrix(
         components_data,
         color=column,
         dimensions=component_names,
-        labels=component_names
+        labels=component_names,
     )
-    fig_scatter.update_traces(diagonal_visible=False, showupperhalf = False)
+    fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
         width=600,
         height=600,
         template="ggplot2",
         title_text=f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance",
-        showlegend=False
+        showlegend=False,
     )
     fig_scatter.write_json(file=f"PCA_scatter_matrix_{column}.json", pretty=True)
 
@@ -96,7 +98,7 @@ def main():
     path_to_sample_sheet = sys.argv[2]
     perc_pca_cpgs = int(sys.argv[3])
     pca_number_of_components = int(sys.argv[4])
-    pca_columns = str(sys.argv[5]).split(sep = ",")
+    pca_columns = str(sys.argv[5]).split(sep=",")
     pca_matrix_PC_count = int(sys.argv[6])
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)

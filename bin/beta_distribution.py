@@ -1,10 +1,11 @@
 #!/usr/local/bin/python
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import plotly.figure_factory as ff
-import sys
 
 
 # I cannot add customized hover to this type of plot, may require more work or impossible:

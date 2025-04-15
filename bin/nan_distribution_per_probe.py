@@ -1,9 +1,10 @@
 #!/usr/local/bin/python
 
-import numpy as np
 import sys
-import plotly.graph_objects as go
+
+import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 
 
 def main():
@@ -46,27 +47,27 @@ def main():
             zmax=1,
             colorbar=dict(
                 title="NaN Distribution",
-                tickvals=[0, 1],  
-                ticktext=['No NaN', 'NaN'],  
-                tickmode='array', 
-                ticks='outside',  
-                lenmode="pixels",  
-                ticklen=10,  
-                tickwidth=2,  
-                tickangle=0  
-            )
+                tickvals=[0, 1],
+                ticktext=["No NaN", "NaN"],
+                tickmode="array",
+                ticks="outside",
+                lenmode="pixels",
+                ticklen=10,
+                tickwidth=2,
+                tickangle=0,
+            ),
         )
     )
 
     fig.update_layout(
         title=f"NaN distribution across {nan_per_probe_n_cpgs} randomly selected CpGs",
         xaxis_title="Sample_Name",
-        yaxis_title="CpG"
+        yaxis_title="CpG",
     )
 
     fig.update_traces(coloraxis=None)
 
-    fig.update_yaxes(showticklabels=False, visible = False)
+    fig.update_yaxes(showticklabels=False, visible=False)
     fig.update_layout(width=600, height=600, template="ggplot2")
     fig.write_json(file="nan_distribution_per_probe.json", pretty=True)
 

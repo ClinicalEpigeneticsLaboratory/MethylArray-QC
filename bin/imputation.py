@@ -1,10 +1,12 @@
 #!/usr/local/bin/python
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import pandas as pd
-from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.impute import KNNImputer, SimpleImputer
+
 
 def main():
     if len(sys.argv) != 5:
@@ -24,19 +26,13 @@ def main():
 
     nan_per_sample = (mynorm.isna().sum(axis=0) / mynorm.index.size) * 100
     nan_per_sample_df = pd.DataFrame(
-        {
-            'Sample_Name': nan_per_sample.index,
-            'NaN_percent': nan_per_sample.values
-        }
+        {"Sample_Name": nan_per_sample.index, "NaN_percent": nan_per_sample.values}
     )
     nan_per_sample_df.to_parquet("impute_nan_per_sample.parquet")
 
     nan_per_cpg = (mynorm.isna().sum(axis=1) / mynorm.columns.size) * 100
     nan_per_cpg_df = pd.DataFrame(
-        {
-            'CpG': nan_per_cpg.index,
-            'NaN_percent': nan_per_cpg.values
-        }
+        {"CpG": nan_per_cpg.index, "NaN_percent": nan_per_cpg.values}
     )
     nan_per_cpg_df.to_parquet("impute_nan_per_probe.parquet")
 
@@ -66,10 +62,9 @@ def main():
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
     with open("mynorm_imputed_n_cpgs.json", "w") as f:
         json.dump(
-            obj = {"mynorm_imputed_n_cpgs": mynorm_imputed.index.size},
-            fp = f,
-            indent = 4
+            obj={"mynorm_imputed_n_cpgs": mynorm_imputed.index.size}, fp=f, indent=4
         )
+
 
 if __name__ == "__main__":
     main()

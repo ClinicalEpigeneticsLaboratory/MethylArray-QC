@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import sys
+
 import pandas as pd
 import plotly.express as px
 
