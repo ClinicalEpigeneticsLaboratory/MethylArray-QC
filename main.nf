@@ -19,7 +19,11 @@ include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 workflow {
 
     validateParameters()
-    ADDITIONAL_VALIDATORS_INIT(params.input, params.sample_sheet, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
+
+    def input_abs_path = file(params.input).toAbsolutePath()
+    def sample_sheet_abs_path = file(params.sample_sheet).toAbsolutePath()
+
+    ADDITIONAL_VALIDATORS_INIT(input_abs_path, sample_sheet_abs_path, params.cpus, params.pca_number_of_components, params.pca_matrix_PC_count)
 
     def cpus = params.cpus
     if(params.cpus == -1) {
@@ -27,11 +31,11 @@ workflow {
         println("cpus parameter set to -1 - ${cpus} CPUs will be used")
     }
 
-    qc_path = QC(params.input, cpus, params.sample_sheet)
+    qc_path = QC(input_abs_path, cpus, sample_sheet_abs_path)
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
     // preprocess_ch_out.raw_mynorm_probe_count_path: raw mynorm probe count JSON file path
-    preprocess_ch_out = PREPROCESS(params.input, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, params.sample_sheet)
+    preprocess_ch_out = PREPROCESS(input_abs_path, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, sample_sheet_abs_path)
     
     // impute_ch_out.imputed_mynorm: imputed mynorm path
     // impute_ch_out.nan_per_sample: path to file with %NaN per sample stats
@@ -48,10 +52,10 @@ workflow {
 
     // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {
-        sex_inference_path = SEX_INFERENCE(impute_ch_out.imputed_mynorm, cpus, params.sample_sheet)
+        sex_inference_path = SEX_INFERENCE(impute_ch_out.imputed_mynorm, cpus, sample_sheet_abs_path)
     }
 
-    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, params.sample_sheet, ["Sentrix_ID", "Sentrix_Position"])
+    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"])
 
     // batch_effect_ch_out.sentrix_id: paths to batch effect evaluation boxplots for Sentrix IDs
     // batch_effect_ch_out.sentrix_position: path to batch effect evaluation boxplots for Sentrix Position
@@ -65,17 +69,17 @@ workflow {
         .set{batch_effect_ch_out}
 
     beta_distr_plot = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_cpgs_beta_distr)
-    nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_path, params.sample_sheet)
+    nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_path, sample_sheet_abs_path)
     nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
 
     // pca_ch_out.area: area plot path
     // pca_ch_out.scatter: scatter matrix plot paths
     // pca_ch_out.kruskal: Kruskal-Wallis test results
-    pca_ch_out = PCA(impute_ch_out.imputed_mynorm, params.sample_sheet, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
+    pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
 
     if(params.infer_epi_age) {
-        epi_age_res_path = EPIGENETIC_AGE_INFERENCE(params.sample_sheet, impute_ch_out.imputed_mynorm, params.epi_clocks)
-        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_path, params.sample_sheet, params.epi_clocks?.split(',') as List)
+        epi_age_res_path = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
+        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_path, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
     }
 
     /* 
