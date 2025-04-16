@@ -51,7 +51,7 @@ def validateParamsPCA(
 def main():
     if len(sys.argv) != 6:
         print(
-            "Usage: python additional_validators.py <params_input> <params_sample_sheet> <params_cpus> <params_pca_number_of_components> <params_pca_matrix_PC_count>"
+            "Usage: python additional_validators_init.py <params_input> <params_sample_sheet> <params_cpus> <params_pca_number_of_components> <params_pca_matrix_PC_count>"
         )
         sys.exit(1)
 
