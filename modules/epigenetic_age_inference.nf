@@ -1,6 +1,6 @@
 process EPIGENETIC_AGE_INFERENCE{
     publishDir "${params.output}", mode: 'copy', overwrite: true
-    label 'r_other'
+    label 'r_clock'
 
     input:
     path sample_sheet_path
