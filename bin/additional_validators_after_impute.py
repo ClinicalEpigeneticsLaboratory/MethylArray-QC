@@ -18,7 +18,7 @@ def validateParamsRandomCpGCount(
 def main():
     if len(sys.argv) != 4:
         print(
-            "Usage: python additional_validators_after_impute.py <params_n_cpgs_beta_distr> <params_nan_per_probe_n_cpgs> <imputed_mynorm_n_cpgs_path>"
+            "Usage: python additional_validators_after_impute.py <params_n_cpgs_beta_distr: int> <params_nan_per_probe_n_cpgs: int> <imputed_mynorm_n_cpgs_path: Path>"
         )
         sys.exit(1)
 

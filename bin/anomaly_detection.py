@@ -67,7 +67,7 @@ def ao_plot(anomaly_results: str, offset: float):
 def main():
     if len(sys.argv) != 3:
         print(
-            "Usage: python cli2.py <path_to_imputed_mynorm: str> <contamination: str | float>"
+            "Usage: python anomaly_detection.py <path_to_imputed_mynorm: str> <contamination: str | float>"
         )
         sys.exit(1)
 
