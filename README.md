@@ -240,4 +240,3 @@ The pipeline produces the following outputs:
 - define figures' common properties in `bin/decorators.py`
 - add the visualisation of fluorescence on control probes (box per Slide, Array, Sample)
 - add non-interactive mode for app
-- correct issue with `pylint` in `Makefile` (`Error 30`)
