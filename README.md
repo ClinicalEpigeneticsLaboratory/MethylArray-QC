@@ -238,7 +238,6 @@ The pipeline produces the following outputs:
 - anomaly detection: implement more models
 - add exemplary workflow (or other way to run a tool with exemplary data)
 - define figures' common properties in `bin/decorators.py`
-- organize process outputs in subdirectories (`publishDir`)
 - add the visualisation of fluorescence on control probes (box per Slide, Array, Sample)
 - add non-interactive mode for app
 - correct issue with `pylint` in `Makefile` (`Error 30`)
