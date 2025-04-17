@@ -18,8 +18,12 @@ dos2unix:
 
 dlint_python:
 	@echo "Lint Python Dockerfile"
-	docker run --rm -i hadolint/hadolint < images/Python/Dockerfile
+	cat images/Python/Dockerfile | docker run --rm -i hadolint/hadolint
 
-dlint_r:
-	@echo "Lint R Dockerfile"
-	docker run --rm -i hadolint/hadolint < images/R/Dockerfile
+dlint_r_sesame:
+	@echo "Lint R SeSAME Dockerfile"
+	cat images/R_sesame/Dockerfile | docker run --rm -i hadolint/hadolint
+
+dlint_r_clock:
+	@echo "Lint R clock Dockerfile"
+	cat images/R_clock/Dockerfile | docker run --rm -i hadolint/hadolint
