@@ -1,5 +1,6 @@
 process EPIGENETIC_AGE_PLOTS {
-    publishDir "${params.output}", mode: 'copy', overwrite: true
+    publishDir "${params.output}/Epi_age/Plots/Regression", mode: 'copy', overwrite: true, pattern: 'Regr_Age_vs_Epi_Age_*.json'
+    publishDir "${params.output}/Epi_age/Plots/Accel", mode: 'copy', overwrite: true, pattern: 'Epi_Age_Accel_*.json'
     label 'python'
 
     input:
@@ -8,8 +9,8 @@ process EPIGENETIC_AGE_PLOTS {
     each epi_clock
 
     output:
-    path "Regression/Regr_Age_vs_Epi_Age_${epi_clock}.json", arity: "1..*", emit: regr
-    path "EAA/Epi_Age_Accel_${epi_clock}.json", optional: true, emit: eaa
+    path "Regr_Age_vs_Epi_Age_${epi_clock}.json", arity: "1..*", emit: regr
+    path "Epi_Age_Accel_${epi_clock}.json", optional: true, arity: "1..*", emit: eaa
 
     script:
     """

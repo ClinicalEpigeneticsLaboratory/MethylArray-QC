@@ -1,8 +1,6 @@
 #!/usr/local/bin/python
 
 import sys
-from pathlib import Path
-
 import pandas as pd
 import plotly.express as px
 from scipy import stats
@@ -46,7 +44,7 @@ def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
         yaxis={"title": epi_clock},
         legend={"title": None},
     )
-    fig.write_json(file=f"EAA/Epi_Age_Accel_{epi_clock}.json", pretty=True)
+    fig.write_json(file=f"Epi_Age_Accel_{epi_clock}.json", pretty=True)
 
 
 def getEpivsChronAgeRegrPlot(
@@ -122,8 +120,7 @@ def getEpivsChronAgeRegrPlot(
         yaxis={"title": epi_clock},
         legend={"title": None},
     )
-    fig.write_json(file=f"Regression/Regr_Age_vs_Epi_Age_{epi_clock}.json", pretty=True)
-
+    fig.write_json(file=f"Regr_Age_vs_Epi_Age_{epi_clock}.json", pretty=True)
 
 def main():
     if len(sys.argv) != 4:
@@ -145,11 +142,6 @@ def main():
     ]
     epi_clock_res.rename(columns={"Sample": "Sample_Name"}, inplace=True)
     data = epi_clock_res.merge(sample_sheet, on="Sample_Name")
-
-    # Create the directories
-    for dir in ["Regression", "EAA"]:
-        out_dir_path = Path(dir)
-        out_dir_path.mkdir(exist_ok=True)
 
     getEpivsChronAgeRegrPlot(
         data=data, epi_clock=epi_clock, hover_cols=sample_sheet.columns.to_list()

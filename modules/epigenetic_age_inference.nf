@@ -1,5 +1,5 @@
 process EPIGENETIC_AGE_INFERENCE{
-    publishDir "${params.output}", mode: 'copy', overwrite: true
+    publishDir "${params.output}/Epi_age", mode: 'copy', overwrite: true
     label 'r_clock'
 
     input:

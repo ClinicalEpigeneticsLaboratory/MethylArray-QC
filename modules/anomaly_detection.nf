@@ -1,5 +1,5 @@
 process ANOMALY_DETECTION {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
+    publishDir "${params.output}/Anomaly_detection", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
     label 'python'
 
     input:

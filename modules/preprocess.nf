@@ -1,5 +1,5 @@
 process PREPROCESS {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'raw_mynorm.parquet'
+    publishDir "${params.output}/Preprocess", mode: 'copy', overwrite: true, pattern: "raw_mynorm*"
     label 'r_sesame'
 
     input:

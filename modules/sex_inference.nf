@@ -1,5 +1,5 @@
 process SEX_INFERENCE {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'inferred_sex.json'
+    publishDir "${params.output}/Sex_inference", mode: 'copy', overwrite: true, pattern: 'inferred_sex.json'
     label 'r_sesame'
 
     input:

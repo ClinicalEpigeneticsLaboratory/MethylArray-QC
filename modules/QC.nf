@@ -1,5 +1,5 @@
 process QC {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
+    publishDir "${params.output}/QC", mode: 'copy', overwrite: true, pattern: 'qc.parquet'
     label 'r_sesame'
 
     input:

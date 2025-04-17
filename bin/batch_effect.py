@@ -52,7 +52,7 @@ def getFigJson(
 
             fig = px.box(grouped_row_melted, x=column, y="Mean beta value")
             fig.update_layout(width=600, height=plot_height, template="ggplot2")
-            fig.write_json(file=f"Mean_beta_per_{column}/{row_num}.json", pretty=True)
+            fig.write_json(file=f"{row_num}.json", pretty=True)
         else:
             print(f"Warning: No {column}s found for row {row_num}.")
 
@@ -68,9 +68,6 @@ def main():
     sample_sheet_path = sys.argv[2]
     col = str(sys.argv[3])
 
-    # Create the directory
-    col_out_dir_path = Path(f"Mean_beta_per_{col}")
-    col_out_dir_path.mkdir(exist_ok=True)
     getFigJson(
         path_to_imputed_mynorm=imputed_mynorm_path,
         path_to_sample_sheet=sample_sheet_path,
