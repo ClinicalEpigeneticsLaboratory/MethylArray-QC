@@ -1,10 +1,29 @@
 #!/usr/local/bin/python
 
+from decorators import update_and_export_plot
+
 import sys
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
+@update_and_export_plot(json_path = "nan_distribution_per_sample.json", showlegend = False, height = 400)
+def getNaNDistrPerSamplePlot(plot_data: pd.DataFrame, hover_data: list) -> go.Figure:
+    # Figure generation
+    fig = px.bar(
+        plot_data, 
+        x = "Sample_Name", 
+        y = "% NaN", 
+        hover_data = hover_data,
+    )
+
+    fig.update_yaxes(title="% NaN", range=[0, 100])
+    fig.update_layout(title_text="% NaN per sample",  
+                    margin={"t": 75}
+    )
+
+    return fig
 
 def main():
     if len(sys.argv) != 3:
@@ -24,24 +43,10 @@ def main():
     # s$frac_na <- sum(is.na(betas)) / length(betas)
 
     # Computation of perc_na:
-    qc["perc_na"] = qc["frac_na"] * 100
+    qc["% NaN"] = qc["frac_na"] * 100
     data = qc.merge(sample_sheet, on="Sample_Name")
 
-    # Figure generation
-    fig = px.bar(
-        data, x="Sample_Name", y="perc_na", hover_data=sample_sheet.columns.to_list()
-    )
-
-    fig.update_yaxes(title="% NaN", range=[0, 100])
-    fig.update_layout(
-        width=600,
-        height=300,
-        template="ggplot2",
-        title_text="NaN% per sample",
-        showlegend=False,
-    )
-    fig.write_json(file="nan_distribution_per_sample.json", pretty=True)
-
+    getNaNDistrPerSamplePlot(plot_data = data, hover_data = sample_sheet.columns.to_list())
 
 if __name__ == "__main__":
     main()
