@@ -1,10 +1,6 @@
-import json
 from functools import wraps
 from pathlib import Path
 from typing import Callable
-
-import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 
 
@@ -64,7 +60,7 @@ def update_and_export_plot(
             # Export to JSON
             fig_json = fig.to_json()
             with open(json_path, "w", encoding="utf-8") as handle:
-                json.dump(fig_json, handle, indent=2)
+                handle.write(fig_json)
 
             return fig
 
