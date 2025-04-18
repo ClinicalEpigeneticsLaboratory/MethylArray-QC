@@ -1,5 +1,5 @@
 process ANOMALY_DETECTION {
-    publishDir "${params.output}/Anomaly_detection", mode: 'copy', overwrite: true, pattern: 'ao_results.parquet'
+    publishDir "${params.output}/Anomaly_detection", mode: 'copy', overwrite: true, pattern: 'ao_*'
     label 'python'
 
     input:
@@ -8,6 +8,7 @@ process ANOMALY_DETECTION {
 
     output:
     path "ao_results.parquet"
+    path "ao_plot.json"
 
     script:
     """
