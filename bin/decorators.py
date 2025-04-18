@@ -6,8 +6,8 @@ import plotly.graph_objects as go
 
 def update_and_export_plot(
     json_path: Path | str,
-    height: int = 600,
-    width: int = 600,
+    height: int = 650,
+    width: int = 650,
     font_size: int = 22,
     template: str = "ggplot2",
     legend_title: str = "",
