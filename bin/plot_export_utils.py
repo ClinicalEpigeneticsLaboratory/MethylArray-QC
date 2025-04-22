@@ -1,6 +1,12 @@
-from decorators import update_and_export_plot
+"""
+A module containing additional helper functions for plot export
+"""
+
 from pathlib import Path
+
 import plotly.graph_objects as go
+from decorators import update_and_export_plot
+
 
 def export_decorated_fig_with_custom_name(
     fig: go.Figure,
@@ -19,7 +25,7 @@ def export_decorated_fig_with_custom_name(
     This is useful in situations where using a decorator directly is not ergonomic,
     such as in dynamic or looped contexts.
 
-    Parameters:
+    Args:
         fig (go.Figure): The Plotly figure to update and export.
         json_path (Path | str): File path to save the JSON.
         height (int): Height of the figure.

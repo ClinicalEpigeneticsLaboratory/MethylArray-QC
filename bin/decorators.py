@@ -1,6 +1,11 @@
+"""
+A module containing helper decorators used by Python modules
+"""
+
 from functools import wraps
 from pathlib import Path
 from typing import Callable
+
 import plotly.graph_objects as go
 
 
@@ -54,7 +59,7 @@ def update_and_export_plot(
                 template=template,
                 showlegend=showlegend,
                 legend={"title": legend_title},
-                font=dict(size=font_size),
+                font={"size": font_size},
             )
 
             # Export to JSON

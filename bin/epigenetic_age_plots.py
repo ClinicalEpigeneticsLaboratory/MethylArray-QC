@@ -1,17 +1,30 @@
+"""
+A module used for the generation of epigenetic age plots
+"""
+
 #!/usr/local/bin/python
 
 import sys
-from plot_export_utils import export_decorated_fig_with_custom_name
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from plot_export_utils import export_decorated_fig_with_custom_name
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import median_absolute_error
 
 
-def getMedAE(x: list, y: list) -> float:
+def get_med_ae(x: list, y: list) -> float:
+    """A function calculating median absolute error for epigenetic age estimation
+
+    Args:
+        x (list): chronological age of subjects
+        y (list): epigenetic age of subjects
+
+    Returns:
+        float: median absolute error
+    """
     model = LinearRegression()
     x = x.reshape(-1, 1)
     model.fit(x, y)
@@ -20,10 +33,30 @@ def getMedAE(x: list, y: list) -> float:
     return medae
 
 
-def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
+def add_med_ae_to_trendline_hover(hovertemplate: str, medae: float) -> str:
+    """A helper function adding median absolute error to \
+        trendline hover template in regression plot
+
+    Args:
+        hovertemplate (str): current hovertemplate
+        medae (float): median absolute error
+
+    Returns:
+        str: updated hovertemplate
+    """
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
-def getEAABoxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
+
+def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
+    """A function generating epigenetic age acceleration boxplot
+
+    Args:
+        data (pd.DataFrame): plot data used to generate boxplots
+        epi_clock (str): the name of currently processed epigenetic clock
+
+    Returns:
+        go.Figure: Epigenetic age acceleration boxplot figure
+    """
     kruskal_res = stats.kruskal(
         *[
             group[f"Age_Acceleration_{epi_clock}"].values
@@ -39,20 +72,28 @@ def getEAABoxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
         hover_data=data.columns.to_list(),
         title=f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
     )
-    fig.update_layout(yaxis={"title": epi_clock})
+    fig.update_layout(yaxis={"title": f"{epi_clock}_Accel"})
 
     if fig is not None:
         export_decorated_fig_with_custom_name(
-            fig=fig,
-            json_path=f"Epi_Age_Accel_{epi_clock}.json",
-            showlegend=False
+            fig=fig, json_path=f"Epi_Age_Accel_{epi_clock}.json", showlegend=False
         )
 
-def getEpivsChronAgeRegrPlot(
+
+def get_epi_vs_chron_age_regr_plot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
 ) -> None:
+    """A function generating regression plot comparing \
+        chronological and epigenetic age for specific clock \
+        (generally and per group)
 
-    overall_medae = getMedAE(x=data["Age"].values, y=data[f"mAge_{epi_clock}"].values)
+    Args:
+        data (pd.DataFrame): data used to generate a plot
+        epi_clock (str): the name of currently processed epigenetic clock
+        hover_cols (list): the list of columns to be presented on hovering over a point
+    """
+
+    overall_medae = get_med_ae(x=data["Age"].values, y=data[f"mAge_{epi_clock}"].values)
 
     if "Sample_Group" in data:
         fig = px.scatter(
@@ -78,7 +119,7 @@ def getEpivsChronAgeRegrPlot(
 
         # Update the hovertemplate for the overall trendline
         trendline_trace.update(
-            hovertemplate=addMedAEToTrendlineHover(
+            hovertemplate=add_med_ae_to_trendline_hover(
                 hovertemplate=trendline_trace.hovertemplate, medae=overall_medae
             )
         )
@@ -89,7 +130,7 @@ def getEpivsChronAgeRegrPlot(
         for group in data["Sample_Group"].unique():
             group_data = data[data["Sample_Group"] == group]
 
-            group_medae = getMedAE(
+            group_medae = get_med_ae(
                 x=group_data["Age"].values, y=group_data[f"mAge_{epi_clock}"].values
             )
 
@@ -100,7 +141,7 @@ def getEpivsChronAgeRegrPlot(
             group_trace = fig.data[group_trace_index]
 
             # Update the hovertemplate for this group's trace
-            group_trace.hovertemplate = addMedAEToTrendlineHover(
+            group_trace.hovertemplate = add_med_ae_to_trendline_hover(
                 hovertemplate=group_trace.hovertemplate, medae=group_medae
             )
     else:
@@ -110,7 +151,7 @@ def getEpivsChronAgeRegrPlot(
 
         trendline_trace = fig.data[1]  # The trendline trace is usually the second trace
 
-        trendline_trace.hovertemplate = addMedAEToTrendlineHover(
+        trendline_trace.hovertemplate = add_med_ae_to_trendline_hover(
             hovertemplate=trendline_trace.hovertemplate, medae=overall_medae
         )
 
@@ -122,7 +163,7 @@ def getEpivsChronAgeRegrPlot(
             "xanchor": "left",
             "x": 0,
             "orientation": "h",
-        }
+        },
     )
 
     if fig is not None:
@@ -131,10 +172,12 @@ def getEpivsChronAgeRegrPlot(
             json_path=f"Regr_Age_vs_Epi_Age_{epi_clock}.json",
         )
 
+
 def main():
     if len(sys.argv) != 4:
         print(
-            "Usage: python epigenetic_age_plots.py <path_to_epi_age_res> <path_to_sample_sheet> <epi_clock>"
+            "Usage: python epigenetic_age_plots.py <path_to_epi_age_res: str> \
+                <path_to_sample_sheet: str> <epi_clock: str>"
         )
         sys.exit(1)
 
@@ -152,12 +195,12 @@ def main():
     epi_clock_res.rename(columns={"Sample": "Sample_Name"}, inplace=True)
     data = epi_clock_res.merge(sample_sheet, on="Sample_Name")
 
-    getEpivsChronAgeRegrPlot(
+    get_epi_vs_chron_age_regr_plot(
         data=data, epi_clock=epi_clock, hover_cols=sample_sheet.columns.to_list()
     )
 
     if "Sample_Group" in sample_sheet:
-        getEAABoxplot(data=data, epi_clock=epi_clock)
+        get_eaa_boxplot(data=data, epi_clock=epi_clock)
 
 
 if __name__ == "__main__":

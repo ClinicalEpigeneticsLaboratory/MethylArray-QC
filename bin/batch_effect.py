@@ -1,20 +1,36 @@
+"""
+A module generating batch effect evaluation figures
+"""
+
 #!/usr/local/bin/python
 
-from plot_export_utils import export_decorated_fig_with_custom_name
 import sys
-import plotly.graph_objects as go
+
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from plot_export_utils import export_decorated_fig_with_custom_name
 
-def getSingleFig(
+
+def get_single_fig(
     sample_sheet: pd.DataFrame,
     grouped: pd.DataFrame,
     row_num: int,
     column: str,
 ) -> go.Figure:
-    ids_to_plot = list(
-        sample_sheet.loc[sample_sheet["Plot_num"] == row_num, column]
-    )
+    """A function generating a single batch effect evaluation figure
+
+    Args:
+        sample_sheet (pd.DataFrame): sample sheet
+        grouped (pd.DataFrame): plot data (data from imputed mynorm\
+            and sample sheet, grouped by processed column)
+        row_num (int): currently processed number of plot row (set of column items)
+        column (str): currently processed column
+
+    Returns:
+        go.Figure: a single figure for specific column and set of column items
+    """
+    ids_to_plot = list(sample_sheet.loc[sample_sheet["Plot_num"] == row_num, column])
 
     # Check if we have valid Sentrix_IDs to plot
     if ids_to_plot:
@@ -31,16 +47,24 @@ def getSingleFig(
 
         fig = px.box(grouped_row_melted, x=column, y="Mean beta value")
         fig.update_layout(boxgap=0.05)
-        fig.update_xaxes(tickangle = 90)
-        return fig
+        fig.update_xaxes(tickangle=90)
     else:
         print(f"Warning: No {column}s found for row {row_num}.")
+    return fig
 
-def getAllFigs(
-    path_to_imputed_mynorm: str, 
-    path_to_sample_sheet: str, 
+
+def get_all_figs(
+    path_to_imputed_mynorm: str,
+    path_to_sample_sheet: str,
     column: str,
 ) -> None:
+    """A function generating all batch effect figures, in a loop
+
+    Args:
+        path_to_imputed_mynorm (str): path to imputed mynorm
+        path_to_sample_sheet (str): path to sample sheet
+        column (str): currently processed column
+    """
     # Load data
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -50,7 +74,8 @@ def getAllFigs(
         "Array_Position"
     ].str.split("_", expand=True)
 
-    # compute the number of figures to generate and assign each /Sentrix_Position to a specific subplot
+    # compute the number of figures to generate and assign each
+    # Sentrix_ID/Sentrix_Position to a specific subplot
     sample_sheet["row_id"] = range(1, sample_sheet.index.size + 1)
     sample_sheet["Plot_num"] = (sample_sheet["row_id"] - 1) // 10 + 1
 
@@ -60,11 +85,11 @@ def getAllFigs(
     grouped = data.groupby(column).mean().T
 
     for row_num in sample_sheet["Plot_num"].unique():
-        fig = getSingleFig(
-            column = column, 
-            grouped = grouped, 
-            row_num = row_num,
-            sample_sheet = sample_sheet,
+        fig = get_single_fig(
+            column=column,
+            grouped=grouped,
+            row_num=row_num,
+            sample_sheet=sample_sheet,
         )
 
         if fig is not None:
@@ -77,7 +102,8 @@ def getAllFigs(
 def main():
     if len(sys.argv) != 4:
         print(
-            "Usage: python batch_effect.py <path_to_imputed_mynorm> <path_to_sample_sheet> <column>"
+            "Usage: python batch_effect.py <path_to_imputed_mynorm: str> \
+                <path_to_sample_sheet: str> <column: str>"
         )
         sys.exit(1)
 
@@ -85,7 +111,7 @@ def main():
     sample_sheet_path = sys.argv[2]
     col = str(sys.argv[3])
 
-    getAllFigs(
+    get_all_figs(
         path_to_imputed_mynorm=imputed_mynorm_path,
         path_to_sample_sheet=sample_sheet_path,
         column=col,

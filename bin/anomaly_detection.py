@@ -1,18 +1,34 @@
+"""
+An anomaly detection module
+"""
+
 #!/usr/local/bin/python
 
 import sys
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from decorators import update_and_export_plot
 from sklearn.ensemble import IsolationForest
-from sklearn.neighbors import LocalOutlierFactor
+# from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 
 
 def ao(
     path_to_imputed_mynorm: str, contamination: str | float
 ) -> (pd.DataFrame, float):
+    """A function performing anomaly detection on imputed mynorm
+
+    Args:
+        path_to_imputed_mynorm (str): path to imputed mynorm
+        contamination (str | float): either auto or float (0, 0.5],\
+              for more info see https://scikit-learn.org/stable/modules/outlier_detection.html
+
+    Returns:
+        (pd.DataFrame, float): A tuple containing anomaly detection results (pd.DataFrame) \
+            and absolute threshold anomaly detection score
+    """
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
 
     if "CpG" in imputed_mynorm.columns:
@@ -34,16 +50,16 @@ def ao(
     for name, algorithm_instance in algorithms.items():
         algorithm_instance.fit(scaled_data)
 
-        anomaly_results[f"|scores|"] = list(
+        anomaly_results["|scores|"] = list(
             map(abs, algorithm_instance.score_samples(scaled_data))
         )
-        anomaly_results[f"classes"] = list(
+        anomaly_results["classes"] = list(
             map(
                 lambda x: {"-1": "Anomaly", "1": "non-Anomaly"}.get(str(x)),
                 algorithm_instance.predict(scaled_data),
             )
         )
-        anomaly_results[f"threshold"] = [
+        anomaly_results["threshold"] = [
             abs(algorithm_instance.offset_) for _ in range(len(samples))
         ]
 
@@ -52,7 +68,18 @@ def ao(
 
 
 @update_and_export_plot("ao_plot.json")
-def ao_plot(anomaly_results: str, offset: float):
+def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
+    """A function generating anomaly detection plot
+
+    Args:
+        anomaly_results (str): The results of anomaly\
+            detection
+        offset (float): the anomaly detection score\
+            threshold differentiating anomaly from non-anomaly
+
+    Returns:
+        go.Figure: anomaly detection plot
+    """
     fig = px.bar(
         anomaly_results,
         y=anomaly_results.index,
@@ -68,7 +95,7 @@ def ao_plot(anomaly_results: str, offset: float):
             "xanchor": "center",
             "x": 0,
             "orientation": "h",
-            "itemsizing": "trace"
+            "itemsizing": "trace",
         }
     )
     return fig
@@ -77,7 +104,8 @@ def ao_plot(anomaly_results: str, offset: float):
 def main():
     if len(sys.argv) != 3:
         print(
-            "Usage: python anomaly_detection.py <path_to_imputed_mynorm: str> <contamination: str | float>"
+            """Usage: python anomaly_detection.py <path_to_imputed_mynorm: str>\
+                <contamination: str | float>"""
         )
         sys.exit(1)
 

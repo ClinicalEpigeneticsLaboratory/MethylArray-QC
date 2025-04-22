@@ -1,8 +1,11 @@
+"""
+A module responsible for imputation
+"""
+
 #!/usr/local/bin/python
 
 import json
 import sys
-from pathlib import Path
 
 import pandas as pd
 from sklearn.impute import KNNImputer, SimpleImputer
@@ -11,7 +14,9 @@ from sklearn.impute import KNNImputer, SimpleImputer
 def main():
     if len(sys.argv) != 5:
         print(
-            "Usage: python imputation.py <path_to_mynorm> <p_threshold> <s_threshold> <imputer_type>"
+            "Usage: python imputation.py <path_to_mynorm: str> \
+                <p_threshold: float> <s_threshold: float> \
+                    <imputer_type: str>"
         )
         sys.exit(1)
 
@@ -60,7 +65,7 @@ def main():
     # Save the imputed data
     mynorm_imputed = mynorm_imputed.reset_index()
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
-    with open("mynorm_imputed_n_cpgs.json", "w") as f:
+    with open("mynorm_imputed_n_cpgs.json", "w", encoding="utf-8") as f:
         json.dump(
             obj={"mynorm_imputed_n_cpgs": mynorm_imputed.index.size}, fp=f, indent=4
         )
