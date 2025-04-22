@@ -1,8 +1,8 @@
+#!/usr/local/bin/python
+
 """
 A module generating beta distribution plot
 """
-
-#!/usr/local/bin/python
 
 import sys
 from pathlib import Path

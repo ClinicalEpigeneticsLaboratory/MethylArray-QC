@@ -1,8 +1,8 @@
+#!/usr/local/bin/python
+
 """
 A module generating batch effect evaluation figures
 """
-
-#!/usr/local/bin/python
 
 import sys
 

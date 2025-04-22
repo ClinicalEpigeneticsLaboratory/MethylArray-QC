@@ -1,9 +1,9 @@
+#!/usr/local/bin/python
+
 """
 A module generating a barplot presenting the percentage of
 missing values per sample
 """
-
-#!/usr/local/bin/python
 
 import sys
 

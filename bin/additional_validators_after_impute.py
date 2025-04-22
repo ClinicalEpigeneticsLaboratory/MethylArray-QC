@@ -1,10 +1,10 @@
+#!/usr/local/bin/python
+
 """
 Module performing additional parameter validation
 (apart from the one managed by Nextflow Schema)
 for parameters depending on imputation statistics
 """
-
-#!/usr/local/bin/python
 
 import json
 import sys

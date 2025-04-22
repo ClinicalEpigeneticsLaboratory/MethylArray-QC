@@ -1,8 +1,8 @@
+#!/usr/local/bin/python
+
 """
 A module responsible for imputation
 """
-
-#!/usr/local/bin/python
 
 import json
 import sys

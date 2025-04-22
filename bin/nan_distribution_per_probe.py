@@ -1,9 +1,9 @@
+#!/usr/local/bin/python
+
 """
 A module generating a heatmap presenting the distribution of
 missing values across probes and samples
 """
-
-#!/usr/local/bin/python
 
 import sys
 

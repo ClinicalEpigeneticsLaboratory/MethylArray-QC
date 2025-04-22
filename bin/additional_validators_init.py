@@ -1,11 +1,11 @@
+#!/usr/local/bin/python
+
 """
 Module performing additional parameter validation
 (apart from the one managed by Nextflow Schema)
 for parameters not depending on imputation statistics
 (validation can be performed at workflow start)
 """
-
-#!/usr/local/bin/python
 
 import multiprocessing
 import sys

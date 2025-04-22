@@ -1,8 +1,9 @@
+#!/usr/local/bin/python
+
 """
 A module responsible for PCA
 """
 
-#!/usr/local/bin/python
 
 import math
 import sys

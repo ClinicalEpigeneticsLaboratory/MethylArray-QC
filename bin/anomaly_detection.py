@@ -1,8 +1,8 @@
+#!/usr/local/bin/python
+
 """
 An anomaly detection module
 """
-
-#!/usr/local/bin/python
 
 import sys
 
