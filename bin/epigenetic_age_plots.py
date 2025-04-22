@@ -1,8 +1,8 @@
+#!/usr/local/bin/python
+
 """
 A module used for the generation of epigenetic age plots
 """
-
-#!/usr/local/bin/python
 
 import sys
 
@@ -70,9 +70,17 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
         color="Sample_Group",
         points="all",
         hover_data=data.columns.to_list(),
-        title=f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
     )
-    fig.update_layout(yaxis={"title": f"{epi_clock}_Accel"})
+    fig.update_layout(
+        yaxis={"title": f"{epi_clock}_Accel"},
+        title={
+            "text": f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
+            "font": {
+                "size": 20
+            },
+            "x": 0.15
+        }
+    )
 
     if fig is not None:
         export_decorated_fig_with_custom_name(
