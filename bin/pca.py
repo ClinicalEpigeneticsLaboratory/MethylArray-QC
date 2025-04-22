@@ -36,7 +36,7 @@ def testKWToJSON(
     )
     kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
 
-@update_and_export_plot(json_path = "PCA_area.json", showlegend = False)
+@update_and_export_plot(json_path = "PCA_area.json", width = 600, height = 775, showlegend = False)
 def areaPlotToJSON(
     number_of_pcs: int,
     number_of_cpgs: int,
@@ -46,18 +46,21 @@ def areaPlotToJSON(
 ) -> go.Figure:
     area_plot_data = {
         "Component": range(1, number_of_pcs + 1, 1),
-        "Cumulative_explained_variance_%": np.cumsum(explained_var_ratio * 100),
+        "Explained variance (%)": explained_var_ratio * 100,
+        "Cumulative explained variance (%)": np.cumsum(explained_var_ratio * 100),
     }
 
     area_plot_data_df = pd.DataFrame(area_plot_data)
 
     fig_area = px.area(
-        data_frame=area_plot_data_df, x="Component", y="Cumulative_explained_variance_%"
+        data_frame=area_plot_data_df, x="Component", y="Cumulative explained variance (%)", hover_data=area_plot_data_df.columns.to_list()
     )
 
     fig_area.update_xaxes(title="Principal component")
-    fig_area.update_yaxes(title="Cumulative explained variance (%)")
-    fig_area.update_layout(title_text=f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance")
+    fig_area.update_layout(
+        title_text=f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs})<br>with highest variance",
+        margin={"l": 20, "r": 20, "t": 175, "b": 20},
+    )
     return fig_area
 
 def scatterMatrixToJSON(
@@ -75,7 +78,8 @@ def scatterMatrixToJSON(
     )
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
-        title_text=f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance",
+        title_text=f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
+        margin={"l": 20, "r": 20, "t": 175, "b": 20},
     )
 
     if fig_scatter:
@@ -83,6 +87,8 @@ def scatterMatrixToJSON(
             fig=fig_scatter,
             json_path = f"PCA_scatter_matrix_{column}.json", 
             showlegend = False,
+            height=len(component_names)*150 + 175,
+            width=len(component_names)*150
         )
 
 
