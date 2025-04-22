@@ -10,7 +10,7 @@ isort:
 
 pylint:
 	@echo "Code QC"
-	poetry run pylint bin/*.py
+	poetry run pylint bin/*.py --no-docstring-rgx='^_|^main$$' --extension-pkg-whitelist=numpy
 
 dos2unix:
 	@echo "Reformatting"
