@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 
-from decorators import update_and_export_plot
+from plot_export_utils import export_decorated_fig_with_custom_name
 import sys
 import plotly.graph_objects as go
 import pandas as pd
@@ -68,10 +68,10 @@ def getAllFigs(
         )
 
         if fig is not None:
-            @update_and_export_plot(f"{row_num}.json")
-            def exportFig():
-                return fig
-            exportFig()
+            export_decorated_fig_with_custom_name(
+                fig=fig,
+                json_path=f"{row_num}.json",
+            )
 
 
 def main():

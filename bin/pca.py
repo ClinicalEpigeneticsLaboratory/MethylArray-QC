@@ -1,11 +1,15 @@
 #!/usr/local/bin/python
 
+from decorators import update_and_export_plot
+from plot_export_utils import export_decorated_fig_with_custom_name
+
 import math
 import sys
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -32,14 +36,14 @@ def testKWToJSON(
     )
     kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
 
-
+@update_and_export_plot(json_path = "PCA_area.json", showlegend = False)
 def areaPlotToJSON(
     number_of_pcs: int,
     number_of_cpgs: int,
     perc_of_cpgs: int,
     explained_var_ratio: np.ndarray,
     col: str,
-) -> None:
+) -> go.Figure:
     area_plot_data = {
         "Component": range(1, number_of_pcs + 1, 1),
         "Cumulative_explained_variance_%": np.cumsum(explained_var_ratio * 100),
@@ -53,15 +57,8 @@ def areaPlotToJSON(
 
     fig_area.update_xaxes(title="Principal component")
     fig_area.update_yaxes(title="Cumulative explained variance (%)")
-    fig_area.update_layout(
-        width=600,
-        height=600,
-        template="ggplot2",
-        title_text=f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance",
-        showlegend=False,
-    )
-    fig_area.write_json(file="PCA_area.json", pretty=True)
-
+    fig_area.update_layout(title_text=f"PCA area plot - {col}<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs}) with highest variance")
+    return fig_area
 
 def scatterMatrixToJSON(
     components_data: pd.DataFrame,
@@ -69,7 +66,7 @@ def scatterMatrixToJSON(
     number_of_cpgs: int,
     perc_of_cpgs: int,
     column: str,
-) -> None:
+) -> go.Figure:
     fig_scatter = px.scatter_matrix(
         components_data,
         color=column,
@@ -78,13 +75,15 @@ def scatterMatrixToJSON(
     )
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
-        width=600,
-        height=600,
-        template="ggplot2",
         title_text=f"PCA scatter matrix- {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs with highest variance",
-        showlegend=False,
     )
-    fig_scatter.write_json(file=f"PCA_scatter_matrix_{column}.json", pretty=True)
+
+    if fig_scatter:
+        export_decorated_fig_with_custom_name(
+            fig=fig_scatter,
+            json_path = f"PCA_scatter_matrix_{column}.json", 
+            showlegend = False,
+        )
 
 
 def main():

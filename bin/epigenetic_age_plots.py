@@ -1,8 +1,11 @@
 #!/usr/local/bin/python
 
 import sys
+from plot_export_utils import export_decorated_fig_with_custom_name
+
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import median_absolute_error
@@ -20,8 +23,7 @@ def getMedAE(x: list, y: list) -> float:
 def addMedAEToTrendlineHover(hovertemplate: str, medae: float) -> str:
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
-
-def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
+def getEAABoxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
     kruskal_res = stats.kruskal(
         *[
             group[f"Age_Acceleration_{epi_clock}"].values
@@ -37,15 +39,14 @@ def getEAABoxplot(data: pd.DataFrame, epi_clock: str):
         hover_data=data.columns.to_list(),
         title=f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
     )
-    fig.update_layout(
-        width=600,
-        height=600,
-        template="ggplot2",
-        yaxis={"title": epi_clock},
-        legend={"title": None},
-    )
-    fig.write_json(file=f"Epi_Age_Accel_{epi_clock}.json", pretty=True)
+    fig.update_layout(yaxis={"title": epi_clock})
 
+    if fig is not None:
+        export_decorated_fig_with_custom_name(
+            fig=fig,
+            json_path=f"Epi_Age_Accel_{epi_clock}.json",
+            showlegend=False
+        )
 
 def getEpivsChronAgeRegrPlot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
@@ -114,13 +115,21 @@ def getEpivsChronAgeRegrPlot(
         )
 
     fig.update_layout(
-        width=600,
-        height=600,
-        template="ggplot2",
         yaxis={"title": epi_clock},
-        legend={"title": None},
+        legend={
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "left",
+            "x": 0,
+            "orientation": "h",
+        }
     )
-    fig.write_json(file=f"Regr_Age_vs_Epi_Age_{epi_clock}.json", pretty=True)
+
+    if fig is not None:
+        export_decorated_fig_with_custom_name(
+            fig=fig,
+            json_path=f"Regr_Age_vs_Epi_Age_{epi_clock}.json",
+        )
 
 def main():
     if len(sys.argv) != 4:
