@@ -1,5 +1,5 @@
 process BETA_DISTRIBUTION {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.json'
+    publishDir "${params.output}/Beta_distribution", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:

@@ -1,5 +1,5 @@
 process IMPUTE {
-    publishDir "${params.output}", mode: 'copy', overwrite: true
+    publishDir "${params.output}/Imputation", mode: 'copy', overwrite: true
     label 'python'
 
     input:

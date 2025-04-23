@@ -1,5 +1,5 @@
 process BATCH_EFFECT {
-    publishDir "${params.output}", mode: 'copy', overwrite: true
+    publishDir "${params.output}/Batch_effect/Mean_beta_per_${column}", mode: 'copy', overwrite: true
     label 'python'
 
     input:
@@ -8,7 +8,7 @@ process BATCH_EFFECT {
     each column
 
     output:
-    path "Mean_beta_per_${column}/*.json", arity: "1..*"
+    path "*.json", arity: "1..*"
 
     script:
     """

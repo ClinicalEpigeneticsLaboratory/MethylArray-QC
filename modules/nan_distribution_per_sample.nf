@@ -1,5 +1,5 @@
 process NAN_DISTRIBUTION_PER_SAMPLE {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.json'
+    publishDir "${params.output}/NaN_distribution", mode: 'copy', overwrite: true, pattern: '*.json'
     label 'python'
 
     input:
