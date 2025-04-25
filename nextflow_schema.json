@@ -72,6 +72,13 @@
                     "description": "SeSAME-recommended prep code matching an array version and organism",
                     "help_text": "Provide SeSAME-recommended prep code matching your array version and organism"
                 },
+                "ctrl_intens_plots": {
+                    "type": "boolean",
+                    "description": "Set to true if you need the evaluation of fluorescence levels on microarray control probes (true - for plots and the export of intensity levels) or not (false)",
+                    "errorMessage": "fluorescence_plots must be set to true or false",
+                    "help_text": "Decide if you want to evaluate fluorescence on control probes (true) or not (false)",
+                    "default": true
+                },
                 "collapse_prefix": {
                     "type": "boolean",
                     "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to true if you want to have CpG suffixes collapsed or to false if you want to have CpG suffixes preserved",

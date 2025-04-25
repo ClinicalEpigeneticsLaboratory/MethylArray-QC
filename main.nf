@@ -1,6 +1,7 @@
 include { validateParameters; paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-schema'
 include { ADDITIONAL_VALIDATORS_INIT } from './modules/additional_validators_init.nf'
 include { QC } from './modules/QC.nf'
+include { CTRL_FLUORESCENCE_DATA } from './modules/ctrl_fluorescence_data.nf'
 include { PREPROCESS } from './modules/preprocess.nf'
 include { IMPUTE } from './modules/impute.nf'
 include { ADDITIONAL_VALIDATORS_AFTER_IMPUTE } from './modules/additional_validators_after_impute.nf'
@@ -32,6 +33,10 @@ workflow {
     }
 
     qc_path = QC(input_abs_path, cpus, sample_sheet_abs_path)
+    
+    if(params.ctrl_intens_plots) {
+        ctrl_fluorescence_data_path = CTRL_FLUORESCENCE_DATA(input_abs_path, sample_sheet_abs_path, cpus)
+    }
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
     // preprocess_ch_out.raw_mynorm_probe_count_path: raw mynorm probe count JSON file path
