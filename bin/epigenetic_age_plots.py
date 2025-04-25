@@ -75,11 +75,9 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
         yaxis={"title": f"{epi_clock}_Accel"},
         title={
             "text": f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
-            "font": {
-                "size": 20
-            },
-            "x": 0.15
-        }
+            "font": {"size": 20},
+            "x": 0.15,
+        },
     )
 
     if fig is not None:

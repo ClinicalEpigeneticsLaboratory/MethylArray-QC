@@ -23,7 +23,7 @@ def ao(
     Args:
         path_to_imputed_mynorm (str): path to imputed mynorm
         contamination (str | float): either auto or float (0, 0.5],\
-              for more info see https://scikit-learn.org/stable/modules/outlier_detection.html
+            for more info see https://scikit-learn.org/stable/modules/outlier_detection.html
 
     Returns:
         (pd.DataFrame, float): A tuple containing anomaly detection results (pd.DataFrame) \

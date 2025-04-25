@@ -146,7 +146,7 @@ def get_scatter_matrix_json(
     )
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
-        title_text = f"PCA scatter matrix - {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
+        title_text=f"PCA scatter matrix - {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
         margin={"l": 20, "r": 20, "t": 175, "b": 20},
     )
 
