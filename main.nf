@@ -98,17 +98,19 @@ workflow {
     */
     workflow.onComplete = {
         def params_map_all = paramsSummaryMap(workflow)
-        def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
+        def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+        def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed")
     }
 
     workflow.onError = {
         def params_map_all = paramsSummaryMap(workflow)
-        def idat_list_size = file("$params.input/{*.idat,*.idat.gz}").size()
+        def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+        def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed with errors")
     }
 }
