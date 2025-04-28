@@ -18,6 +18,7 @@ from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+# TODO: a case where there are < 2 Sentrix_IDs, Sentrix_Positions to compare...
 
 # Computes Kruskal-Wallis results for a specific column and saves to JSON
 def test_kw_to_json(
