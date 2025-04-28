@@ -14,7 +14,22 @@ library(sesame)
 library(arrow)
 library(glue)
 
+# EPICv2 - use a solution with column split
+# EPIC, 450K, Mammal40 column type present
+# problematic: mm285
+
+#   TODO: figure out why control probe types for EPIC exported as numeric! (occurred in 2 evaluated datasets, does not occurr in data provided in sesameData package)
+
 extract_control_signals <- function(sdf, sample_name) {
+
+    # platform <- sdfPlatform(sdf)
+
+# # how to get control probe addresses for 450K, EPIC
+#     if(platform %in% c("EPIC", "HM450")) {
+#         ctl <- sesameDataGet(sprintf(
+# +     "%s.address", "EPIC"))$controls
+#     }
+
     ctl <- sesame::controls(sdf)
     ctl$Sample <- sample_name
     ctl
@@ -55,7 +70,9 @@ control_all <- tryCatch(
 control_all_df <- data.frame()
 control_all_df <- do.call(rbind, control_all)
 
-control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
+if(!("col" %in% colnames(control_all_df))) {
+    control_all_df[, "col"] <- "missing"
+}
 
 control_all_df$max_intensity <- NA
 control_all_df$max_intensity <- unlist(
@@ -70,17 +87,21 @@ control_all_df$max_intensity <- unlist(
             } else if (col == "2") {
                 max(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
             } else {
-                NA # fallback if 'col' is unexpected
+                max(control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
             }
         },
         BPPARAM = BiocParallel::MulticoreParam(cpus)
     )
 )
 
-control_all_df$Probe_ID <- sapply(control_all_df$Probe_ID_split, function(x) paste(x[1:2], collapse = "_"))
+if(!("Type" %in% colnames(control_all_df))) {
+    control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
+    control_all_df$Probe_ID <- sapply(control_all_df$Probe_ID_split, function(x) paste(x[1:2], collapse = "_"))
+    control_all_df$Type <- sapply(control_all_df$Probe_ID_split, function(x) ifelse(length(x) > 2, paste(x[3:length(x)], collapse = "_"), NA))
+    control_all_df$Probe_ID_split <- NULL
+}
 
-control_all_df$Control_Type <- sapply(control_all_df$Probe_ID_split, function(x) ifelse(length(x) > 2, paste(x[3:length(x)], collapse = "_"), NA))
-
-control_all_df$Probe_ID_split <- NULL
+control_all_df$Type <- as.character(control_all_df$Type)
+#control_all_df <- data.frame(control_all_df, stringsAsFactors = FALSE)
 
 arrow::write_parquet(control_all_df, glue("ctrl_fluorescence", ".parquet"))
