@@ -13,9 +13,8 @@ if (length(args) != 3) {
 library(sesame)
 library(arrow)
 library(glue)
+library(stringr)
 
-# EPICv2 - use a solution with column split
-# EPIC, 450K, Mammal40 column type present
 # problematic: mm285
 
 # Modified controls function from https://github.com/zwdzwd/sesame/
@@ -31,7 +30,18 @@ controls_custom <- function(sdf, verbose) {
 
         # BUG FIX: Fixed a bug when last column name is NA instead of type (which is assigned to another column)
         if(is.na(colnames(df)[ncol(df)])) colnames(df)[ncol(df)] <- "type_str"
-        return(data.frame(UG = df$G, UR = df$R, Type = df$type_str))
+        df$Probe_ID <- sapply(
+            strsplit(rownames(df), "\\."), 
+            function(x) {
+                parts <- x[x != ""]
+                if(length(parts) > 1) {
+                    paste0(paste(parts[-length(parts)], collapse = " "), " (", parts[length(parts)], ")")
+                } else {
+                    parts
+                }
+            }
+        )
+        return(data.frame(Probe_ID = df$Probe_ID, UG = df$G, UR = df$R, Type = df$type_str))
     }
     else if(sesameDataHas(sprintf("%s.address", sdf_platform))) {
         df <- sesameDataGet(sprintf("%s.address", sdf_platform))$controls
