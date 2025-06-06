@@ -127,6 +127,9 @@ control_all_df$max_intensity <- unlist(
     )
 )
 
+control_all_df$log_10_max_intens <- NA
+control_all_df$log_10_max_intens <- log10(control_all_df$max_intensity)
+
 control_all_df$total_intensity <- NA
 control_all_df$total_intensity <- unlist(
     BiocParallel::bplapply(
@@ -147,6 +150,8 @@ control_all_df$total_intensity <- unlist(
     )
 )
 
+control_all_df$log_10_total_intens <- NA
+control_all_df$log_10_total_intens <- log10(control_all_df$total_intensity)
 
 if(!("Type" %in% colnames(control_all_df))) {
     control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
