@@ -2,12 +2,13 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) != 3) {
-    stop("Expected input: Rscript ctrl_fluorescence_data.R <idats> <sample_sheet_path> <cpus>")
+if (length(args) != 4) {
+    stop("Expected input: Rscript ctrl_fluorescence_data.R <idats> <sample_sheet_path> <cpus> <metric>")
 } else {
     idats <- args[1]
     sample_sheet_path <- args[2]
     cpus <- args[3]
+    metric <- args[4]
 }
 
 library(sesame)
@@ -107,51 +108,46 @@ if(!("col" %in% colnames(control_all_df))) {
     control_all_df[, "col"] <- "missing"
 }
 
-control_all_df$max_intensity <- NA
-control_all_df$max_intensity <- unlist(
-    BiocParallel::bplapply(
-        seq_len(nrow(control_all_df)), 
-        function(i) {
+control_all_df$metric_type <- NA
+control_all_df$metric_type <- rep(metric, times = nrow(control_all_df))
+
+metric_fun <- list()
+metric_fun <- switch(
+    metric,
+    "max" = function(i) {
             col <- control_all_df$col[i]
-            if (col == "G") {
-                max(control_all_df$MG[i], control_all_df$UG[i], na.rm = TRUE)
-            } else if (col == "R") {
-                max(control_all_df$MR[i], control_all_df$UR[i], na.rm = TRUE)
-            } else if (col == "2") {
-                max(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
-            } else {
-                max(control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
-            }
-        },
+            vals <- switch(col,
+                "G" = c(control_all_df$MG[i], control_all_df$UG[i]),
+                "R" = c(control_all_df$MR[i], control_all_df$UR[i]),
+                "2" = c(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i]),
+                c(control_all_df$UG[i], control_all_df$UR[i])  # default
+        )
+        max(vals, na.rm = TRUE)
+    },
+    "total" = function(i) {
+        col <- control_all_df$col[i]
+        vals <- switch(col,
+            "G" = c(control_all_df$MG[i], control_all_df$UG[i]),
+            "R" = c(control_all_df$MR[i], control_all_df$UR[i]),
+            "2" = c(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i]),
+            c(control_all_df$UG[i], control_all_df$UR[i])  # default
+        )
+        sum(vals, na.rm = TRUE)
+    },
+    stop("Unsupported metric: ", metric)
+)
+
+# Compute the selected metric
+control_all_df$metric <- unlist(
+    BiocParallel::bplapply(
+        seq_len(nrow(control_all_df)),
+        metric_fun,
         BPPARAM = BiocParallel::MulticoreParam(cpus)
     )
 )
 
-control_all_df$log_10_max_intens <- NA
-control_all_df$log_10_max_intens <- log10(control_all_df$max_intensity)
-
-control_all_df$total_intensity <- NA
-control_all_df$total_intensity <- unlist(
-    BiocParallel::bplapply(
-        seq_len(nrow(control_all_df)), 
-        function(i) {
-            col <- control_all_df$col[i]
-            if (col == "G") {
-                sum(control_all_df$MG[i], control_all_df$UG[i], na.rm = TRUE)
-            } else if (col == "R") {
-                sum(control_all_df$MR[i], control_all_df$UR[i], na.rm = TRUE)
-            } else if (col == "2") {
-                sum(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
-            } else {
-                sum(control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
-            }
-        },
-        BPPARAM = BiocParallel::MulticoreParam(cpus)
-    )
-)
-
-control_all_df$log_10_total_intens <- NA
-control_all_df$log_10_total_intens <- log10(control_all_df$total_intensity)
+control_all_df$log_10_metric <- NA
+control_all_df$log_10_metric <- log10(control_all_df$metric)
 
 if(!("Type" %in% colnames(control_all_df))) {
     control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
