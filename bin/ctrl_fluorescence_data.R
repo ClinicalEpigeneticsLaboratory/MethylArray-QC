@@ -18,19 +18,42 @@ library(glue)
 # EPIC, 450K, Mammal40 column type present
 # problematic: mm285
 
-#   TODO: figure out why control probe types for EPIC exported as numeric! (occurred in 2 evaluated datasets, does not occurr in data provided in sesameData package)
+# Modified controls function from https://github.com/zwdzwd/sesame/
+controls_custom <- function(sdf, verbose) {  
+    stopifnot(is(sdf, "SigDF"))
+
+    sdf_platform <- character()
+    sdf_platform <- sesame::sdfPlatform(sdf, verbose = verbose)
+
+    if (!is.null(attr(sdf, "controls"))) {
+        df <- attr(sdf, "controls")
+        last_colname <- colnames(df)[ncol(df)]
+
+        # BUG FIX: Fixed a bug when last column name is NA instead of type (which is assigned to another column)
+        if(is.na(colnames(df)[ncol(df)])) colnames(df)[ncol(df)] <- "type_str"
+        return(data.frame(UG = df$G, UR = df$R, Type = df$type_str))
+    }
+    else if(sesameDataHas(sprintf("%s.address", sdf_platform))) {
+        df <- sesameDataGet(sprintf("%s.address", sdf_platform))$controls
+        if (is.null(df)) {
+            return(sdf[grepl("^ctl", sdf$Probe_ID), ])
+        }
+        else {
+            cbind(
+                df, 
+                sdf[match(paste0("ctl_", df$Address), sdf$Probe_ID), c("MG", "MR", "UG", "UR")]
+            )
+        }
+    }
+    else {
+        return(sdf[grepl("^ctl", sdf$Probe_ID), ])
+    }
+}
 
 extract_control_signals <- function(sdf, sample_name) {
 
-    # platform <- sdfPlatform(sdf)
-
-# # how to get control probe addresses for 450K, EPIC
-#     if(platform %in% c("EPIC", "HM450")) {
-#         ctl <- sesameDataGet(sprintf(
-# +     "%s.address", "EPIC"))$controls
-#     }
-
-    ctl <- sesame::controls(sdf)
+    sdf <- sesame::resetMask(sdf)
+    ctl <- controls_custom(sdf)
     ctl$Sample <- sample_name
     ctl
 }
@@ -102,6 +125,5 @@ if(!("Type" %in% colnames(control_all_df))) {
 }
 
 control_all_df$Type <- as.character(control_all_df$Type)
-#control_all_df <- data.frame(control_all_df, stringsAsFactors = FALSE)
 
 arrow::write_parquet(control_all_df, glue("ctrl_fluorescence", ".parquet"))

@@ -237,5 +237,5 @@ The pipeline produces the following outputs:
 - Implement the output summary HTML report with embedded figures and tables
 - anomaly detection: implement more models
 - add exemplary workflow (or other way to run a tool with exemplary data)
-- add the visualisation of fluorescence on control probes (box per Slide, Array, Sample) for MM285
+- add the visualisation of fluorescence on control probes (box per Slide, Array, Sample) (check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285)
 - add non-interactive mode for app
