@@ -127,6 +127,27 @@ control_all_df$max_intensity <- unlist(
     )
 )
 
+control_all_df$total_intensity <- NA
+control_all_df$total_intensity <- unlist(
+    BiocParallel::bplapply(
+        seq_len(nrow(control_all_df)), 
+        function(i) {
+            col <- control_all_df$col[i]
+            if (col == "G") {
+                sum(control_all_df$MG[i], control_all_df$UG[i], na.rm = TRUE)
+            } else if (col == "R") {
+                sum(control_all_df$MR[i], control_all_df$UR[i], na.rm = TRUE)
+            } else if (col == "2") {
+                sum(control_all_df$MG[i], control_all_df$MR[i], control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
+            } else {
+                sum(control_all_df$UG[i], control_all_df$UR[i], na.rm = TRUE)
+            }
+        },
+        BPPARAM = BiocParallel::MulticoreParam(cpus)
+    )
+)
+
+
 if(!("Type" %in% colnames(control_all_df))) {
     control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
     control_all_df$Probe_ID <- sapply(control_all_df$Probe_ID_split, function(x) paste(x[1:2], collapse = "_"))
