@@ -18,9 +18,7 @@ from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-# TODO: a case where there are < 2 Sentrix_IDs, Sentrix_Positions to compare...
-
-# Computes Kruskal-Wallis results for a specific column and saves to JSON
+# Computes Kruskal-Wallis results for a specific column and saves to JSON 
 def test_kw_to_json(
     components_data: pd.DataFrame, component_names: list, column: str
 ) -> None:
@@ -68,7 +66,6 @@ def get_area_plot(
     number_of_cpgs: int,
     perc_of_cpgs: int,
     explained_var_ratio: np.ndarray,
-    col: str,
 ) -> go.Figure:
     """A function generating area plot showing explained variance for principal components
 
@@ -80,7 +77,6 @@ def get_area_plot(
             provided by user
         explained_var_ratio (np.ndarray): Ratio of explained variance \
             for each component
-        col (str): Currently processed column
 
     Returns:
         go.Figure: area plot
@@ -231,15 +227,15 @@ def main():
             perc_of_cpgs=perc_pca_cpgs,
         )
 
-        test_kw_to_json(
-            components_data=components_df,
-            column=column,
-            component_names=component_col_names,
-        )
+        if sample_sheet[column].nunique() >= 2:
+            test_kw_to_json(
+                components_data=components_df,
+                column=column,
+                component_names=component_col_names,
+            )
 
         if i == 0:
             get_area_plot(
-                col=column,
                 explained_var_ratio=pca_res.explained_variance_ratio_,
                 number_of_cpgs=n_cpgs,
                 number_of_pcs=pca_number_of_components,

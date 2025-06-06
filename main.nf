@@ -32,6 +32,8 @@ workflow {
         println("cpus parameter set to -1 - ${cpus} CPUs will be used")
     }
 
+    def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
+
     qc_path = QC(input_abs_path, cpus, sample_sheet_abs_path)
     
     if(params.ctrl_intens_plots) {
@@ -53,7 +55,9 @@ workflow {
         ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.mynorm_imputed_n_cpgs)
     }
 
-    ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
+    if(processed_samples_count > 2) {
+        ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
+    }
 
     // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {
@@ -99,7 +103,6 @@ workflow {
     workflow.onComplete = {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
-        def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
         def paramExporter = new JsonWorkflowParamExporter()
         file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed")
@@ -108,7 +111,6 @@ workflow {
     workflow.onError = {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
-        def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
         def paramExporter = new JsonWorkflowParamExporter()
         file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
         println("Workflow completed with errors")
