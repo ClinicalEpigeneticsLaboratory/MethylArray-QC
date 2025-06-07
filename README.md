@@ -252,7 +252,7 @@ The pipeline produces the following outputs:
 - Output:
    - results of the calculation of control intensity metrics (`ctrl_fluorescence.parquet`)
    - list of unique types of control probes for the inferred platform (`ctrl_unique_probe_types.json`)
-## 13. Control intensity plots:
+### 13. Control intensity plots:
 -  Uses a Python script (`ctrl_fluorescence_plots.py`) to generate control intensity plots
 - Output:
    - control intensity dotplots showing wither log<sub>10</sub>Maximum Intensity or log<sub>10</sub>Total Intensity for each category of control probes, grouped per selected column (JSON files, with names of form: `{ctrl_probe_type}_by_{column}.json`), 
