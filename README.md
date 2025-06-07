@@ -22,6 +22,10 @@ The pipeline performs the following steps:
       - general
       - if Sample_Group column present in sample sheet - trendlines for specific groups and general trendline
    - boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)
+12. **Control probe intensity data**: generates:
+   - a JSON file with a list of unique control probe types provided for the inferred platform
+   - a PARQUET file with computed control probe intensity data
+13. **Control probe intensity plots**: generates dotplots showing the intensity (either log<sub>10</sub>total intensity or log<sub>10</sub>maximum intensity) at different categories of control probes (per Sentrix_ID, Sentrix_Position, Sample_Name and/or Sample_Group - selected by the user, with coloring per sample group)
 ## Prerequisites
 
 ### Software Requirements
@@ -97,6 +101,11 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **Epigenetic age inference**:
    - `params.infer_epi_age`: Boolean (`true` or `false`, default: `true`) stating whether epigenetic age inference will be performed
    - `params.epi_clocks`: Epigenetic clocks used for epigenetic age inference (>= 1 clock, in any order, separated by commas without spaces; for full list of supported clocks use a function`dnaMethyAge::availableClock()` from `dnaMethyAge` R package)
+- **Control intensity data**:
+   - `params.ctrl_intens_metric`: an intensity value to be computed - either max (maximum intensity) or total (total intensity, default)
+- **Control intensity plots**:
+   - `params.ctrl_intens_metric`: an intensity value to be logarithmed and shown on plots - either max (maximum intensity) or total (total intensity, default)
+   - `params.ctrl_intens_cols`: grouping columns for control intensity plots (Sample_Name, Sample_Group, Sentrix_ID and/or Sentrix_Position)
 
 In case you need additional information on parameters, run the following command:
 
@@ -139,7 +148,9 @@ nextflow run main.nf -params-file params.json
   "pca_matrix_PC_count": 5,
   "infer_sex": true,
   "infer_epi_age": true,
-  "epi_clocks": "HannumG2013,HorvathS2013"
+  "epi_clocks": "HannumG2013,HorvathS2013",
+  "ctrl_intens_metric": "total",
+  "ctrl_intens_cols": "Sentrix_ID,Sentrix_Position"
 }
 ```
 
@@ -173,6 +184,11 @@ The pipeline produces the following outputs:
    - results of epigenetic age inference and epigenetic age accelereation for all selected clocks, as parquet file,
    - linear regression trendline plot for each clock (`Regression` subdirectory), as JSON file,
    - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory), as JSON file.
+12. **Control intensity data**:
+   - a JSON file with unique control probe types provided for the platform inferred from the input IDATs
+   - a PARQUET file with computed control probe intensity metrics
+13. **Control intensity plots**:
+   - control plot intensity dotplots, as JSON files
 
 ## Process Details
 
@@ -231,11 +247,22 @@ The pipeline produces the following outputs:
    - results of epigenetic age inference and epigenetic age accelereation for all selected clocks: `epi_clocks_res.parquet`,
    - linear regression trendline plot for each clock (`Regression` subdirectory): `Regr_Age_vs_Epi_Age_${epi_clock}.json`,
    - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory): `Epi_Age_Accel_${epi_clock}.json`
+### 12. Control intensity data:
+-  Uses an R script (`ctrl_fluorescence_data.R`) to compute intensity metrics (either maximum intensity or total intensity) to be plotted on control intensity plots
+- Output:
+   - results of the calculation of control intensity metrics (`ctrl_fluorescence.parquet`)
+   - list of unique types of control probes for the inferred platform (`ctrl_unique_probe_types.json`)
+## 13. Control intensity plots:
+-  Uses a Python script (`ctrl_fluorescence_plots.py`) to generate control intensity plots
+- Output:
+   - control intensity dotplots showing wither log<sub>10</sub>Maximum Intensity or log<sub>10</sub>Total Intensity for each category of control probes, grouped per selected column (JSON files, with names of form: `{ctrl_probe_type}_by_{column}.json`), 
 
 ## Known Issues and TODOs
 - Implement tests for workflow and for specific processes
 - Implement the output summary HTML report with embedded figures and tables
 - anomaly detection: implement more models
 - add exemplary workflow (or other way to run a tool with exemplary data)
-- add the visualisation of fluorescence on control probes (box per Slide, Array, Sample) (check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285)
+- fluorescence on control probes: 
+   - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
+   - loads of plots are generated: to decide which plots to generate and put in the final report
 - add non-interactive mode for app

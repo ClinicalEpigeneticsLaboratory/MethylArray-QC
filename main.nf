@@ -14,6 +14,7 @@ include { NAN_DISTRIBUTION_PER_PROBE } from './modules/nan_distribution_per_prob
 include { PCA } from './modules/pca.nf'
 include { EPIGENETIC_AGE_INFERENCE } from './modules/epigenetic_age_inference.nf'
 include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
+include { CTRL_FLUORESCENCE_PLOTS } from './modules/ctrl_fluorescence_plots.nf'
 
 //Default values for parameters stored in nextflow.config (ref. https://www.nextflow.io/docs/latest/cli.html#cli-params)
 
@@ -37,7 +38,32 @@ workflow {
     qc_path = QC(input_abs_path, cpus, sample_sheet_abs_path)
     
     if(params.ctrl_intens_plots) {
-        ctrl_fluorescence_data_path = CTRL_FLUORESCENCE_DATA(input_abs_path, sample_sheet_abs_path, cpus)
+        // ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path: control probe fluorescence data file path
+        // ctrl_fluorescence_data_ch_out.ctrl_fluorescence_unique_probe_types: unique control probe types JSON file path
+        ctrl_fluorescence_data_ch_out = CTRL_FLUORESCENCE_DATA(input_abs_path, sample_sheet_abs_path, cpus, params.ctrl_intens_metric)
+
+        def unique_grouping_cols = params.ctrl_intens_cols?.split(',') as List
+
+        def unique_probe_types = ctrl_fluorescence_data_ch_out.ctrl_fluorescence_unique_probe_types.map { jsonFilePath ->
+            try {
+                def jsonText = file(jsonFilePath).text
+                def typesList = new groovy.json.JsonSlurper().parseText(jsonText)
+                if (typesList instanceof String) {
+                    typesList = typesList.split(',') as List
+                }
+                return typesList
+            } catch (Exception e) {
+                println "Failed to parse JSON from $jsonFilePath : $e"
+                return []  // or handle error as needed
+            }
+        }
+
+        // Now you can use 'unique_types_ch' as a channel of lists
+        unique_probe_types.subscribe { list ->
+            println "Unique types from JSON: $list"
+        }
+
+        ctrl_fluorescence_plots_ch_out = CTRL_FLUORESCENCE_PLOTS(ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path, sample_sheet_abs_path, unique_grouping_cols, unique_probe_types)
     }
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
@@ -48,7 +74,6 @@ workflow {
     // impute_ch_out.nan_per_sample: path to file with %NaN per sample stats
     // impute_ch_out.nan_per_probe: path to file with %NaN per probe stats
     // impute_ch_out.mynorm_imputed_n_cpgs: number of CpGs in imputed mynorm
-
     impute_ch_out = IMPUTE(preprocess_ch_out.raw_mynorm_path, params.p_threshold, params.s_threshold, params.imputer_type)
 
     if(impute_ch_out) {

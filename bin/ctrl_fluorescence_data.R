@@ -15,6 +15,7 @@ library(sesame)
 library(arrow)
 library(glue)
 library(stringr)
+library(jsonlite)
 
 # problematic: mm285
 
@@ -65,7 +66,7 @@ extract_control_signals <- function(sdf, sample_name) {
 
     sdf <- sesame::resetMask(sdf)
     ctl <- controls_custom(sdf)
-    ctl$Sample <- sample_name
+    ctl$Sample_Name <- sample_name
     ctl
 }
 
@@ -159,3 +160,7 @@ if(!("Type" %in% colnames(control_all_df))) {
 control_all_df$Type <- as.character(control_all_df$Type)
 
 arrow::write_parquet(control_all_df, glue("ctrl_fluorescence", ".parquet"))
+
+unique_probe_types_json <- character()
+unique_probe_types_json <- toJSON(unique(control_all_df$Type))
+write(unique_probe_types_json, "ctrl_unique_probe_types.json")

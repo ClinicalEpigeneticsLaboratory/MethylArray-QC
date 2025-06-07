@@ -79,6 +79,25 @@
                     "help_text": "Decide if you want to evaluate fluorescence on control probes (true) or not (false)",
                     "default": true
                 },
+                "ctrl_intens_metric": {
+                    "type": "string",
+                    "enum": [
+                        "total",
+                        "max"
+                    ],
+                    "default": "total",
+                    "errorMessage": "Control probe intensity metric must match one of the following: total (sum of intensities from unmethylated and methylated signals per probe), max (maximum intensity from methylated/unmethylated channels per probe)",
+                    "description": "Control probe intensity metric to be computed and shown on plots: total (sum of intensities from unmethylated and methylated signals per probe) or max (maximum intensity from methylated/unmethylated channels per probe)",
+                    "help_text": "Provide selected control probe intensity metric to be computed (raw and log10 value)n and shown on plots (log10 value)"
+                },
+                "ctrl_intens_cols": {
+                    "type": "string",
+                    "default": "Sentrix_ID,Sentrix_Position",
+                    "pattern": "^(?:(Sentrix_ID|Sentrix_Position|Sample_Group|Sample_Name)(?:,(?!\\1)(Sentrix_ID|Sentrix_Position|Sample_Group|Sample_Name))*)$",
+                    "help_text": "Columns used in control intensity plots for sample grouping on a plot (1-4 columns: Sentrix_ID, Sentrix_Position, Sample_Name and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "description": "Columns used in control intensity plots for sample grouping on a plot on a plot (1-4 columns: Sentrix_ID, Sentrix_Position, Sample_Name and/or Sample_Group, in any order, separated by commas without spaces)",
+                    "errorMessage": "Invalid columns for sample grouping in control intensity plots provided. Allowed: 1-4 columns - Sentrix_ID, Sentrix_Position, Sample_Name and/or Sample_Group, in any order, separated by commas without spaces"
+                },
                 "collapse_prefix": {
                     "type": "boolean",
                     "description": "Option passed to SeSAME getBetas (collapseToPfx parameter). Set to true if you want to have CpG suffixes collapsed or to false if you want to have CpG suffixes preserved",
