@@ -30,7 +30,6 @@ controls_custom <- function(sdf, verbose) {
         df <- attr(sdf, "controls")
         last_colname <- colnames(df)[ncol(df)]
 
-        # BUG FIX: Fixed a bug when last column name is NA instead of type (which is assigned to another column)
         if(is.na(colnames(df)[ncol(df)])) colnames(df)[ncol(df)] <- "type_str"
         df$Probe_ID <- sapply(
             strsplit(rownames(df), "\\."), 
@@ -157,7 +156,13 @@ if(!("Type" %in% colnames(control_all_df))) {
     control_all_df$Probe_ID_split <- NULL
 }
 
-control_all_df$Type <- as.character(control_all_df$Type)
+control_all_df$Type <- as.character(
+    stringr::str_replace_all(
+        string = control_all_df$Type,
+        pattern = " ",
+        replacement = "_"
+    )
+)
 
 arrow::write_parquet(control_all_df, glue("ctrl_fluorescence", ".parquet"))
 
