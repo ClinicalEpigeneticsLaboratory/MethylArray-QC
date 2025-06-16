@@ -15,6 +15,7 @@ include { PCA } from './modules/pca.nf'
 include { EPIGENETIC_AGE_INFERENCE } from './modules/epigenetic_age_inference.nf'
 include { EPIGENETIC_AGE_PLOTS } from './modules/epigenetic_age_plots.nf'
 include { CTRL_FLUORESCENCE_PLOTS } from './modules/ctrl_fluorescence_plots.nf'
+include { REPORT } from './modules/report.nf'
 
 //Default values for parameters stored in nextflow.config (ref. https://www.nextflow.io/docs/latest/cli.html#cli-params)
 
@@ -82,6 +83,9 @@ workflow {
 
     if(processed_samples_count > 2) {
         ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
+        ao_plot_path = ao_results.ao_plot
+    } else {
+        ao_plot_path = "$projectDir/assets/NO_FILE.txt"
     }
 
     // run sex_inference process when parameter infer_sex is set to true
@@ -115,6 +119,16 @@ workflow {
         epi_age_res_path = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
         epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_path, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
     }
+
+    report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
+
+    REPORT(
+        report_template_path,
+        ao_plot_path,
+        beta_distr_plot,
+        nan_per_probe_plot,
+        nan_per_sample_plot
+    )
 
     /* 
     Moved saving params to the end of the workflow to add parameters such as workflow duration etc.

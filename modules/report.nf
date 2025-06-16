@@ -1,0 +1,21 @@
+process REPORT {
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.html'
+    label 'python'
+    debug true
+
+    input:
+    //TODO: define all inputs for the report!!!
+    path html_template
+    path ao_plot_path
+    path beta_distribution_plot
+    path nan_distribution_per_probe_plot
+    path nan_distribution_per_sample_plot
+
+    output:
+    path "qc_report.html"
+
+    script:
+    """
+    report.py ${html_template} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot}
+    """
+}

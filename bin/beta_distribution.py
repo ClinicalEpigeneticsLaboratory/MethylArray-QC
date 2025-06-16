@@ -14,7 +14,7 @@ from decorators import update_and_export_plot
 
 
 @update_and_export_plot(
-    json_path="beta_distribution.json", height=400, showlegend=False
+    json_path="beta_distribution.json", height=325, showlegend=False
 )
 def get_beta_distr_plot(n_cpgs_beta_distr: int, plot_data: pd.DataFrame) -> ff:
     """A function generating beta distribution plot

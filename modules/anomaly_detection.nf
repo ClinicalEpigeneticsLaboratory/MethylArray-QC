@@ -7,8 +7,8 @@ process ANOMALY_DETECTION {
     val contamination
 
     output:
-    path "ao_results.parquet"
-    path "ao_plot.json"
+    path "ao_results.parquet", emit: ao_results
+    path "ao_plot.json", emit: ao_plot
 
     script:
     """

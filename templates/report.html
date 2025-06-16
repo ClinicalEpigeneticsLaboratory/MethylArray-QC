@@ -31,6 +31,20 @@
                     </div>
                 </div>
             </div>
+            {% if anomaly_det_plot %}
+                <div class="card">
+                    <div class="card-header">
+                        <a class="collapsed btn" data-bs-toggle="collapse" href="#anomalyDetection">
+                            <b>Anomaly detection plot</b>
+                        </a>
+                    </div>
+                    <div id="anomalyDetection" class="collapse" data-bs-parent="#accordion">
+                        <div class="card-body">
+                            {{anomaly_det_plot}}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
             <div class="card">
                 <div class="card-header">
                     <a class="collapsed btn" data-bs-toggle="collapse" href="#betaDistribution">
@@ -39,31 +53,31 @@
                 </div>
                 <div id="betaDistribution" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        A place for the beta distribution plot
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <a class="collapsed btn" data-bs-toggle="collapse" href="#nanPerSample">
-                        <b>%NaN per sample plot</b>
-                    </a>
-                </div>
-                <div id="nanPerSample" class="collapse" data-bs-parent="#accordion">
-                    <div class="card-body">
-                        Here goes the %NaN per sample plot
+                        {{beta_distr_plot}}
                     </div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <a class="collapsed btn" data-bs-toggle="collapse" href="#nanPerProbe">
-                        <b>NaN per probe plot</b>
+                        <b>Heatmap showing NaN per probe/sample</b>
                     </a>
                 </div>
                 <div id="nanPerProbe" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        Here goes the NaN per probe plot
+                        {{nan_per_probe_plot}}
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <a class="collapsed btn" data-bs-toggle="collapse" href="#nanPerSample">
+                        <b>NaN per sample plot</b>
+                    </a>
+                </div>
+                <div id="nanPerSample" class="collapse" data-bs-parent="#accordion">
+                    <div class="card-body">
+                        {{nan_per_sample_plot}}
                     </div>
                 </div>
             </div>
