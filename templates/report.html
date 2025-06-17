@@ -18,6 +18,18 @@
             margin: 0 20; 
             background: whitesmoke;
         }
+        /* Fix for long text in table cells */
+        table td, table th {
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        /* Allow <pre> blocks to wrap */
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -33,29 +45,33 @@
                 </div>
                 <div id="workflowParams" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        <h2>Workflow version: {{ nextflow_version }}</h2>
-                        <table class = "table">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for key, value in workflow_params.items() %}
-                                <tr>
-                                    <td><b>{{ key }}</b></td>
-                                    <td>
-                                        {% if value is string or value is number or value is boolean %}
-                                            {{ value }}
-                                        {% else %}
-                                            <pre>{{ value | tojson(indent=2) }}</pre>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <div class="container mt-3">
+                            <h2>Workflow version: {{ nextflow_version }}</h2>
+                            <div class="table-responsive">
+                                <table class = "table w-100">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for key, value in workflow_params.items() %}
+                                        <tr>
+                                            <td><b>{{ key }}</b></td>
+                                            <td>
+                                                {% if value is string or value is number or value is boolean %}
+                                                    {{ value }}
+                                                {% else %}
+                                                    <pre>{{ value | tojson(indent=2) }}</pre>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
