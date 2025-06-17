@@ -56,5 +56,5 @@ mynorm$CpG <- rownames(mynorm)
 write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
 
 raw_probe_count_json <- character()
-raw_probe_count_json <- toJSON(nrow(mynorm))
+raw_probe_count_json <- toJSON(nrow(mynorm), auto_unbox = TRUE)
 write(raw_probe_count_json, "raw_mynorm_probe_count.json")
