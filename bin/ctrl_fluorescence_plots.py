@@ -1,5 +1,7 @@
 #!/usr/local/bin/python
 
+# TODO: there is a bug when a probe type consists of 2 words without underscore!!!
+
 """
 A module generating figures for control probe fluorescence evaluation
 """
@@ -42,8 +44,14 @@ def get_ctrl_fluorescence_plot(
         metric_name = "Max Intensity"
 
     fig.update_layout(
-        yaxis={"title": f"log<sub>10</sub>{metric_name}"},
-        title=ctrl_probe_type
+        yaxis={"title": f"log<sub>10</sub>{metric_name}<br>({ctrl_probe_type})"},
+        legend={
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "left",
+            "x": 0,
+            "orientation": "h",
+        },
     )
 
     if fig is not None:
