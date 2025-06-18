@@ -6,7 +6,6 @@ A module generating HTML report
 
 import sys
 import datetime
-import plotly.express as px
 import json
 from jinja2 import Template
 import plotly.io as pio
