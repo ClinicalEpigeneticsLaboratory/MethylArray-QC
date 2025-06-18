@@ -82,8 +82,13 @@
                             <div class="plot-container">
                                 {{ section.html | safe }}
                             </div>
+                            {% elif section.type == "plot-group" %}
+                                {% for plot in section.html_list %}
+                                    <div class="plot-container mb-4">
+                                        {{ plot.plot_html | safe }}
+                                    </div>
+                                {% endfor %}
                             {% endif %}
-
                     </div>
                 </div>
             </div>

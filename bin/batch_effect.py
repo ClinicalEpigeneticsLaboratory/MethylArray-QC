@@ -95,7 +95,7 @@ def get_all_figs(
         if fig is not None:
             export_decorated_fig_with_custom_name(
                 fig=fig,
-                json_path=f"{row_num}.json",
+                json_path=f"{column}_{row_num}.json",
             )
 
 

@@ -8,7 +8,7 @@ process BATCH_EFFECT {
     each column
 
     output:
-    path "*.json", arity: "1..*"
+    path "${column}_*.json", arity: "1..*"
 
     script:
     """

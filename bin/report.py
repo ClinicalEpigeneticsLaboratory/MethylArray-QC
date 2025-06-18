@@ -4,11 +4,13 @@
 A module generating HTML report
 """
 
+import os
 import sys
 import datetime
 import json
 from jinja2 import Template
 import plotly.io as pio
+from pathlib import Path
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
@@ -134,23 +136,63 @@ def flatten_dict(d: dict, parent_key: str='', sep: str='.') -> dict:
             items.append((new_key, v))
     return dict(items)
 
-def add_plot_section(report_sections: dict, id: str, title: str, path: str) -> str:
-    if path and path != "NO_FILE.txt":
-        report_sections.append({
-            "id": id,
-            "title": title,
-            "type": "plot",
-            "html": json_fig_to_html(path)
+# def get_all_plot_paths(root_dir: str) -> list:
+#     """
+#     Recursively collects all JSON plot files under the given root directory.
+
+#     Returns:
+#         List of paths to JSON files
+#     """
+#     plot_paths = []
+#     for dirpath, _, filenames in os.walk(root_dir):
+#         for fname in filenames:
+#             if fname.endswith(".json"):
+#                 full_path = os.path.join(dirpath, fname)
+#                 plot_paths.append(full_path)
+#     return sorted(plot_paths)  # sort for deterministic order
+
+def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path|list) -> str:
+    if isinstance(paths, str):
+        paths = [paths]
+
+    valid_paths = [(p, json_fig_to_html(p)) for p in paths if p and p != "NO_FILE.txt"]
+
+    if not valid_paths:
+        return report_sections
+
+    html_list = []
+    for idx, (path, html) in enumerate(valid_paths):
+        html_list.append({
+            "plot_html": html,
+            "plot_path": path,
+            "plot_name": f"plot_{id}_{idx}"
         })
+
+    report_sections.append({
+        "id": id,
+        "title": title,
+        "type": "plot-group",
+        "html_list": html_list
+    })
+
     return report_sections
+    # if path and path != "NO_FILE.txt":
+    #     report_sections.append({
+    #         "id": id,
+    #         "title": title,
+    #         "type": "plot",
+    #         "html": json_fig_to_html(path)
+    #     })
+    # return report_sections
 
 def main():
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 8:
         print(
             "Usage: python report.py <html_template: str|Path> \
                 <ao_plot_path: str|Path> <beta_distribution_plot: str|Path> \
                 <nan_distribution_per_probe_plot: str|Path> \
                 <nan_distribution_per_sample_plot: str|Path> \
+                <batch_effect_dir: str|Path> \
                 <config_json_path: str|Path>"
         )
         sys.exit(1)
@@ -160,9 +202,20 @@ def main():
     beta_distr_plot_path = sys.argv[3]
     heatmap_path = sys.argv[4]
     nan_distr_per_sample_path = sys.argv[5]
-    config_json_path = sys.argv[6]
+    batch_effect_plot_paths = sys.argv[6]
+    config_json_path = sys.argv[7]
 
     output_report_path = "qc_report.html"
+
+    batch_effect_plot_paths = batch_effect_plot_paths.split(',')
+    # Remove any empty strings (just in case)
+    # items = [item.strip() for item in batch_effect_plot_paths if item.strip()]
+
+    # Convert to a single string or list depending on length
+    # if len(items) == 1:
+    #     batch_effect_plot_paths = items[0]
+    # else:
+    #     batch_effect_plot_paths = items
 
     config = load_config_json(config_json_path)
     nf_version = get_nextflow_version(config)
@@ -208,6 +261,7 @@ def main():
     # Add plot sections
     if ao_plot_path != "NO_FILE.txt":
         report_sections = add_plot_section(report_sections, "anomalyDetection", "Anomaly detection plot", ao_plot_path)
+    report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
     report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
