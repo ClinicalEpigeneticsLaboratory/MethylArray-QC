@@ -136,21 +136,6 @@ def flatten_dict(d: dict, parent_key: str='', sep: str='.') -> dict:
             items.append((new_key, v))
     return dict(items)
 
-# def get_all_plot_paths(root_dir: str) -> list:
-#     """
-#     Recursively collects all JSON plot files under the given root directory.
-
-#     Returns:
-#         List of paths to JSON files
-#     """
-#     plot_paths = []
-#     for dirpath, _, filenames in os.walk(root_dir):
-#         for fname in filenames:
-#             if fname.endswith(".json"):
-#                 full_path = os.path.join(dirpath, fname)
-#                 plot_paths.append(full_path)
-#     return sorted(plot_paths)  # sort for deterministic order
-
 def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path|list) -> str:
     if isinstance(paths, str):
         paths = [paths]
@@ -176,14 +161,6 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
     })
 
     return report_sections
-    # if path and path != "NO_FILE.txt":
-    #     report_sections.append({
-    #         "id": id,
-    #         "title": title,
-    #         "type": "plot",
-    #         "html": json_fig_to_html(path)
-    #     })
-    # return report_sections
 
 def main():
     if len(sys.argv) != 8:
@@ -208,14 +185,6 @@ def main():
     output_report_path = "qc_report.html"
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(',')
-    # Remove any empty strings (just in case)
-    # items = [item.strip() for item in batch_effect_plot_paths if item.strip()]
-
-    # Convert to a single string or list depending on length
-    # if len(items) == 1:
-    #     batch_effect_plot_paths = items[0]
-    # else:
-    #     batch_effect_plot_paths = items
 
     config = load_config_json(config_json_path)
     nf_version = get_nextflow_version(config)
@@ -266,29 +235,10 @@ def main():
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
 
-
-        #report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
-    # else:
-    #     report_jinja_data["anomaly_det_plot"] = None
-
     # Final template data
     report_jinja_data = {
         "report_sections": report_sections
     }
-
-
-    # report_jinja_data = {
-    #     "beta_distr_plot": json_fig_to_html(beta_distr_plot_path),
-    #     "nan_per_probe_plot": json_fig_to_html(heatmap_path),
-    #     "nan_per_sample_plot": json_fig_to_html(nan_distr_per_sample_path),
-    #     "workflow_params": flat_config_ordered
-    # }
-
-    # if ao_plot_path != "NO_FILE.txt":
-
-    #     #report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
-    # else:
-    #     report_jinja_data["anomaly_det_plot"] = None
 
     with open(output_report_path, "w", encoding="utf-8") as output_file:
         with open(input_template_path) as template_file:

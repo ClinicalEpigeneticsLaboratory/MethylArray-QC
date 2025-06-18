@@ -95,9 +95,6 @@ workflow {
 
     batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"])
 
-    // original_batch_effect_ch_out = batch_effect_ch_out
-    // original_batch_effect_ch_out.view { "original batch_effect_ch_out emits: $it" }
-
     // batch_effect_ch_out.sentrix_id: paths to batch effect evaluation boxplots for Sentrix IDs
     // batch_effect_ch_out.sentrix_position: path to batch effect evaluation boxplots for Sentrix Position
     batch_effect_ch_out
@@ -132,10 +129,6 @@ workflow {
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
     params_path = file("${params.output}/params.json")
-
-    //batch_effect_ch_out.sentrix_id.view { "batch_effect_ch_out.sentrix_id emits: $it" }
-    //batch_effect_ch_out.sentrix_position.view { "batch_effect_ch_out.sentrix_position emits: $it" }
-    // batch_effect_plot_paths.view { "Collected batch effect paths: ${it}" }
 
     REPORT(
         report_template_path,
