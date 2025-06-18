@@ -121,13 +121,15 @@ workflow {
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
+    params_path = file("${params.output}/params.json")
 
     REPORT(
         report_template_path,
         ao_plot_path,
         beta_distr_plot,
         nan_per_probe_plot,
-        nan_per_sample_plot
+        nan_per_sample_plot,
+        params_path
     )
 
     /* 
