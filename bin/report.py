@@ -95,7 +95,10 @@ def get_formatted_time(config: dict, type_value: str) -> str:
             f"Incorrect value for 'type_VALUE' parameter provided — must be one of: {', '.join(allowed_types)}"
         )
     
-    time_data = config.get(f"Workflow_{type_value}", {})
+    time_data = config.get(f"Workflow_{type_value}")
+
+    if not time_data:
+        return "Not available"
 
     if type_value == "duration":
         seconds = time_data.get("seconds", "NA")
@@ -110,7 +113,7 @@ def get_formatted_time(config: dict, type_value: str) -> str:
         second = int(time_data.get("second", "NA"))
         return f"{day:02d} {month} {year} {hour:02d}:{minute:02d}:{second:02d}"
 
-def flatten_dict(d, parent_key='', sep='.') -> dict:
+def flatten_dict(d: dict, parent_key: str='', sep: str='.') -> dict:
     """A helper function flattening nested dict into dot-notated keys, e.g.:
     {'a': {'b': 1}} -> {'a.b': 1}
 
@@ -130,6 +133,16 @@ def flatten_dict(d, parent_key='', sep='.') -> dict:
         else:
             items.append((new_key, v))
     return dict(items)
+
+def add_plot_section(report_sections: dict, id: str, title: str, path: str) -> str:
+    if path and path != "NO_FILE.txt":
+        report_sections.append({
+            "id": id,
+            "title": title,
+            "type": "plot",
+            "html": json_fig_to_html(path)
+        })
+    return report_sections
 
 def main():
     if len(sys.argv) != 7:
@@ -182,17 +195,46 @@ def main():
         **flat_config_filtered
     }
 
+    report_sections = []
+
+    # Add table section for workflow parameters
+    report_sections.append({
+        "id": "workflowParams",
+        "title": "Workflow parameters",
+        "type": "table",
+        "data": flat_config_ordered
+    })
+
+    # Add plot sections
+    if ao_plot_path != "NO_FILE.txt":
+        report_sections = add_plot_section(report_sections, "anomalyDetection", "Anomaly detection plot", ao_plot_path)
+    report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
+    report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
+    report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
+
+
+        #report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
+    # else:
+    #     report_jinja_data["anomaly_det_plot"] = None
+
+    # Final template data
     report_jinja_data = {
-        "beta_distr_plot": json_fig_to_html(beta_distr_plot_path),
-        "nan_per_probe_plot": json_fig_to_html(heatmap_path),
-        "nan_per_sample_plot": json_fig_to_html(nan_distr_per_sample_path),
-        "workflow_params": flat_config_ordered
+        "report_sections": report_sections
     }
 
-    if ao_plot_path != "NO_FILE.txt":
-        report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
-    else:
-        report_jinja_data["anomaly_det_plot"] = None
+
+    # report_jinja_data = {
+    #     "beta_distr_plot": json_fig_to_html(beta_distr_plot_path),
+    #     "nan_per_probe_plot": json_fig_to_html(heatmap_path),
+    #     "nan_per_sample_plot": json_fig_to_html(nan_distr_per_sample_path),
+    #     "workflow_params": flat_config_ordered
+    # }
+
+    # if ao_plot_path != "NO_FILE.txt":
+
+    #     #report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
+    # else:
+    #     report_jinja_data["anomaly_det_plot"] = None
 
     with open(output_report_path, "w", encoding="utf-8") as output_file:
         with open(input_template_path) as template_file:
