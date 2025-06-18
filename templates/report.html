@@ -30,6 +30,17 @@
             word-break: break-word;
             margin: 0;
         }
+
+    /* Plotly responsiveness fix */
+    .plot-container .js-plotly-plot {
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Optional: Prevent scroll on small screens */
+    .plot-container {
+        overflow-x: auto;
+    }
     </style>
 </head>
 
@@ -46,13 +57,12 @@
                 <div id="workflowParams" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
                         <div class="container mt-3">
-                            <h2>Workflow version: {{ nextflow_version }}</h2>
                             <div class="table-responsive">
                                 <table class = "table w-100">
                                     <thead>
                                         <tr>
-                                            <th>Parameter</th>
-                                            <th>Value</th>
+                                            <th style="width: 40%;">Parameter</th>
+                                            <th style="width: 60%;">Value</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -84,7 +94,9 @@
                     </div>
                     <div id="anomalyDetection" class="collapse" data-bs-parent="#accordion">
                         <div class="card-body">
-                            {{anomaly_det_plot}}
+                            <div class="plot-container">
+                                {{anomaly_det_plot | safe}}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -97,7 +109,9 @@
                 </div>
                 <div id="betaDistribution" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        {{beta_distr_plot}}
+                        <div class="plot-container">
+                            {{beta_distr_plot | safe}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,7 +123,9 @@
                 </div>
                 <div id="nanPerProbe" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        {{nan_per_probe_plot}}
+                        <div class="plot-container">
+                            {{nan_per_probe_plot | safe}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -121,7 +137,9 @@
                 </div>
                 <div id="nanPerSample" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        {{nan_per_sample_plot}}
+                        <div class="plot-container">
+                            {{nan_per_sample_plot | safe}}
+                        </div>
                     </div>
                 </div>
             </div>
