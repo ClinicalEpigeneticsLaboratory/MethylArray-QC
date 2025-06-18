@@ -12,6 +12,14 @@ from jinja2 import Template
 import plotly.io as pio
 
 def json_fig_to_html(json_path: str) -> str:
+    """A function generating HTML div for a figure exported as JSON
+
+    Args:
+        json_path (str): path to a figure JSON file
+
+    Returns:
+        str: HTML code generated for a figure saved in JSON format
+    """    
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid = True)
         return fig.to_html(full_html=False, include_plotlyjs='cdn', config={"responsive": True})
@@ -20,6 +28,14 @@ def json_fig_to_html(json_path: str) -> str:
         sys.exit(1)
 
 def load_config_json(json_path: str) -> dict:
+    """A function loading a JSON config (with exception handling)
+
+    Args:
+        json_path (str): path to a config exported as JSON file
+
+    Returns:
+        dict: a config with all exported workflow parameters, as dict
+    """    
     try:
         with open(json_path) as f:
             return json.load(f)
@@ -28,6 +44,15 @@ def load_config_json(json_path: str) -> dict:
         return {}
 
 def get_nextflow_version(config: dict) -> str:
+    """A function generating Nextflow version as formatted string
+
+    Args:
+        config (dict): a config with all exported workflow parameters, as dict
+
+    Returns:
+        str: Nextflow version, e.g. 24.10.5 (f"{major}.{minor}.{patch}")
+    """    
+
     nf_ver = config.get("Nextflow_version", {})
     major = nf_ver.get("major", "NA")
     minor = nf_ver.get("minor", "NA")
@@ -35,6 +60,19 @@ def get_nextflow_version(config: dict) -> str:
     return f"{major}.{minor}.{patch}"
 
 def get_run_times(config: dict) -> str:
+    """A function generating a string containing information about:\n\
+            1) workflow start date and time,\n\
+            2) workflow completion date and time,\n\
+            3) workflow duration
+    Args:
+        config (dict): a config with all exported workflow parameters, as dict
+
+    Returns:
+        str: a string containing:\n\
+            1) workflow start date and time,\n\
+            2) workflow completion date and time,\n\
+            3) workflow duration
+    """    
     start = get_formatted_time(config = config, type_value = "start")
     complete = get_formatted_time(config = config, type_value = "complete")
     duration = get_formatted_time(config = config, type_value = "duration")
@@ -74,9 +112,16 @@ def get_formatted_time(config: dict, type_value: str) -> str:
         return f"{day:02d} {month} {year} {hour:02d}:{minute:02d}:{second:02d}"
 
 def flatten_dict(d, parent_key='', sep='.') -> dict:
-    """
-    Flattens nested dict into dot-notated keys, e.g.:
+    """A helper function flattening nested dict into dot-notated keys, e.g.:
     {'a': {'b': 1}} -> {'a.b': 1}
+
+    Args:
+        d (dict): a dictionary with nested parameters
+        parent_key (str): a parent key for the currently processed key (default: '')
+        sep (str): a separator for the new dictionary keys(default: .)
+
+    Returns:
+        dict: a flattened dictionary
     """
     items = []
     for k, v in d.items():
@@ -138,10 +183,6 @@ def main():
         **flat_config_filtered
     }
 
-    # print("Flattened config:")
-    # for k, v in flat_config.items():
-    #     print(f"{k}: {v} ({type(v)})")
-
     report_jinja_data = {
         "beta_distr_plot": json_fig_to_html(beta_distr_plot_path),
         "nan_per_probe_plot": json_fig_to_html(heatmap_path),
@@ -150,7 +191,6 @@ def main():
     }
 
     if ao_plot_path != "NO_FILE.txt":
-        # print(f"Reading plot: {ao_plot_path}")
         report_jinja_data["anomaly_det_plot"] = json_fig_to_html(ao_plot_path)
     else:
         report_jinja_data["anomaly_det_plot"] = None
