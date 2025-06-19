@@ -15,16 +15,15 @@ class JsonWorkflowParamExporter {
     @param nextflow_version                         Nextflow version (property from Nextflow metadata object)
     @param idat_count                               Number of IDAT files in input directory
     @param sample_count                             Number of processed samples (in sample sheet)
-    @param imputed_mynorm_probe_count_json_path     Path to JSON file containing number of probes in imputed mynorm
 
     @return formated JSON string
     */
-    public static String toJSON(passed_params_map, params_map_full, workflow_metadata, nextflow_version, idat_count, sample_count, imputed_mynorm_probe_count_json_path) {
+    public static String toJSON(passed_params_map, params_map_full, workflow_metadata, nextflow_version, idat_count, sample_count) {
         
         def jsonSlurper = new JsonSlurper()
         
-        def imputed_mynorm_probe_count_file = new File(imputed_mynorm_probe_count_json_path)
-        def imputed_mynorm_probe_count = jsonSlurper.parse(imputed_mynorm_probe_count_file)
+        // def imputed_mynorm_probe_count_file = new File(imputed_mynorm_probe_count_json_path)
+        // def imputed_mynorm_probe_count = jsonSlurper.parse(imputed_mynorm_probe_count_file)
 
         def params_map_flattened = passed_params_map
         
@@ -33,7 +32,7 @@ class JsonWorkflowParamExporter {
         params_map_flattened['Container_R_clock'] = params_map_full['Core Nextflow options']['container']['withLabel:r_clock']
         params_map_flattened['Container_Python'] = params_map_full['Core Nextflow options']['container']['withLabel:python']
         params_map_flattened['Nextflow_version'] = nextflow_version
-        params_map_flattened['Imputed_mynorm_probe_count'] = imputed_mynorm_probe_count.mynorm_imputed_n_cpgs
+        // params_map_flattened['Imputed_mynorm_probe_count'] = imputed_mynorm_probe_count.mynorm_imputed_n_cpgs
         params_map_flattened['Workflow_start'] = workflow_metadata.start
         params_map_flattened.remove('container')
         params_map_flattened['Workflow_duration'] = workflow_metadata.duration

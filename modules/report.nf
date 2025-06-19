@@ -7,7 +7,9 @@ process REPORT {
     //TODO: define all inputs for the report!!!
     path html_template
     path qc_summary_path
+    val ctrl_fluorescence_plot_paths
     path preprocess_summary_path
+    path imputation_summary_path
     path ao_plot_path
     path beta_distribution_plot
     path nan_distribution_per_probe_plot
@@ -21,6 +23,6 @@ process REPORT {
 
     script:
     """
-    report.py ${html_template} ${qc_summary_path} ${preprocess_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
+    report.py ${html_template} ${qc_summary_path} ${ctrl_fluorescence_plot_paths} ${preprocess_summary_path} ${imputation_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
     """
 }

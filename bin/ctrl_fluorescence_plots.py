@@ -31,11 +31,11 @@ def get_ctrl_fluorescence_plot(
     
     if "Sample_Group" in probe_data.columns:
         fig = px.scatter(
-            probe_data, x=column, y="log_10_metric", hover_data=hover_cols, color = "Sample_Group"
+            probe_data, x=column, y="log_10_metric", hover_data=hover_cols, color = "Sample_Group", symbol = "Subtype"
         )
     else:
         fig = px.scatter(
-            probe_data, x=column, y="log_10_metric", hover_data=hover_cols
+            probe_data, x=column, y="log_10_metric", hover_data=hover_cols, symbol = "Subtype"
         )
 
     if probe_data['metric_type'].unique().tolist() == "total":
@@ -52,6 +52,7 @@ def get_ctrl_fluorescence_plot(
             "x": 0,
             "orientation": "h",
         },
+        scattermode="group",
     )
 
     if fig is not None:

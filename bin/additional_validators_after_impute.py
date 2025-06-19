@@ -40,19 +40,19 @@ def main():
             Usage: python additional_validators_after_impute.py 
             <params_n_cpgs_beta_distr: int> 
             <params_nan_per_probe_n_cpgs: int> 
-            <imputed_mynorm_n_cpgs_path: str>
+            <imputation_summary_path: str>
             """
         )
         sys.exit(1)
 
     params_n_cpgs_beta_distr = int(sys.argv[1])
     params_nan_per_probe_n_cpgs = int(sys.argv[2])
-    imputed_mynorm_n_cpgs_path = Path(sys.argv[3])
+    imputation_summary_path = Path(sys.argv[3])
 
-    imputed_mynorm_n_cpgs_dict = {}
-    with open(imputed_mynorm_n_cpgs_path, encoding="utf-8") as f:
-        imputed_mynorm_n_cpgs_dict = json.load(f)
-    imputed_mynorm_n_cpgs = imputed_mynorm_n_cpgs_dict["mynorm_imputed_n_cpgs"]
+    imputation_summary_dict = {}
+    with open(imputation_summary_path, encoding="utf-8") as f:
+        imputation_summary_dict = json.load(f)
+    imputed_mynorm_n_cpgs = imputation_summary_dict["mynorm_imputed_n_cpgs"]
 
     validate_params_random_cpg_count(
         param_name=f"params_n_cpgs_beta_distr={params_n_cpgs_beta_distr!r}".split(

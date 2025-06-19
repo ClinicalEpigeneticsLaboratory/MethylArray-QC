@@ -67,6 +67,11 @@ workflow {
         }
 
         ctrl_fluorescence_plots_ch_out = CTRL_FLUORESCENCE_PLOTS(ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path, sample_sheet_abs_path, unique_grouping_cols, unique_probe_types)
+        ctrl_fluorescence_plot_paths = ctrl_fluorescence_plots_ch_out
+            .collect()
+            .map {
+                it.join(',')
+            }
     }
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
@@ -80,7 +85,7 @@ workflow {
     impute_ch_out = IMPUTE(preprocess_ch_out.raw_mynorm_path, params.p_threshold, params.s_threshold, params.imputer_type)
 
     if(impute_ch_out) {
-        ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.mynorm_imputed_n_cpgs)
+        ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.imputation_summary_path)
     }
 
     if(processed_samples_count > 2) {
@@ -135,7 +140,9 @@ workflow {
     REPORT(
         report_template_path,
         qc_ch_out.qc_json,
+        ctrl_fluorescence_plot_paths,
         preprocess_ch_out.preprocess_summary_path,
+        impute_ch_out.imputation_summary_path,
         ao_plot_path,
         beta_distr_plot,
         nan_per_probe_plot,
@@ -158,7 +165,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
         println("Workflow completed")
     }
 
@@ -166,7 +173,7 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
         println("Workflow completed with errors")
     }
 }
