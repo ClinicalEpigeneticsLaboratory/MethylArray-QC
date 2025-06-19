@@ -55,6 +55,25 @@ mynorm <- as.data.frame(mynorm)
 mynorm$CpG <- rownames(mynorm)
 write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
 
-raw_probe_count_json <- character()
-raw_probe_count_json <- toJSON(nrow(mynorm), auto_unbox = TRUE)
-write(raw_probe_count_json, "raw_mynorm_probe_count.json")
+preprocessing_data <- data.frame()
+preprocessing_data <- data.frame(
+    Microarray_platform = sesame::sdfPlatform(sdfs[[1]]),
+    IDAT_count_in_input_dir = length(
+        list.files(
+            path = "idats",
+            pattern = "\\.idat(\\.gz)?$",
+            full.names = TRUE,
+            recursive = TRUE
+        )
+    ),
+    Processed_samples_count = length(sdfs),
+    Processed_IDAT_count = length(sdfs)*2,
+    Raw_mynorm_probe_count = nrow(mynorm)
+)
+preprocessing_data_json <- character()
+preprocessing_data_json <- toJSON(preprocessing_data, auto_unbox = TRUE)
+write(preprocessing_data_json, "preprocessing_data_summary.json")
+
+# platform_json <- character()
+# platform_json <- toJSON(sesame::sdfPlatform, auto_unbox = TRUE)
+# write(raw_probe_count_json, "raw_mynorm_probe_count.json")

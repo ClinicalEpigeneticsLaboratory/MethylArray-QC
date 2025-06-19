@@ -68,7 +68,7 @@ workflow {
     }
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
-    // preprocess_ch_out.raw_mynorm_probe_count_path: raw mynorm probe count JSON file path
+    // preprocess_ch_out.preprocessing_data_summary: preprocessing data summary JSON file path
     preprocess_ch_out = PREPROCESS(input_abs_path, cpus, params.prep_code, params.collapse_prefix, params.collapse_prefix_method, sample_sheet_abs_path)
     
     // impute_ch_out.imputed_mynorm: imputed mynorm path
@@ -154,7 +154,9 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString()
+        //, preprocess_ch_out.raw_mynorm_probe_count_path.val.toString()
+        )
         println("Workflow completed")
     }
 
@@ -162,7 +164,9 @@ workflow {
         def params_map_all = paramsSummaryMap(workflow)
         def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
         def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString(), preprocess_ch_out.raw_mynorm_probe_count_path.val.toString())
+        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count, impute_ch_out.mynorm_imputed_n_cpgs.val.toString()
+        //, preprocess_ch_out.raw_mynorm_probe_count_path.val.toString()
+        )
         println("Workflow completed with errors")
     }
 }

@@ -1,5 +1,5 @@
 process PREPROCESS {
-    publishDir "${params.output}/Preprocess", mode: 'copy', overwrite: true, pattern: "raw_mynorm*"
+    publishDir "${params.output}/Preprocess", mode: 'copy', overwrite: true
     label 'r_sesame'
 
     input:
@@ -12,7 +12,8 @@ process PREPROCESS {
 
     output:
     path "raw_mynorm.parquet", emit: raw_mynorm_path
-    path "raw_mynorm_probe_count.json", emit: raw_mynorm_probe_count_path
+    path "preprocessing_data_summary.json", emit: preprocessing_data_summary
+    //path "raw_mynorm_probe_count.json", emit: raw_mynorm_probe_count_path
 
     script:
     """

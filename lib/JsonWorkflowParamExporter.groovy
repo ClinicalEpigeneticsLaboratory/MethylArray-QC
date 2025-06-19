@@ -20,12 +20,12 @@ class JsonWorkflowParamExporter {
 
     @return formated JSON string
     */
-    public static String toJSON(passed_params_map, params_map_full, workflow_metadata, nextflow_version, idat_count, sample_count, imputed_mynorm_probe_count_json_path, raw_mynorm_probe_count_json_path) {
+    public static String toJSON(passed_params_map, params_map_full, workflow_metadata, nextflow_version, idat_count, sample_count, imputed_mynorm_probe_count_json_path) {
         
         def jsonSlurper = new JsonSlurper()
         
-        def raw_mynorm_probe_count_file = new File(raw_mynorm_probe_count_json_path)
-        def raw_mynorm_probe_count = jsonSlurper.parse(raw_mynorm_probe_count_file)
+        //def raw_mynorm_probe_count_file = new File(raw_mynorm_probe_count_json_path)
+        //def raw_mynorm_probe_count = jsonSlurper.parse(raw_mynorm_probe_count_file)
         
         def imputed_mynorm_probe_count_file = new File(imputed_mynorm_probe_count_json_path)
         def imputed_mynorm_probe_count = jsonSlurper.parse(imputed_mynorm_probe_count_file)
@@ -34,13 +34,13 @@ class JsonWorkflowParamExporter {
         
         params_map_flattened['Container_engine'] = params_map_full['Core Nextflow options']['containerEngine']
         params_map_flattened['Container_R_sesame'] = params_map_full['Core Nextflow options']['container']['withLabel:r_sesame']
-        params_map_flattened['Container_R_other'] = params_map_full['Core Nextflow options']['container']['withLabel:r_other']
+        params_map_flattened['Container_R_clock'] = params_map_full['Core Nextflow options']['container']['withLabel:r_clock']
         params_map_flattened['Container_Python'] = params_map_full['Core Nextflow options']['container']['withLabel:python']
         params_map_flattened['Nextflow_version'] = nextflow_version
-        params_map_flattened['IDAT_count_in_input_dir'] = idat_count
-        params_map_flattened['Processed_samples_count'] = sample_count
-        params_map_flattened['Processed_IDAT_count'] = sample_count*2
-        params_map_flattened['Raw_mynorm_probe_count'] = raw_mynorm_probe_count
+        //params_map_flattened['IDAT_count_in_input_dir'] = idat_count
+        //params_map_flattened['Processed_samples_count'] = sample_count
+        //params_map_flattened['Processed_IDAT_count'] = sample_count*2
+        //params_map_flattened['Raw_mynorm_probe_count'] = raw_mynorm_probe_count
         params_map_flattened['Imputed_mynorm_probe_count'] = imputed_mynorm_probe_count.mynorm_imputed_n_cpgs
         params_map_flattened['Workflow_start'] = workflow_metadata.start
         params_map_flattened.remove('container')
