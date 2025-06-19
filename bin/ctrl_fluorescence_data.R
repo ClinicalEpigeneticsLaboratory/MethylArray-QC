@@ -153,12 +153,22 @@ if(!("Type" %in% colnames(control_all_df))) {
     control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
     control_all_df$Probe_ID <- sapply(control_all_df$Probe_ID_split, function(x) paste(x[1:2], collapse = "_"))
     control_all_df$Type <- sapply(control_all_df$Probe_ID_split, function(x) ifelse(length(x) > 2, paste(x[3:length(x)], collapse = "_"), NA))
+    control_all_df$Subtype <- control_all_df$Type
+    control_all_df$Type <- ifelse(control_all_df$Type %in% paste0("NORM_", c("A", "C", "T", "G")), "NORM", control_all_df$Type)
     control_all_df$Probe_ID_split <- NULL
 }
 
 control_all_df$Type <- as.character(
     stringr::str_replace_all(
         string = control_all_df$Type,
+        pattern = " ",
+        replacement = "_"
+    )
+)
+
+control_all_df$Subtype <- as.character(
+    stringr::str_replace_all(
+        string = control_all_df$Subtype,
         pattern = " ",
         replacement = "_"
     )
