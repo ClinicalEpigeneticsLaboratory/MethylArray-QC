@@ -73,7 +73,3 @@ preprocessing_data <- data.frame(
 preprocessing_data_json <- character()
 preprocessing_data_json <- toJSON(preprocessing_data, auto_unbox = TRUE)
 write(preprocessing_data_json, "preprocessing_data_summary.json")
-
-# platform_json <- character()
-# platform_json <- toJSON(sesame::sdfPlatform, auto_unbox = TRUE)
-# write(raw_probe_count_json, "raw_mynorm_probe_count.json")
