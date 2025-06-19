@@ -12,7 +12,7 @@ process PREPROCESS {
 
     output:
     path "raw_mynorm.parquet", emit: raw_mynorm_path
-    path "preprocessing_data_summary.json", emit: preprocessing_data_summary
+    path "preprocessing_data_summary.json", emit: preprocess_summary_path
     //path "raw_mynorm_probe_count.json", emit: raw_mynorm_probe_count_path
 
     script:

@@ -163,9 +163,10 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
     return report_sections
 
 def main():
-    if len(sys.argv) != 9:
+    if len(sys.argv) != 10:
         print(
             "Usage: python report.py <html_template: str|Path> \
+                <preprocess_summary_path: str|Path> \
                 <ao_plot_path: str|Path> <beta_distribution_plot: str|Path> \
                 <nan_distribution_per_probe_plot: str|Path> \
                 <nan_distribution_per_sample_plot: str|Path> \
@@ -176,13 +177,14 @@ def main():
         sys.exit(1)
 
     input_template_path = sys.argv[1]
-    ao_plot_path = sys.argv[2]
-    beta_distr_plot_path = sys.argv[3]
-    heatmap_path = sys.argv[4]
-    nan_distr_per_sample_path = sys.argv[5]
-    batch_effect_plot_paths = sys.argv[6]
-    sex_inference_path = sys.argv[7]
-    config_json_path = sys.argv[8]
+    preprocess_summary_path = sys.argv[2]
+    ao_plot_path = sys.argv[3]
+    beta_distr_plot_path = sys.argv[4]
+    heatmap_path = sys.argv[5]
+    nan_distr_per_sample_path = sys.argv[6]
+    batch_effect_plot_paths = sys.argv[7]
+    sex_inference_path = sys.argv[8]
+    config_json_path = sys.argv[9]
 
 
     output_report_path = "qc_report.html"
@@ -191,6 +193,7 @@ def main():
 
     config = load_table_data_json(config_json_path)
     sex_inference_data = load_table_data_json(sex_inference_path)
+    preprocess_summary = load_table_data_json(preprocess_summary_path)
     nf_version = get_nextflow_version(config)
 
     flat_config = flatten_dict(config)
@@ -229,6 +232,13 @@ def main():
         "title": "Workflow parameters",
         "type": "table",
         "data": flat_config_ordered
+    })
+
+    report_sections.append({
+        "id": "preprocessingSummary",
+        "title": "Data preprocessing - summary",
+        "type": "table",
+        "data": preprocess_summary
     })
 
     # Add plot sections

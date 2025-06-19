@@ -6,6 +6,7 @@ process REPORT {
     input:
     //TODO: define all inputs for the report!!!
     path html_template
+    path preprocess_summary_path
     path ao_plot_path
     path beta_distribution_plot
     path nan_distribution_per_probe_plot
@@ -19,6 +20,6 @@ process REPORT {
 
     script:
     """
-    report.py ${html_template} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
+    report.py ${html_template} ${preprocess_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
     """
 }

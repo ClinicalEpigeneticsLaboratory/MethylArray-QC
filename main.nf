@@ -132,6 +132,7 @@ workflow {
 
     REPORT(
         report_template_path,
+        preprocess_ch_out.preprocess_summary_path,
         ao_plot_path,
         beta_distr_plot,
         nan_per_probe_plot,
