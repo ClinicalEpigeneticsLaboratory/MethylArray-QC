@@ -36,7 +36,9 @@ workflow {
 
     def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
 
-    qc_path = QC(input_abs_path, cpus, sample_sheet_abs_path)
+    // qc_ch_out.qc_parquet: QC stats exported as PARQUET
+    // qc_ch_out.qc_json: QC stats exported as JSON
+    qc_ch_out = QC(input_abs_path, cpus, sample_sheet_abs_path)
     
     if(params.ctrl_intens_plots) {
         // ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path: control probe fluorescence data file path
@@ -114,7 +116,7 @@ workflow {
         }
 
     beta_distr_plot = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_cpgs_beta_distr)
-    nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_path, sample_sheet_abs_path)
+    nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path)
     nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
 
     // pca_ch_out.area: area plot path
@@ -132,6 +134,7 @@ workflow {
 
     REPORT(
         report_template_path,
+        qc_ch_out.qc_json,
         preprocess_ch_out.preprocess_summary_path,
         ao_plot_path,
         beta_distr_plot,

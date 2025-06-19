@@ -34,3 +34,11 @@ quality_metrics <- do.call(rbind, lapply(qcs, as.data.frame))
 message("Dumping ...")
 quality_metrics$Sample_Name <- rownames(quality_metrics)
 write_parquet(quality_metrics, glue("qc", ".parquet"))
+
+write(
+    jsonlite::toJSON(
+        data.frame(quality_metrics),
+        pretty = TRUE
+    ),
+    glue("qc", ".json")
+)
