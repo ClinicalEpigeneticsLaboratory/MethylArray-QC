@@ -77,7 +77,33 @@
                                     </tbody>
                                 </table>
                             </div>
-
+                            {% elif section.type == "table-rows" %}
+                            <div class="table-responsive">
+                                <table class="table w-100">
+                                    <thead>
+                                        <tr>
+                                            {% for key in section.data[0].keys() %}
+                                                <th>{{ key }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in section.data %}
+                                            <tr>
+                                                {% for value in row.values() %}
+                                                    <td>
+                                                        {% if value is string or value is number or value is boolean %}
+                                                            {{ value }}
+                                                        {% else %}
+                                                            <pre>{{ value | tojson(indent=2) }}</pre>
+                                                        {% endif %}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                             {% elif section.type == "plot" %}
                             <div class="plot-container">
                                 {{ section.html | safe }}

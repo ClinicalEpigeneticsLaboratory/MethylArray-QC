@@ -28,14 +28,14 @@ def json_fig_to_html(json_path: str) -> str:
         print(f"❌ Failed to parse JSON Plotly figure from {json_path}: {e}")
         sys.exit(1)
 
-def load_config_json(json_path: str) -> dict:
-    """A function loading a JSON config (with exception handling)
+def load_table_data_json(json_path: str) -> dict:
+    """A function loading a JSON data for the table (e.g. config; with exception handling)
 
     Args:
-        json_path (str): path to a config exported as JSON file
+        json_path (str): path to data exported as JSON file
 
     Returns:
-        dict: a config with all exported workflow parameters, as dict
+        dict: a dictionary with data read from JSON (e.g. config with all exported workflow parameters), as dict
     """    
     try:
         with open(json_path) as f:
@@ -163,13 +163,14 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
     return report_sections
 
 def main():
-    if len(sys.argv) != 8:
+    if len(sys.argv) != 9:
         print(
             "Usage: python report.py <html_template: str|Path> \
                 <ao_plot_path: str|Path> <beta_distribution_plot: str|Path> \
                 <nan_distribution_per_probe_plot: str|Path> \
                 <nan_distribution_per_sample_plot: str|Path> \
                 <batch_effect_dir: str|Path> \
+                <sex_inference_path: str|Path> \
                 <config_json_path: str|Path>"
         )
         sys.exit(1)
@@ -180,13 +181,16 @@ def main():
     heatmap_path = sys.argv[4]
     nan_distr_per_sample_path = sys.argv[5]
     batch_effect_plot_paths = sys.argv[6]
-    config_json_path = sys.argv[7]
+    sex_inference_path = sys.argv[7]
+    config_json_path = sys.argv[8]
+
 
     output_report_path = "qc_report.html"
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(',')
 
-    config = load_config_json(config_json_path)
+    config = load_table_data_json(config_json_path)
+    sex_inference_data = load_table_data_json(sex_inference_path)
     nf_version = get_nextflow_version(config)
 
     flat_config = flatten_dict(config)
@@ -230,6 +234,15 @@ def main():
     # Add plot sections
     if ao_plot_path != "NO_FILE.txt":
         report_sections = add_plot_section(report_sections, "anomalyDetection", "Anomaly detection plot", ao_plot_path)
+        # Add table section for workflow parameters
+    
+    report_sections.append({
+        "id": "sexInference",
+        "title": "Sex inference",
+        "type": "table-rows",
+        "data": sex_inference_data
+    })
+    
     report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
     report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)

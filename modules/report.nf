@@ -11,6 +11,7 @@ process REPORT {
     path nan_distribution_per_probe_plot
     path nan_distribution_per_sample_plot
     val batch_effect_plot_paths
+    path sex_inference_path
     path params_path
 
     output:
@@ -18,6 +19,6 @@ process REPORT {
 
     script:
     """
-    report.py ${html_template} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${params_path}
+    report.py ${html_template} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
     """
 }

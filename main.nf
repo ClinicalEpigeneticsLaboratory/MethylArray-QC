@@ -137,6 +137,7 @@ workflow {
         nan_per_probe_plot,
         nan_per_sample_plot,
         batch_effect_plot_paths,
+        sex_inference_path,
         params_path
     )
 
