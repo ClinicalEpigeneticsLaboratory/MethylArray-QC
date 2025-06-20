@@ -42,6 +42,7 @@ def test_kw_to_json(
     """
     kruskal_pvals = []
     test_method = []
+    column_vals = []
 
     for component in component_names:
         df = components_data[[component, column]]
@@ -50,12 +51,23 @@ def test_kw_to_json(
         )
         kruskal_pvals.append(kruskal_res.pvalue)
         test_method.append("Kruskal-Wallis test")
+        column_vals.append(column)
 
+
+    # kruskal_col_res = pd.DataFrame(
+    #     data={f"{column}_p_value": kruskal_pvals, "Method": test_method},
+    #     index=component_names,
+    # )
     kruskal_col_res = pd.DataFrame(
-        data={f"{column}_p_value": kruskal_pvals, "Method": test_method},
-        index=component_names,
+        data={
+            "Column": column_vals,
+            "Component": component_names,
+            "Method": test_method,
+            "p_value": kruskal_pvals, 
+        },
+        #index=component_names,
     )
-    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
+    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json", orient='records', indent=2)
 
 
 @update_and_export_plot(
