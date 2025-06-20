@@ -17,12 +17,15 @@ process REPORT {
     val batch_effect_plot_paths
     path sex_inference_path
     path params_path
+    val pca_kruskal_paths
+    val pca_plot_paths
+    val epi_age_plot_paths
 
     output:
     path "qc_report.html"
 
     script:
     """
-    report.py ${html_template} ${qc_summary_path} ${ctrl_fluorescence_plot_paths} ${preprocess_summary_path} ${imputation_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path}
+    report.py ${html_template} ${qc_summary_path} ${ctrl_fluorescence_plot_paths} ${preprocess_summary_path} ${imputation_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path} ${pca_kruskal_paths} ${pca_plot_paths} ${epi_age_plot_paths}
     """
 }

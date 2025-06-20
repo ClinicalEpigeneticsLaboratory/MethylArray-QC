@@ -11,6 +11,7 @@ import json
 from jinja2 import Template
 import plotly.io as pio
 from pathlib import Path
+import re
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
@@ -163,40 +164,55 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
     return report_sections
 
 def main():
-    if len(sys.argv) != 11:
+    if len(sys.argv) != 16:
         print(
             "Usage: python report.py <html_template: str|Path> \
                 <qc_summary_path: str|Path> \
+                <ctrl_fluorescence_plot_paths: str|Path> \
                 <preprocess_summary_path: str|Path> \
+                <imputation_summary_path: str|Path> \
                 <ao_plot_path: str|Path> <beta_distribution_plot: str|Path> \
                 <nan_distribution_per_probe_plot: str|Path> \
                 <nan_distribution_per_sample_plot: str|Path> \
                 <batch_effect_dir: str|Path> \
                 <sex_inference_path: str|Path> \
-                <config_json_path: str|Path>"
+                <config_json_path: str|Path> \
+                <pca_kruskal_path: str|Path> \
+                <pca_plot_paths: str|Path> \
+                <epi_age_plot_paths: str|Path>"
         )
         sys.exit(1)
 
     input_template_path = sys.argv[1]
     qc_summary_path = sys.argv[2]
-    preprocess_summary_path = sys.argv[3]
-    ao_plot_path = sys.argv[4]
-    beta_distr_plot_path = sys.argv[5]
-    heatmap_path = sys.argv[6]
-    nan_distr_per_sample_path = sys.argv[7]
-    batch_effect_plot_paths = sys.argv[8]
-    sex_inference_path = sys.argv[9]
-    config_json_path = sys.argv[10]
+    ctrl_fluorescence_plot_paths = sys.argv[3]
+    preprocess_summary_path = sys.argv[4]
+    imputation_summary_path = sys.argv[5]
+    ao_plot_path = sys.argv[6]
+    beta_distr_plot_path = sys.argv[7]
+    heatmap_path = sys.argv[8]
+    nan_distr_per_sample_path = sys.argv[9]
+    batch_effect_plot_paths = sys.argv[10]
+    sex_inference_path = sys.argv[11]
+    config_json_path = sys.argv[12]
+    pca_kruskal_paths = sys.argv[13]
+    pca_plot_paths = sys.argv[14]
+    epi_age_plot_paths = sys.argv[15]
 
 
     output_report_path = "qc_report.html"
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(',')
+    ctrl_fluorescence_plot_paths = ctrl_fluorescence_plot_paths.split(',')
+    pca_plot_paths = pca_plot_paths.split(',')
+    pca_kruskal_paths = pca_kruskal_paths.split(',')
+    epi_age_plot_paths = epi_age_plot_paths.split(',')
 
     config = load_table_data_json(config_json_path)
     sex_inference_data = load_table_data_json(sex_inference_path)
     qc_summary = load_table_data_json(qc_summary_path)
     preprocess_summary = load_table_data_json(preprocess_summary_path)
+    imputation_summary = load_table_data_json(imputation_summary_path)
     nf_version = get_nextflow_version(config)
 
     flat_config = flatten_dict(config)
@@ -244,6 +260,8 @@ def main():
         "data": qc_summary
     })
 
+    report_sections = add_plot_section(report_sections, "ctrlFluorescence", "Control probe fluorescence plots", ctrl_fluorescence_plot_paths)
+
     report_sections.append({
         "id": "preprocessingSummary",
         "title": "Data preprocessing - summary",
@@ -251,10 +269,16 @@ def main():
         "data": preprocess_summary
     })
 
+    report_sections.append({
+        "id": "imputationSummary",
+        "title": "Data imputation - summary",
+        "type": "table",
+        "data": imputation_summary
+    })
+
     # Add plot sections
     if ao_plot_path != "NO_FILE.txt":
         report_sections = add_plot_section(report_sections, "anomalyDetection", "Anomaly detection plot", ao_plot_path)
-        # Add table section for workflow parameters
     
     report_sections.append({
         "id": "sexInference",
@@ -267,6 +291,28 @@ def main():
     report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
+    
+    pca_kruskal_path = None
+
+    for pca_kruskal_path in pca_kruskal_paths:
+        if pca_kruskal_path is None:
+            raise ValueError("No pca_kruskal_path found!")
+        else: 
+            pca_kruskal_data = load_table_data_json(pca_kruskal_path)
+            pattern = r"Sample_Group|Sentrix_ID|Sentrix_Position"
+            match = re.search(pattern, pca_kruskal_path)
+            column = match.group() 
+
+            report_sections.append({
+                "id": f"pcaKruskal{column}",
+                "title": f"PCA (Kruskal-Wallis, {column})",
+                "type": "table-rows",
+                "data": pca_kruskal_data
+            })
+
+    report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
+    
+    report_sections = add_plot_section(report_sections, "epiAgePlots", "Epigenetic age plots", epi_age_plot_paths)
 
     # Final template data
     report_jinja_data = {

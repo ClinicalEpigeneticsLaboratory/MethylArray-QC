@@ -128,10 +128,32 @@ workflow {
     // pca_ch_out.scatter: scatter matrix plot paths
     // pca_ch_out.kruskal: Kruskal-Wallis test results
     pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
+    pca_plot_paths = pca_ch_out.scatter
+        .merge(pca_ch_out.area)
+        .collect()
+        .map {
+            it.join(',')
+        }
+
+    pca_kruskal_paths = pca_ch_out.kruskal
+        .collect()
+        .map {
+            it.join(',')
+        }
 
     if(params.infer_epi_age) {
-        epi_age_res_path = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
-        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_path, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
+        // previously: epi_age_res_path
+        // epi_age_res_ch_out.epi_clocks_res_parquet - epigenetic age inference results (PARQUET)
+        // TO CONSIDER: epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON)
+        epi_age_res_ch_out = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
+        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
+
+        epi_age_plot_paths = epi_age_plots_ch_out.regr
+            .merge(epi_age_plots_ch_out.eaa)
+            .collect()
+            .map {
+                it.join(',')
+            }
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
@@ -149,7 +171,10 @@ workflow {
         nan_per_sample_plot,
         batch_effect_plot_paths,
         sex_inference_path,
-        params_path
+        params_path,
+        pca_kruskal_paths,
+        pca_plot_paths,
+        epi_age_plot_paths
     )
 
     /* 

@@ -70,3 +70,12 @@ res_df <- res_df %>%
     )
 
 arrow::write_parquet(res_df, "epi_clocks_res.parquet")
+
+# TODO: consider adding a table section with epigenetic age inference to the report
+# write(
+#     jsonlite::toJSON(
+#         res_df,
+#         pretty = TRUE
+#     ),
+#     "epi_clocks_res.json"
+# )

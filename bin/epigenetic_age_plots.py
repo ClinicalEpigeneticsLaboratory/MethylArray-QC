@@ -176,6 +176,8 @@ def get_epi_vs_chron_age_regr_plot(
         export_decorated_fig_with_custom_name(
             fig=fig,
             json_path=f"Regr_Age_vs_Epi_Age_{epi_clock}.json",
+            # width = 837, # poster
+            # height = 837 # poster
         )
 
 
