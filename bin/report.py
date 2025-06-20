@@ -4,7 +4,6 @@
 A module generating HTML report
 """
 
-import os
 import sys
 import datetime
 import json
@@ -12,6 +11,10 @@ from jinja2 import Template
 import plotly.io as pio
 from pathlib import Path
 import re
+
+# TODO: 
+# 1. Separate sections/carousels for different epigenetic clocks or columns for coloring, 
+# 2. Add subsections to report sections 
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
