@@ -7,13 +7,16 @@
     <title>MethylArrayQC report</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
     <style>
         body {
-            margin: 0 20; 
+            margin: 0 20;
             background: whitesmoke;
         }
+
         /* Fix for long text in table cells */
-        table td, table th {
+        table td,
+        table th {
             word-break: break-word;
             white-space: normal;
         }
@@ -39,6 +42,10 @@
         table td {
             min-width: 150px;
         }
+
+        .brick-red-bar {
+            background-color: #B22222 !important;
+        }
     </style>
 </head>
 
@@ -47,83 +54,137 @@
         <h2>Methylation Array QC report</h2>
         <div id="accordion">
             {% for section in report_sections %}
-                <div class="card">
-                    <div class="card-header">
-                        <a class="collapsed btn" data-bs-toggle="collapse" href="#{{ section.id }}">
-                            <b>{{ section.title }}</b>
-                        </a>
-                    </div>
-                    <div id="{{ section.id }}" class="collapse" data-bs-parent="#accordion">
-                        <div class="card-body">
+            <div class="card">
+                <div class="card-header">
+                    <a class="collapsed btn" data-bs-toggle="collapse" href="#{{ section.id }}">
+                        <b>{{ section.title }}</b>
+                    </a>
+                </div>
+                <div id="{{ section.id }}" class="collapse" data-bs-parent="#accordion">
+                    <div class="card-body">
 
-                            {% if section.type == "table" %}
-                            <div class="table-responsive">
-                                <table class="table w-100">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40%;">Parameter</th>
-                                            <th style="width: 60%;">Value</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for key, value in section.data.items() %}
-                                        <tr>
-                                            <td><b>{{ key }}</b></td>
-                                            <td>
-                                                {% if value is string or value is number or value is boolean %}
-                                                    {{ value }}
-                                                {% else %}
-                                                    <pre>{{ value | tojson(indent=2) }}</pre>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
+                        {% if section.type == "table" %}
+                        <div class="table-responsive">
+                            <table class="table w-100">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40%;">Parameter</th>
+                                        <th style="width: 60%;">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in section.data.items() %}
+                                    <tr>
+                                        <td><b>{{ key }}</b></td>
+                                        <td>
+                                            {% if value is string or value is number or value is boolean %}
+                                            {{ value }}
+                                            {% else %}
+                                            <pre>{{ value | tojson(indent=2) }}</pre>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% elif section.type == "table-rows" %}
+                        <div class="table-responsive">
+                            <table class="table w-100">
+                                <thead>
+                                    <tr>
+                                        {% for key in section.data[0].keys() %}
+                                        <th>{{ key }}</th>
                                         {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% elif section.type == "table-rows" %}
-                            <div class="table-responsive">
-                                <table class="table w-100">
-                                    <thead>
-                                        <tr>
-                                            {% for key in section.data[0].keys() %}
-                                                <th>{{ key }}</th>
-                                            {% endfor %}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in section.data %}
-                                            <tr>
-                                                {% for value in row.values() %}
-                                                    <td>
-                                                        {% if value is string or value is number or value is boolean %}
-                                                            {{ value }}
-                                                        {% else %}
-                                                            <pre>{{ value | tojson(indent=2) }}</pre>
-                                                        {% endif %}
-                                                    </td>
-                                                {% endfor %}
-                                            </tr>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in section.data %}
+                                    <tr>
+                                        {% for value in row.values() %}
+                                        <td>
+                                            {% if value is string or value is number or value is boolean %}
+                                            {{ value }}
+                                            {% else %}
+                                            <pre>{{ value | tojson(indent=2) }}</pre>
+                                            {% endif %}
+                                        </td>
                                         {% endfor %}
-                                    </tbody>
-                                </table>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% elif section.type == "plot" %}
+                        <div class="plot-container">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        role="progressbar" style="width: 100%">Loading plot...</div>
+                                </div>
                             </div>
-                            {% elif section.type == "plot" %}
-                            <div class="plot-container">
-                                {{ section.html | safe }}
+                            <div class="lazy-plot" data-html='{{ section.html | tojson | safe }}'></div>
+                        </div>
+                        {% elif section.type == "plot-group" %}
+                        {% for plot in section.html_list %}
+                        <div class="plot-container mb-4">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        role="progressbar" style="width: 100%">Loading plot...</div>
+                                </div>
                             </div>
-                            {% elif section.type == "plot-group" %}
-                                {% for plot in section.html_list %}
-                                    <div class="plot-container mb-4">
-                                        {{ plot.plot_html | safe }}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
+                            <div class="lazy-plot" data-html='{{ plot.plot_html | tojson | safe }}'></div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const lazyPlots = document.querySelectorAll('.lazy-plot');
+
+            lazyPlots.forEach(container => {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            try {
+                                const rawHtml = JSON.parse(container.getAttribute('data-html')); // correctly decoded
+                                container.innerHTML = rawHtml;
+
+                                // Re-run any scripts in the injected HTML
+                                container.querySelectorAll("script").forEach(script => {
+                                    const newScript = document.createElement("script");
+                                    if (script.src) {
+                                        newScript.src = script.src;
+                                    } else {
+                                        newScript.textContent = script.textContent;
+                                    }
+                                    script.replaceWith(newScript);
+                                });
+
+                                // Remove loading
+                                const loader = container.parentElement.querySelector('.plot-loading');
+                                if (loader) loader.remove();
+
+                                observer.unobserve(container);
+                            } catch (err) {
+                                console.error("Failed to load plot HTML:", err);
+                            }
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                observer.observe(container);
+            });
+        });
+
+    </script>
+
 </body>
+
 </html>

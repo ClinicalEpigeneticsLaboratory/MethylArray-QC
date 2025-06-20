@@ -24,7 +24,7 @@ def json_fig_to_html(json_path: str) -> str:
     """    
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid = True)
-        return fig.to_html(full_html=False, include_plotlyjs='cdn', config={"responsive": True})
+        return fig.to_html(full_html=False, include_plotlyjs=False, config={"responsive": True})
     except Exception as e:
         print(f"❌ Failed to parse JSON Plotly figure from {json_path}: {e}")
         sys.exit(1)
