@@ -10,31 +10,27 @@
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
     <style>
         body {
-            margin: 0 20;
+            margin: 0 20px;
             background: whitesmoke;
         }
 
-        /* Fix for long text in table cells */
         table td,
         table th {
             word-break: break-word;
             white-space: normal;
         }
 
-        /* Allow <pre> blocks to wrap */
         pre {
             white-space: pre-wrap;
             word-break: break-word;
             margin: 0;
         }
 
-        /* Plotly responsiveness fix */
         .plot-container .js-plotly-plot {
             width: 100% !important;
             height: auto !important;
         }
 
-        /* Optional: Prevent scroll on small screens */
         .plot-container {
             overflow-x: auto;
         }
@@ -52,15 +48,16 @@
 <body>
     <div class="container mt-3">
         <h2>Methylation Array QC report</h2>
-        <div id="accordion">
-            {% for section in report_sections %}
-            <div class="card">
+        <div class="accordion" id="accordion">
+
+            {% macro render_section(section, parent_id="accordion") %}
+            <div class="card mb-3">
                 <div class="card-header">
-                    <a class="collapsed btn" data-bs-toggle="collapse" href="#{{ section.id }}">
+                    <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
                         <b>{{ section.title }}</b>
                     </a>
                 </div>
-                <div id="{{ section.id }}" class="collapse" data-bs-parent="#accordion">
+                <div id="{{ section.id }}" class="collapse" data-bs-parent="#{{ parent_id }}">
                     <div class="card-body">
 
                         {% if section.type == "table" %}
@@ -68,123 +65,112 @@
                             <table class="table w-100">
                                 <thead>
                                     <tr>
-                                        <th style="width: 40%;">Parameter</th>
-                                        <th style="width: 60%;">Value</th>
+                                        <th style="width:40%">Parameter</th>
+                                        <th style="width:60%">Value</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for key, value in section.data.items() %}
+                                    {% for k,v in section.data.items() %}
                                     <tr>
-                                        <td><b>{{ key }}</b></td>
-                                        <td>
-                                            {% if value is string or value is number or value is boolean %}
-                                            {{ value }}
-                                            {% else %}
-                                            <pre>{{ value | tojson(indent=2) }}</pre>
-                                            {% endif %}
+                                        <td><b>{{k}}</b></td>
+                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+
                         {% elif section.type == "table-rows" %}
                         <div class="table-responsive">
                             <table class="table w-100">
                                 <thead>
-                                    <tr>
-                                        {% for key in section.data[0].keys() %}
-                                        <th>{{ key }}</th>
-                                        {% endfor %}
-                                    </tr>
+                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
                                 </thead>
                                 <tbody>
                                     {% for row in section.data %}
-                                    <tr>
-                                        {% for value in row.values() %}
-                                        <td>
-                                            {% if value is string or value is number or value is boolean %}
-                                            {{ value }}
-                                            {% else %}
-                                            <pre>{{ value | tojson(indent=2) }}</pre>
-                                            {% endif %}
-                                        </td>
-                                        {% endfor %}
-                                    </tr>
+                                    <tr>{% for v in row.values() %}<td>{% if v is string or number or boolean %}{{v}}{%
+                                            else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>{% endfor %}</tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+
                         {% elif section.type == "plot" %}
                         <div class="plot-container">
                             <div class="plot-loading">
                                 <div class="progress my-2">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
-                                        role="progressbar" style="width: 100%">Loading plot...</div>
+                                        style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ section.html | tojson | safe }}'></div>
+                            <div class="lazy-plot" data-html='{{ section.html|tojson|safe }}'></div>
                         </div>
+
                         {% elif section.type == "plot-group" %}
                         {% for plot in section.html_list %}
                         <div class="plot-container mb-4">
                             <div class="plot-loading">
                                 <div class="progress my-2">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
-                                        role="progressbar" style="width: 100%">Loading plot...</div>
+                                        style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ plot.plot_html | tojson | safe }}'></div>
+                            <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
                         {% endif %}
+
+                        {% if section.subsections %}
+                        <div class="accordion mt-3" id="accordion-{{ section.id }}">
+                            {% for sub in section.subsections %}
+                            {{ render_section(sub, "accordion-" ~ section.id) }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                     </div>
                 </div>
             </div>
+            {% endmacro %}
+
+            {% for section in report_sections %}
+            {{ render_section(section) }}
             {% endfor %}
+
         </div>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const lazyPlots = document.querySelectorAll('.lazy-plot');
 
-            lazyPlots.forEach(container => {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('.lazy-plot').forEach(container => {
                 const observer = new IntersectionObserver(entries => {
-                    entries.forEach(entry => {
+                    for (let entry of entries) {
                         if (entry.isIntersecting) {
                             try {
-                                const rawHtml = JSON.parse(container.getAttribute('data-html')); // correctly decoded
-                                container.innerHTML = rawHtml;
-
-                                // Re-run any scripts in the injected HTML
-                                container.querySelectorAll("script").forEach(script => {
-                                    const newScript = document.createElement("script");
-                                    if (script.src) {
-                                        newScript.src = script.src;
-                                    } else {
-                                        newScript.textContent = script.textContent;
-                                    }
-                                    script.replaceWith(newScript);
+                                const raw = JSON.parse(container.dataset.html);
+                                container.innerHTML = raw;
+                                container.querySelectorAll('script').forEach(s => {
+                                    const n = document.createElement('script');
+                                    if (s.src) n.src = s.src; else n.textContent = s.textContent;
+                                    s.replaceWith(n);
                                 });
-
-                                // Remove loading
-                                const loader = container.parentElement.querySelector('.plot-loading');
+                                const loader = container.closest('.plot-container').querySelector('.plot-loading');
                                 if (loader) loader.remove();
-
                                 observer.unobserve(container);
                             } catch (err) {
-                                console.error("Failed to load plot HTML:", err);
+                                console.error('Failed lazy load:', err);
                             }
                         }
-                    });
+                    }
                 }, { threshold: 0.1 });
-
                 observer.observe(container);
             });
         });
-
     </script>
-
 </body>
 
 </html>

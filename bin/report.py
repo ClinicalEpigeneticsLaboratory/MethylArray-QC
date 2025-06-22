@@ -4,17 +4,15 @@
 A module generating HTML report
 """
 
+from collections import defaultdict
 import sys
 import datetime
 import json
 from jinja2 import Template
 import plotly.io as pio
 from pathlib import Path
+from typing import Union, List, Dict
 import re
-
-# TODO: 
-# 1. Separate sections/carousels for different epigenetic clocks or columns for coloring, 
-# 2. Add subsections to report sections 
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
@@ -166,6 +164,402 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
 
     return report_sections
 
+# def add_column_group_plot_section(
+#     report_sections: list,
+#     section_id: str,
+#     section_title: str,
+#     file_paths: list[str],
+#     group_label: str = "Sample"
+# ) -> list:
+#     """
+#     Adds a 'column-group' section to the report, where each subgroup gets its own plot(s),
+#     grouped by a provided label (e.g., 'Sentrix_ID') extracted from the filename.
+
+#     Args:
+#         report_sections (list): The list to append sections to.
+#         section_id (str): The unique ID for the section.
+#         section_title (str): The title shown in the report.
+#         file_paths (list[str]): List of paths to JSON plot files.
+#         group_label (str): A string pattern to match in filenames to determine grouping.
+
+#     Returns:
+#         list: Updated report_sections list.
+#     """
+#     if not file_paths:
+#         return report_sections
+
+#     group_data = defaultdict(list)
+
+#     pattern = re.compile(fr"{group_label}[-_]?([A-Za-z0-9]+)", re.IGNORECASE)
+
+#     for path in file_paths:
+#         if not path or path == "NO_FILE.txt":
+#             continue
+
+#         try:
+#             match = pattern.search(path)
+#             if match:
+#                 group_key = match.group(1)
+#             else:
+#                 group_key = Path(path).stem  # fallback to filename if no match
+
+#             html = json_fig_to_html(path)
+
+#             group_data[group_key].append({
+#                 "type": "plot",
+#                 "html": html,
+#                 "plot_path": path
+#             })
+#         except Exception as e:
+#             print(f"⚠️ Could not process {path}: {e}")
+#             continue
+
+#     if not group_data:
+#         return report_sections
+
+#     # Convert group_data to dict with one plot per key if only one, else list
+#     final_group_data = {}
+#     for key, items in group_data.items():
+#         if len(items) == 1:
+#             final_group_data[key] = items[0]
+#         else:
+#             final_group_data[key] = {
+#                 "type": "composite",
+#                 "items": items
+#             }
+
+#     report_sections.append({
+#         "id": section_id,
+#         "title": section_title,
+#         "type": "column-group",
+#         "group_label": group_label,
+#         "items": final_group_data
+#     })
+
+#     return report_sections
+
+# def add_column_group_table_section(report_sections: list, section_id: str, section_title: str, table_paths: list[str], group_label: str = "Sample") -> list:
+#     """
+#     Adds a 'column-group' section where each group gets a separate table.
+
+#     Args:
+#         report_sections (list): List of current sections.
+#         section_id (str): Unique ID for the section.
+#         section_title (str): Title shown in the report.
+#         table_paths (list): List of JSON paths (each one should be a list of rows or a dict).
+#         group_label (str): Label used for buttons (e.g. 'Sentrix_ID').
+
+#     Returns:
+#         list: Updated report_sections list.
+#     """
+#     group_data = {}
+
+#     for path in table_paths:
+#         if not path or path == "NO_FILE.txt":
+#             continue
+
+#         try:
+#             data = load_table_data_json(path)
+#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
+#             if match:
+#                 group_key = match.group(1)
+#             else:
+#                 group_key = Path(path).stem
+
+#             group_data[group_key] = {
+#                 "type": "table-rows" if isinstance(data, list) else "table",
+#                 "data": data
+#             }
+#         except Exception as e:
+#             print(f"⚠️ Could not load table from {path}: {e}")
+#             continue
+
+#     if group_data:
+#         report_sections.append({
+#             "id": section_id,
+#             "title": section_title,
+#             "type": "column-group",
+#             "group_label": group_label,
+#             "items": group_data
+#         })
+
+#     return report_sections
+
+# def add_column_group_table_and_plot_section(report_sections: list, section_id: str, section_title: str,
+#                                             table_paths: list[str], plot_paths: list[str], group_label: str = "Sample") -> list:
+#     """
+#     Adds a 'column-group' section where each group shows both a table and a plot.
+
+#     Args:
+#         report_sections (list): List of sections to update.
+#         section_id (str): Unique ID.
+#         section_title (str): Title of section.
+#         table_paths (list[str]): List of paths to table JSONs.
+#         plot_paths (list[str]): List of paths to plot JSONs.
+#         group_label (str): Label used for grouping (default: "Sample").
+
+#     Returns:
+#         list: Updated report_sections list.
+#     """
+#     group_data = {}
+
+#     # Index tables by group ID
+#     for path in table_paths:
+#         if not path or path == "NO_FILE.txt":
+#             continue
+#         try:
+#             data = load_table_data_json(path)
+#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
+#             key = match.group(1) if match else Path(path).stem
+#             group_data.setdefault(key, {})["table"] = {
+#                 "type": "table-rows" if isinstance(data, list) else "table",
+#                 "data": data
+#             }
+#         except Exception as e:
+#             print(f"⚠️ Could not load table from {path}: {e}")
+
+#     # Index plots by same group ID
+#     for path in plot_paths:
+#         if not path or path == "NO_FILE.txt":
+#             continue
+#         try:
+#             html = json_fig_to_html(path)
+#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
+#             key = match.group(1) if match else Path(path).stem
+#             group_data.setdefault(key, {})["plot"] = {
+#                 "type": "plot",
+#                 "html": html
+#             }
+#         except Exception as e:
+#             print(f"⚠️ Could not load plot from {path}: {e}")
+
+#     # Final combined sections
+#     final_items = {}
+#     for key, contents in group_data.items():
+#         if "plot" not in contents and "table" not in contents:
+#             continue  # skip if empty
+
+#         # Prioritize both; fallback to one
+#         if "plot" in contents and "table" in contents:
+#             final_items[key] = {
+#                 "type": "composite",
+#                 "plot": contents["plot"],
+#                 "table": contents["table"]
+#             }
+#         elif "plot" in contents:
+#             final_items[key] = contents["plot"]
+#         elif "table" in contents:
+#             final_items[key] = contents["table"]
+
+#     if final_items:
+#         report_sections.append({
+#             "id": section_id,
+#             "title": section_title,
+#             "type": "column-group",
+#             "group_label": group_label,
+#             "items": final_items
+#         })
+
+#     return report_sections
+
+def add_column_group_section(report_sections, section_id, section_title, group_data_dict):
+    """
+    Adds a generalized column-group section.
+
+    group_data_dict: {
+        "Sentrix_ID": [
+            {"type": "plot", "html": ...},
+            {"type": "table-rows", "data": [...]}
+        ],
+        "Sentrix_Position": [
+            {"type": "plot-group", "html_list": [...]},
+            ...
+        ]
+    }
+    """
+    report_sections.append({
+        "id": section_id,
+        "title": section_title,
+        "type": "column-group",
+        "items": group_data_dict
+    })
+    return report_sections
+
+
+def build_batch_effect_column_group(batch_plot_paths: list[str]) -> dict:
+    """
+    Groups batch effect plots by column (e.g., Sentrix_ID, Sentrix_Position) and generates
+    HTML content for each, formatted for 'column-group' section structure.
+
+    Args:
+        batch_plot_paths (list[str]): List of JSON plot file paths
+
+    Returns:
+        dict: Dictionary where keys are group labels (e.g. Sentrix_ID) and values are:
+            {
+                "type": "plot-group",
+                "html_list": [ { "plot_html": "<div>..." }, ... ]
+            }
+    """
+    grouped_html: dict[str, list[dict]] = {}
+
+    for path in batch_plot_paths:
+        if not path or path == "NO_FILE.txt":
+            continue
+
+        try:
+            match = re.search(r"(Sentrix_ID|Sentrix_Position)", Path(path).name)
+            if match:
+                group = match.group(1)
+            else:
+                print(f"⚠️ Could not infer group column from {path}")
+                continue
+
+            html = json_fig_to_html(path)
+            #print(f"HTML snippet start:\n{html[:300]}")
+
+            grouped_html.setdefault(group, []).append(
+                {"plot_html": html}  # ✅ correctly formatted for template
+            )
+
+        except Exception as e:
+            print(f"⚠️ Failed to load plot from {path}: {e}")
+            continue
+
+    # Wrap each group's list in the expected plot-group dict
+    # result = {
+    #     group: {"type": "plot-group", "html_list": plots}
+    #     for group, plots in grouped_html.items()
+    # }
+    result = {
+        group: [
+            {"type": "plot-group", "html_list": plots}
+        ]
+        for group, plots in grouped_html.items()
+    }
+
+    return result
+
+def make_section(
+    id: str,
+    title: str,
+    section_type: str,
+    html: str = None,
+    data=None,
+    html_list=None,
+    subsections=None
+) -> dict:
+    sect = {"id": id, "title": title, "type": section_type}
+    if section_type == "table":
+        sect["data"] = data or {}
+    elif section_type == "table-rows":
+        sect["data"] = data or []
+    elif section_type == "plot":
+        sect["html"] = html or ""
+    elif section_type == "plot-group":
+        sect["html_list"] = html_list or []
+    if subsections:
+        sect["subsections"] = subsections
+    return sect
+
+def add_plot_section_with_subs(
+    report_sections: List[Dict],
+    id: str,
+    title: str,
+    paths: Union[str, Path, List[Union[str, Path]]],
+    subsections: List[Dict] = None
+) -> List[Dict]:
+    """
+    If `subsections` is non-empty and valid, only add subsections under a parent shell.
+    If no valid subsections, add a standalone plot or plot-group for `paths`.
+    """
+    # Build subsections first
+    subsecs_out = []
+    if subsections:
+        for sub in subsections:
+            sub_paths = sub.get("paths") or sub.get("path")
+            sub_paths = sub_paths if isinstance(sub_paths, (list, tuple)) else [sub_paths]
+            valid = [
+                (p, json_fig_to_html(p))
+                for p in sub_paths
+                if p and p != "NO_FILE.txt"
+            ]
+            if not valid:
+                continue
+
+            if len(valid) == 1:
+                p, html = valid[0]
+                subsecs_out.append(make_section(
+                    id=sub["id"],
+                    title=sub["title"],
+                    section_type="plot",
+                    html=html
+                ))
+            else:
+                html_list = [
+                    {
+                        "plot_html": html,
+                        "plot_path": str(path),
+                        "plot_name": f"{sub['id']}_{idx}"
+                    }
+                    for idx, (path, html) in enumerate(valid)
+                ]
+                subsecs_out.append(make_section(
+                    id=sub["id"],
+                    title=sub["title"],
+                    section_type="plot-group",
+                    html_list=html_list
+                ))
+
+    # If subsections exist, add the parent section (shell) with subsections only
+    if subsecs_out:
+        report_sections.append(make_section(
+            id=id,
+            title=title,
+            section_type="plot",  # no main plot here
+            html="",  # empty or placeholder content
+            subsections=subsecs_out
+        ))
+        return report_sections
+
+    # No valid subsections: proceed with main paths
+    paths_list = paths if isinstance(paths, (list, tuple)) else [paths]
+    valid_main = [
+        (p, json_fig_to_html(p))
+        for p in paths_list
+        if p and p != "NO_FILE.txt"
+    ]
+    if not valid_main:
+        return report_sections
+
+    if len(valid_main) == 1:
+        p, html = valid_main[0]
+        report_sections.append(make_section(
+            id=id,
+            title=title,
+            section_type="plot",
+            html=html
+        ))
+    else:
+        html_list = [
+            {
+                "plot_html": html,
+                "plot_path": str(path),
+                "plot_name": f"{id}_{idx}"
+            }
+            for idx, (path, html) in enumerate(valid_main)
+        ]
+        report_sections.append(make_section(
+            id=id,
+            title=title,
+            section_type="plot-group",
+            html_list=html_list
+        ))
+
+    return report_sections
+
+
+
 def main():
     if len(sys.argv) != 16:
         print(
@@ -290,7 +684,77 @@ def main():
         "data": sex_inference_data
     })
     
-    report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
+    # grouped_batch_data = build_batch_effect_column_group(batch_effect_plot_paths)
+
+    # report_sections = add_column_group_section(
+    #     group_data_dict=grouped_batch_data,
+    #     report_sections=report_sections,
+    #     section_id="batchEffect",
+    #     section_title="Batch effect evaluation plots",
+    # )
+
+    # with open("batch_test.json", "w", encoding="utf-8") as f:
+    #     json.dump(batch_section, indent=4, fp = f)
+
+    # print("DEBUG: batch_section =", json.dumps(batch_section, indent=2, default=str))
+
+        
+    # report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
+    
+    # TODO: generalize this to other cases (PCA, epi clocks, control fluorescence plots), generate data structure dynamically!!!
+    report_sections = add_plot_section_with_subs(
+        report_sections,
+        id="batch_effects",
+        title="Batch Effect evaluation",
+        paths="batch_summary.json",          # ignored since subs exist
+        subsections=[
+            {"id": "batch_Sentrix_id", "title": "Mean beta per Sentrix_ID", "paths": batch_effect_plot_paths},
+            {"id": "batch_Sentrix_Position", "title": "Mean beta per Sentrix_Position", "paths": [batch_effect_plot_paths[1]]}
+        ]
+    )
+    
+    
+    
+    # group_data = {
+    #     "Sentrix_ID": [
+    #         {"type": "plot-group", "html_list": [html1, html2]}        ],
+    #     "Sentrix_Position": [
+    #         {"type": "plot-group", "html_list": [html3]}        
+    #     ]
+    # }
+    # add_column_group_section(report_sections, "batchEffect", "Batch effect evaluation plots", group_data)
+    # report_sections.append({
+    #     "id": "batchEffect",
+    #     "title": "Batch effect evaluation plots",
+    #     "type": "column-group",
+    #     "items": {
+    #         "Sentrix_ID": {
+    #             "type": "plot-group",
+    #             "html": html_for_sentrix_id
+    #         },
+    #         "Sentrix_Position": {
+    #             "type": "plot-group",
+    #             "html": html_for_sentrix_position
+    #         }
+    #     }
+    # })
+
+
+    # for column in ["Sentrix_ID", "Sentrix_Position"]:
+    #     report_sections = add_column_group_plot_section(
+    #         report_sections=report_sections,
+    #         section_id = "batchEffect",
+    #         group_label=column,
+    #         section_title="Batch effect evaluation plots",
+    #         file_paths=batch_effect_plot_paths
+    #     )
+    #     report_sections = add_column_group_plot_section(
+    #         report_sections,
+    #         section_id="batchEffect",
+    #         section_title=f"Mean Beta per {column}",
+    #         file_paths=batch_effect_plot_paths,
+    #         group_label=column
+    #     )
     report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
