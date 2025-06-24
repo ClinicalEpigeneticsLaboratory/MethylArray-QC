@@ -596,7 +596,7 @@ def add_plot_section_with_subs(
 
 
 def main():
-    if len(sys.argv) != 16:
+    if len(sys.argv) != 17:
         print(
             "Usage: python report.py <html_template: str|Path> \
                 <qc_summary_path: str|Path> \
@@ -611,7 +611,8 @@ def main():
                 <config_json_path: str|Path> \
                 <pca_kruskal_path: str|Path> \
                 <pca_plot_paths: str|Path> \
-                <epi_age_plot_paths: str|Path>"
+                <epi_age_plot_paths: str|Path> \
+                <unique_ctrl_probe_types: str>"
         )
         sys.exit(1)
 
@@ -630,6 +631,7 @@ def main():
     pca_kruskal_paths = sys.argv[13]
     pca_plot_paths = sys.argv[14]
     epi_age_plot_paths = sys.argv[15]
+    unique_ctrl_probe_types = sys.argv[16]
 
 
     output_report_path = "qc_report.html"
@@ -639,6 +641,7 @@ def main():
     pca_plot_paths = pca_plot_paths.split(',')
     pca_kruskal_paths = pca_kruskal_paths.split(',')
     epi_age_plot_paths = epi_age_plot_paths.split(',')
+    unique_ctrl_probe_types = sorted(unique_ctrl_probe_types.split(','))
 
     config = load_table_data_json(config_json_path)
     sex_inference_data = load_table_data_json(sex_inference_path)
@@ -692,7 +695,23 @@ def main():
         "data": qc_summary
     })
 
-    report_sections = add_plot_section(report_sections, "ctrlFluorescence", "Control probe fluorescence plots", ctrl_fluorescence_plot_paths)
+    # report_sections = add_plot_section(report_sections, "ctrlFluorescence", "Control probe fluorescence plots", ctrl_fluorescence_plot_paths)
+
+    ctrl_fluorescence_subsections = generate_subsection_list(
+        main_id="ctrlFluorescence",
+        subsection_list=unique_ctrl_probe_types,
+        paths=ctrl_fluorescence_plot_paths,
+        title_prefix=None,
+    )
+
+    # TODO: generalize this to other cases (PCA, epi clocks, control fluorescence plots), generate data structure dynamically!!!
+    report_sections = add_plot_section_with_subs(
+        report_sections,
+        id="ctrlFluorescence",
+        title="Control probe fluorescence plots",
+        paths="",          # ignored since subs exist
+        subsections = ctrl_fluorescence_subsections,
+    )
 
     report_sections.append({
         "id": "preprocessingSummary",
@@ -719,23 +738,6 @@ def main():
         "data": sex_inference_data
     })
     
-    # grouped_batch_data = build_batch_effect_column_group(batch_effect_plot_paths)
-
-    # report_sections = add_column_group_section(
-    #     group_data_dict=grouped_batch_data,
-    #     report_sections=report_sections,
-    #     section_id="batchEffect",
-    #     section_title="Batch effect evaluation plots",
-    # )
-
-    # with open("batch_test.json", "w", encoding="utf-8") as f:
-    #     json.dump(batch_section, indent=4, fp = f)
-
-    # print("DEBUG: batch_section =", json.dumps(batch_section, indent=2, default=str))
-
-        
-    # report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
-    
     batch_subsections = generate_subsection_list(
         main_id="batchEffect",
         subsection_list=["Sentrix_ID", "Sentrix_Position"],
@@ -750,54 +752,8 @@ def main():
         title="Batch effect evaluation",
         paths="",          # ignored since subs exist
         subsections = batch_subsections,
-        # subsections=[
-        #     {"id": "batch_Sentrix_id", "title": "Mean beta per Sentrix_ID", "paths": batch_effect_plot_paths},
-        #     {"id": "batch_Sentrix_Position", "title": "Mean beta per Sentrix_Position", "paths": [batch_effect_plot_paths[1]]}
-        # ]
     )
-    
-    
-    
-    # group_data = {
-    #     "Sentrix_ID": [
-    #         {"type": "plot-group", "html_list": [html1, html2]}        ],
-    #     "Sentrix_Position": [
-    #         {"type": "plot-group", "html_list": [html3]}        
-    #     ]
-    # }
-    # add_column_group_section(report_sections, "batchEffect", "Batch effect evaluation plots", group_data)
-    # report_sections.append({
-    #     "id": "batchEffect",
-    #     "title": "Batch effect evaluation plots",
-    #     "type": "column-group",
-    #     "items": {
-    #         "Sentrix_ID": {
-    #             "type": "plot-group",
-    #             "html": html_for_sentrix_id
-    #         },
-    #         "Sentrix_Position": {
-    #             "type": "plot-group",
-    #             "html": html_for_sentrix_position
-    #         }
-    #     }
-    # })
 
-
-    # for column in ["Sentrix_ID", "Sentrix_Position"]:
-    #     report_sections = add_column_group_plot_section(
-    #         report_sections=report_sections,
-    #         section_id = "batchEffect",
-    #         group_label=column,
-    #         section_title="Batch effect evaluation plots",
-    #         file_paths=batch_effect_plot_paths
-    #     )
-    #     report_sections = add_column_group_plot_section(
-    #         report_sections,
-    #         section_id="batchEffect",
-    #         section_title=f"Mean Beta per {column}",
-    #         file_paths=batch_effect_plot_paths,
-    #         group_label=column
-    #     )
     report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
     report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
@@ -822,8 +778,6 @@ def main():
 
     report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
     
-    # report_sections = add_plot_section(report_sections, "epiAgePlots", "Epigenetic age plots", epi_age_plot_paths)
-
     epi_age_subsections = generate_subsection_list(
         main_id="epiAge",
         subsection_list=flat_config_ordered["epi_clocks"].split(","),
