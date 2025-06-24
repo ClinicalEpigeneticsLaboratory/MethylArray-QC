@@ -386,59 +386,59 @@ def add_column_group_section(report_sections, section_id, section_title, group_d
     return report_sections
 
 
-def build_batch_effect_column_group(batch_plot_paths: list[str]) -> dict:
-    """
-    Groups batch effect plots by column (e.g., Sentrix_ID, Sentrix_Position) and generates
-    HTML content for each, formatted for 'column-group' section structure.
+# def build_batch_effect_column_group(batch_plot_paths: list[str]) -> dict:
+#     """
+#     Groups batch effect plots by column (e.g., Sentrix_ID, Sentrix_Position) and generates
+#     HTML content for each, formatted for 'column-group' section structure.
 
-    Args:
-        batch_plot_paths (list[str]): List of JSON plot file paths
+#     Args:
+#         batch_plot_paths (list[str]): List of JSON plot file paths
 
-    Returns:
-        dict: Dictionary where keys are group labels (e.g. Sentrix_ID) and values are:
-            {
-                "type": "plot-group",
-                "html_list": [ { "plot_html": "<div>..." }, ... ]
-            }
-    """
-    grouped_html: dict[str, list[dict]] = {}
+#     Returns:
+#         dict: Dictionary where keys are group labels (e.g. Sentrix_ID) and values are:
+#             {
+#                 "type": "plot-group",
+#                 "html_list": [ { "plot_html": "<div>..." }, ... ]
+#             }
+#     """
+#     grouped_html: dict[str, list[dict]] = {}
 
-    for path in batch_plot_paths:
-        if not path or path == "NO_FILE.txt":
-            continue
+#     for path in batch_plot_paths:
+#         if not path or path == "NO_FILE.txt":
+#             continue
 
-        try:
-            match = re.search(r"(Sentrix_ID|Sentrix_Position)", Path(path).name)
-            if match:
-                group = match.group(1)
-            else:
-                print(f"⚠️ Could not infer group column from {path}")
-                continue
+#         try:
+#             match = re.search(r"(Sentrix_ID|Sentrix_Position)", Path(path).name)
+#             if match:
+#                 group = match.group(1)
+#             else:
+#                 print(f"⚠️ Could not infer group column from {path}")
+#                 continue
 
-            html = json_fig_to_html(path)
-            #print(f"HTML snippet start:\n{html[:300]}")
+#             html = json_fig_to_html(path)
+#             #print(f"HTML snippet start:\n{html[:300]}")
 
-            grouped_html.setdefault(group, []).append(
-                {"plot_html": html}  # ✅ correctly formatted for template
-            )
+#             grouped_html.setdefault(group, []).append(
+#                 {"plot_html": html}  # ✅ correctly formatted for template
+#             )
 
-        except Exception as e:
-            print(f"⚠️ Failed to load plot from {path}: {e}")
-            continue
+#         except Exception as e:
+#             print(f"⚠️ Failed to load plot from {path}: {e}")
+#             continue
 
-    # Wrap each group's list in the expected plot-group dict
-    # result = {
-    #     group: {"type": "plot-group", "html_list": plots}
-    #     for group, plots in grouped_html.items()
-    # }
-    result = {
-        group: [
-            {"type": "plot-group", "html_list": plots}
-        ]
-        for group, plots in grouped_html.items()
-    }
+#     # Wrap each group's list in the expected plot-group dict
+#     # result = {
+#     #     group: {"type": "plot-group", "html_list": plots}
+#     #     for group, plots in grouped_html.items()
+#     # }
+#     result = {
+#         group: [
+#             {"type": "plot-group", "html_list": plots}
+#         ]
+#         for group, plots in grouped_html.items()
+#     }
 
-    return result
+#     return result
 
 def make_section(
     id: str,
@@ -822,7 +822,22 @@ def main():
 
     report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
     
-    report_sections = add_plot_section(report_sections, "epiAgePlots", "Epigenetic age plots", epi_age_plot_paths)
+    # report_sections = add_plot_section(report_sections, "epiAgePlots", "Epigenetic age plots", epi_age_plot_paths)
+
+    epi_age_subsections = generate_subsection_list(
+        main_id="epiAge",
+        subsection_list=flat_config_ordered["epi_clocks"].split(","),
+        paths=epi_age_plot_paths,
+        title_prefix="Epigenetic clock: ",
+    )
+
+    report_sections = add_plot_section_with_subs(
+        report_sections,
+        id="epiAge",
+        title="Epigenetic age plots",
+        paths="",          # ignored since subs exist
+        subsections = epi_age_subsections,
+    )
 
     # Final template data
     report_jinja_data = {
