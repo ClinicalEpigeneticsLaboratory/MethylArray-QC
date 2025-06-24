@@ -4,7 +4,6 @@
 A module generating HTML report
 """
 
-from collections import defaultdict
 import sys
 import datetime
 import json
@@ -138,7 +137,19 @@ def flatten_dict(d: dict, parent_key: str='', sep: str='.') -> dict:
             items.append((new_key, v))
     return dict(items)
 
-def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path|list) -> str:
+def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path|list, description: str = None) -> dict:
+    """A function generating a report section containing one plot
+
+    Args:
+        report_sections (dict): a dictionary containing report sections
+        id (str): an id assigned to div with report section
+        title (str): a title of report section
+        paths (str | Path | list): one plot path or a list of plot paths
+        description (str, optional): A description of plot section. Defaults to None.
+
+    Returns:
+        dict: a dictionary containing report sections with new report section added
+    """    
     if isinstance(paths, str):
         paths = [paths]
 
@@ -155,149 +166,48 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
             "plot_name": f"plot_{id}_{idx}"
         })
 
-    report_sections.append({
+    report_section_dict = {
         "id": id,
         "title": title,
         "type": "plot-group",
         "html_list": html_list
-    })
+    }
+
+    if description is not None:
+        report_section_dict["description"] = description
+
+    report_sections.append(report_section_dict)
 
     return report_sections
-
-# def add_column_group_table_section(report_sections: list, section_id: str, section_title: str, table_paths: list[str], group_label: str = "Sample") -> list:
-#     """
-#     Adds a 'column-group' section where each group gets a separate table.
-
-#     Args:
-#         report_sections (list): List of current sections.
-#         section_id (str): Unique ID for the section.
-#         section_title (str): Title shown in the report.
-#         table_paths (list): List of JSON paths (each one should be a list of rows or a dict).
-#         group_label (str): Label used for buttons (e.g. 'Sentrix_ID').
-
-#     Returns:
-#         list: Updated report_sections list.
-#     """
-#     group_data = {}
-
-#     for path in table_paths:
-#         if not path or path == "NO_FILE.txt":
-#             continue
-
-#         try:
-#             data = load_table_data_json(path)
-#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
-#             if match:
-#                 group_key = match.group(1)
-#             else:
-#                 group_key = Path(path).stem
-
-#             group_data[group_key] = {
-#                 "type": "table-rows" if isinstance(data, list) else "table",
-#                 "data": data
-#             }
-#         except Exception as e:
-#             print(f"⚠️ Could not load table from {path}: {e}")
-#             continue
-
-#     if group_data:
-#         report_sections.append({
-#             "id": section_id,
-#             "title": section_title,
-#             "type": "column-group",
-#             "group_label": group_label,
-#             "items": group_data
-#         })
-
-#     return report_sections
-
-# def add_column_group_table_and_plot_section(report_sections: list, section_id: str, section_title: str,
-#                                             table_paths: list[str], plot_paths: list[str], group_label: str = "Sample") -> list:
-#     """
-#     Adds a 'column-group' section where each group shows both a table and a plot.
-
-#     Args:
-#         report_sections (list): List of sections to update.
-#         section_id (str): Unique ID.
-#         section_title (str): Title of section.
-#         table_paths (list[str]): List of paths to table JSONs.
-#         plot_paths (list[str]): List of paths to plot JSONs.
-#         group_label (str): Label used for grouping (default: "Sample").
-
-#     Returns:
-#         list: Updated report_sections list.
-#     """
-#     group_data = {}
-
-#     # Index tables by group ID
-#     for path in table_paths:
-#         if not path or path == "NO_FILE.txt":
-#             continue
-#         try:
-#             data = load_table_data_json(path)
-#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
-#             key = match.group(1) if match else Path(path).stem
-#             group_data.setdefault(key, {})["table"] = {
-#                 "type": "table-rows" if isinstance(data, list) else "table",
-#                 "data": data
-#             }
-#         except Exception as e:
-#             print(f"⚠️ Could not load table from {path}: {e}")
-
-#     # Index plots by same group ID
-#     for path in plot_paths:
-#         if not path or path == "NO_FILE.txt":
-#             continue
-#         try:
-#             html = json_fig_to_html(path)
-#             match = re.search(rf'{group_label}[-_]?([A-Za-z0-9]+)', path)
-#             key = match.group(1) if match else Path(path).stem
-#             group_data.setdefault(key, {})["plot"] = {
-#                 "type": "plot",
-#                 "html": html
-#             }
-#         except Exception as e:
-#             print(f"⚠️ Could not load plot from {path}: {e}")
-
-#     # Final combined sections
-#     final_items = {}
-#     for key, contents in group_data.items():
-#         if "plot" not in contents and "table" not in contents:
-#             continue  # skip if empty
-
-#         # Prioritize both; fallback to one
-#         if "plot" in contents and "table" in contents:
-#             final_items[key] = {
-#                 "type": "composite",
-#                 "plot": contents["plot"],
-#                 "table": contents["table"]
-#             }
-#         elif "plot" in contents:
-#             final_items[key] = contents["plot"]
-#         elif "table" in contents:
-#             final_items[key] = contents["table"]
-
-#     if final_items:
-#         report_sections.append({
-#             "id": section_id,
-#             "title": section_title,
-#             "type": "column-group",
-#             "group_label": group_label,
-#             "items": final_items
-#         })
-
-#     return report_sections
 
 def make_section(
     id: str,
     title: str,
     section_type: str,
     html: str = None,
-    data=None,
-    html_list=None,
-    subsections=None
+    data: dict = None,
+    html_list: List[str] = None,
+    subsections: dict = None,
+    description: str = None,
 ) -> dict:
+    """A function creating a dictionary for single report section
+
+    Args:
+        id (str): an id assigned to div with report section
+        title (str): a title of report section
+        section_type (str): a type of section added - table, table-rows, plot, plot_group or plot+table
+        html (str, optional): HTML for a single plot added to "plot" or "plot+table" report section. Defaults to None.
+        data (dict, optional): a dictionary containing data used to generate a table in "table" or "plot+table" report section. Defaults to None.
+        html_list (List[str], optional): A list of HTML strings for multiple plots added to a "plot-group" report section. Defaults to None.
+        subsections (dict, optional): A dictionary containing data used to generate subsections within a report section. Defaults to None.
+        description (str, optional): A description of report section. Defaults to None.
+        
+    Returns:
+        dict: a dictionary defining single report section
+    """    
     sect = {"id": id, "title": title, "type": section_type}
+    if description is not None:
+        sect["description"] = description
     if section_type == "table":
         sect["data"] = data or {}
     elif section_type == "table-rows":
@@ -316,14 +226,28 @@ def make_section(
 def generate_subsection_list(
     main_id: str,
     subsection_list: List[str],
-    title_prefix: str,
-    plot_paths: List[str],
-    table_paths: List[str]
+    title_prefix: str = None,
+    plot_paths: List[str] = None,
+    table_paths: List[str] = None
 
 ) -> List[Dict]:
-    
+    """A function generating a list of subsections for report section, with associated data.
+    Data are dynamically mapped to a specific subsection, based on a current subsection_list element,
+    typically contained within a path to specific table or plot.
+
+    Args:
+        main_id (str): a main div id for report section
+        subsection_list (List[str]): a list of subsections to generate within report section (e.g. list of epigenetic clocks, list of column/workflow parameter values...)
+        title_prefix (str, optional): A prefix added to subsection title. Defaults to None.
+        plot_paths (List[str], optional): A list of paths to plots added to the whole report section. Defaults to None.
+        table_paths (List[str], optional): A list of paths to tables added to the whole report section.. Defaults to None.
+
+    Returns:
+        List[Dict]: A list of dictionaries with defined structure and data for subsections of specific report section
+    """    
     TITLE_MAP = {
-        "area_plot": "PCA (general): Area plot"
+        "area_plot": "PCA (general): Area plot",
+        "probe": "Heatmap showing missing (NaN) values across samples and probes"
     }
     
     subsections = []
@@ -361,12 +285,24 @@ def add_plot_section_with_subs(
     id: str,
     title: str,
     paths: Union[str, Path, List[Union[str, Path]]],
-    subsections: List[Dict] = None
+    subsections: List[Dict] = None,
+    description: str = None,
 ) -> List[Dict]:
-    """
-    If `subsections` is non-empty and valid, only add subsections under a parent shell.
+    """A function adding a plot report section with subsections. If `subsections` is non-empty and valid, only add subsections under a parent shell.
     If no valid subsections, add a standalone plot or plot-group for `paths`.
-    """
+
+    Args:
+        report_sections (List[Dict]): a list of dictionaries containing report sections
+        id (str): an id assigned to div with report section
+        title (str): a title of report section
+        paths (Union[str, Path, List[Union[str, Path]]]): _description_
+        subsections (List[Dict], optional): A list of dictionaries with defined structure and plot HTML data for subsections of specific report section. Defaults to None.
+        description (str, optional): A description of report section. Defaults to None.
+
+    Returns:
+        List[Dict]: a list of dictionaries containing report sections with new section divided to subsections added
+
+    """    
     # Build subsections first
     subsecs_out = []
     if subsections:
@@ -406,14 +342,15 @@ def add_plot_section_with_subs(
                         for i, (p, html) in enumerate(plot_htmls)
                     ]
 
-                subsecs_out.append(make_section(**section_data))
+                subsecs_out.append(make_section(**section_data, description=description))
 
             elif has_table:
                 subsecs_out.append(make_section(
                     id=sub["id"],
                     title=sub["title"],
                     section_type="table",
-                    data=table_data[0][1]
+                    data=table_data[0][1],
+                    description=description
                 ))
 
             elif has_plots:
@@ -422,7 +359,8 @@ def add_plot_section_with_subs(
                         id=sub["id"],
                         title=sub["title"],
                         section_type="plot",
-                        html=plot_htmls[0][1]
+                        html=plot_htmls[0][1],
+                        description=description
                     ))
                 else:
                     html_list = [
@@ -433,42 +371,9 @@ def add_plot_section_with_subs(
                         id=sub["id"],
                         title=sub["title"],
                         section_type="plot-group",
-                        html_list=html_list
+                        html_list=html_list,
+                        description=description
                     ))
-
-            # sub_paths = sub.get("paths") or sub.get("path")
-            # sub_paths = sub_paths if isinstance(sub_paths, (list, tuple)) else [sub_paths]
-            # valid = [
-            #     (p, json_fig_to_html(p))
-            #     for p in sub_paths
-            #     if p and p != "NO_FILE.txt"
-            # ]
-            # if not valid:
-            #     continue
-
-            # if len(valid) == 1:
-            #     p, html = valid[0]
-            #     subsecs_out.append(make_section(
-            #         id=sub["id"],
-            #         title=sub["title"],
-            #         section_type="plot",
-            #         html=html
-            #     ))
-            # else:
-            #     html_list = [
-            #         {
-            #             "plot_html": html,
-            #             "plot_path": str(path),
-            #             "plot_name": f"{sub['id']}_{idx}"
-            #         }
-            #         for idx, (path, html) in enumerate(valid)
-            #     ]
-            #     subsecs_out.append(make_section(
-            #         id=sub["id"],
-            #         title=sub["title"],
-            #         section_type="plot-group",
-            #         html_list=html_list
-            #     ))
 
     # If subsections exist, add the parent section (shell) with subsections only
     if subsecs_out:
@@ -477,7 +382,8 @@ def add_plot_section_with_subs(
             title=title,
             section_type="plot",  # no main plot here
             html="",  # empty or placeholder content
-            subsections=subsecs_out
+            subsections=subsecs_out,
+            description=description
         ))
         return report_sections
 
@@ -497,7 +403,8 @@ def add_plot_section_with_subs(
             id=id,
             title=title,
             section_type="plot",
-            html=html
+            html=html,
+            description=description
         ))
     else:
         html_list = [
@@ -512,12 +419,11 @@ def add_plot_section_with_subs(
             id=id,
             title=title,
             section_type="plot-group",
-            html_list=html_list
+            html_list=html_list,
+            description=description
         ))
 
     return report_sections
-
-
 
 def main():
     if len(sys.argv) != 17:
@@ -609,17 +515,16 @@ def main():
         "id": "workflowParams",
         "title": "Workflow parameters",
         "type": "table",
-        "data": flat_config_ordered
+        "data": flat_config_ordered,
     })
 
     report_sections.append({
         "id": "qcSummary",
         "title": "Data QC - summary",
         "type": "table-rows",
-        "data": qc_summary
+        "data": qc_summary,
+        "description": 'This section contains a table with QC statistics generated for provided IDAT files using SeSAME R package. For detailed explanations, refer to <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/QC.html">SeSAME documentation</a>.'
     })
-
-    # report_sections = add_plot_section(report_sections, "ctrlFluorescence", "Control probe fluorescence plots", ctrl_fluorescence_plot_paths)
 
     ctrl_fluorescence_subsections = generate_subsection_list(
         main_id="ctrlFluorescence",
@@ -629,38 +534,46 @@ def main():
         title_prefix=None,
     )
 
-    # TODO: generalize this to other cases (PCA, epi clocks, control fluorescence plots), generate data structure dynamically!!!
     report_sections = add_plot_section_with_subs(
         report_sections,
         id="ctrlFluorescence",
         title="Control probe fluorescence plots",
         paths="",          # ignored since subs exist
         subsections = ctrl_fluorescence_subsections,
+        description="This section contains control probe fluorescence plots showing the intensity at different types of control probes present at Illumina microarrays. For details on how to interpret the results, see <a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a>."
     )
 
     report_sections.append({
         "id": "preprocessingSummary",
         "title": "Data preprocessing - summary",
         "type": "table",
-        "data": preprocess_summary
+        "data": preprocess_summary,
+        "description": "This section contains the summary of data preprocessing with SeSAME R package. For the details on the meaning of specific prep codes, please refer to <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/sesame.html'>SeSAME R package documentation</a>."
     })
 
     report_sections.append({
         "id": "imputationSummary",
         "title": "Data imputation - summary",
         "type": "table",
-        "data": imputation_summary
+        "data": imputation_summary,
+        "description": "This section contains imputation statistics after handling missing values based on user-specified thresholds and imputation methods"
     })
 
-    # Add plot sections
     if ao_plot_path != "NO_FILE.txt":
-        report_sections = add_plot_section(report_sections, "anomalyDetection", "Anomaly detection plot", ao_plot_path)
+        report_sections = add_plot_section(
+            report_sections, 
+            "anomalyDetection", 
+            "Anomaly detection plot", 
+            ao_plot_path,
+            description="This section contains a plot visualising the identifiication of anomalies using Isolation Forest algorithm (for details see: <a href='https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html'>scikit-learn documentation</a>). Each sample is represented by one bar and a user-specified threshold is represented by red dashed line. Samples with bars exceeding threshold line should be considered as anomalies. "
+        )
     
     report_sections.append({
         "id": "sexInference",
         "title": "Sex inference",
         "type": "table-rows",
-        "data": sex_inference_data
+        "data": sex_inference_data,
+        "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. "
     })
     
     batch_subsections = generate_subsection_list(
@@ -677,9 +590,10 @@ def main():
         title="Batch effect evaluation",
         paths="",          # ignored since subs exist
         subsections = batch_subsections,
+        description="This section contains batch effect evaluation plots showing mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites. Sentrix_IDs or Sentrix_Positions with mean methylation levels significantly deviating from the others are the potential source of batch effect and their exclusion from analysis should be considered."
     )
 
-    report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path)
+    report_sections = add_plot_section(report_sections, "betaDistribution", "Beta distribution plot", beta_distr_plot_path, description="This section contains a plot showing the kernel density (KDE) distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k). Samples with a distribution significantly deviating from the others may be potential outliers.")
 
     missing_data_subsections = generate_subsection_list(
         main_id="missingData",
@@ -695,10 +609,12 @@ def main():
         title="Missing data evaluation",
         paths="",          # ignored since subs exist
         subsections = missing_data_subsections,
+        description="This section contains plots allowing to identify samples and probes with high fraction of missing values:\
+            <ul>\
+                <li>a barplot representing the percentage of missing (NaN) probes per sample</li>\
+                <li>a heatmap representing the distribution of missing (NaN) values across samples (in columns) and randomly selected n probes (in rows; n specified by the user)</li>\
+            </ul>"
     )
-
-    # report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
-    # report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
     
     pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
     pca_subsection_list.append("area_plot")
@@ -722,27 +638,15 @@ def main():
         title="PCA",
         paths="",          # ignored since subs exist
         subsections = pca_subsections,
+        description="This section contains the results of PCA analysis divided into the following subsections:<ul>\
+            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+            <li>one subsection for each column provided in workflow parameters - each containing:\
+            <ul>\
+                <li>results of Kruskal-Wallis test for each principal component</li>\
+                <li>scatter matrix plot for first n components (n specified by the user)</li>\
+            </ul>\
+            </li></ul>"
     )
-
-    # pca_kruskal_path = None
-
-    # for pca_kruskal_path in pca_kruskal_paths:
-    #     if pca_kruskal_path is None:
-    #         raise ValueError("No pca_kruskal_path found!")
-    #     else: 
-    #         pca_kruskal_data = load_table_data_json(pca_kruskal_path)
-    #         pattern = r"Sample_Group|Sentrix_ID|Sentrix_Position"
-    #         match = re.search(pattern, pca_kruskal_path)
-    #         column = match.group() 
-
-    #         report_sections.append({
-    #             "id": f"pcaKruskal{column}",
-    #             "title": f"PCA (Kruskal-Wallis, {column})",
-    #             "type": "table-rows",
-    #             "data": pca_kruskal_data
-    #         })
-
-    # report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
     
     epi_age_subsections = generate_subsection_list(
         main_id="epiAge",
@@ -758,6 +662,12 @@ def main():
         title="Epigenetic age plots",
         paths="",          # ignored since subs exist
         subsections = epi_age_subsections,
+        description="This section contains the results of epigenetic age inference using \
+            one or more of epigenetic clocks supported by <a href='https://github.com/yiluyucheng/dnaMethyAge'>dnaMethyAge R package</a> \
+            (see the package website for full list of clocks and publications). Each subsection contains results for one clock. \
+            For each clock, 2 types of plots are generated: <ul><li>a regression trendline of chronological and epigenetic age \
+            <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
+            trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
     )
 
     # Final template data
