@@ -14,6 +14,8 @@ library(sesame)
 library(arrow)
 library(glue)
 
+options(scipen = 999)
+
 message("Parsing ...")
 
 sample_sheet <- data.frame()
