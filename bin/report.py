@@ -462,6 +462,41 @@ def make_section(
         sect["subsections"] = subsections
     return sect
 
+def generate_subsection_list(
+    main_id: str,
+    subsection_list: List[str],
+    title_prefix: str,
+    paths: List[str]
+
+) -> List[Dict]:
+    
+    subsections = []
+
+    for subsection in subsection_list:
+
+        title = ""
+
+        if title_prefix is None:
+            title = subsection
+        else:
+            title = f"{title_prefix} {subsection}"
+
+        regex = re.compile(re.escape(subsection))
+
+        subsection_paths = [path for path in paths if re.search(regex, path)]
+
+        subsections.append({
+            "id": f"{main_id}_{subsection}",
+            "title": title,
+            "paths": subsection_paths
+        })
+
+    return subsections
+    # [
+    #         {"id": "batch_Sentrix_id", "title": "Mean beta per Sentrix_ID", "paths": batch_effect_plot_paths},
+    #         {"id": "batch_Sentrix_Position", "title": "Mean beta per Sentrix_Position", "paths": [batch_effect_plot_paths[1]]}
+    #     ]
+
 def add_plot_section_with_subs(
     report_sections: List[Dict],
     id: str,
@@ -701,16 +736,24 @@ def main():
         
     # report_sections = add_plot_section(report_sections, "batchEffect", "Mean beta value per Sentrix_ID/Sentrix_Position", batch_effect_plot_paths)
     
+    batch_subsections = generate_subsection_list(
+        main_id="batchEffect",
+        subsection_list=["Sentrix_ID", "Sentrix_Position"],
+        paths=batch_effect_plot_paths,
+        title_prefix="Mean beta per ",
+    )
+
     # TODO: generalize this to other cases (PCA, epi clocks, control fluorescence plots), generate data structure dynamically!!!
     report_sections = add_plot_section_with_subs(
         report_sections,
-        id="batch_effects",
-        title="Batch Effect evaluation",
-        paths="batch_summary.json",          # ignored since subs exist
-        subsections=[
-            {"id": "batch_Sentrix_id", "title": "Mean beta per Sentrix_ID", "paths": batch_effect_plot_paths},
-            {"id": "batch_Sentrix_Position", "title": "Mean beta per Sentrix_Position", "paths": [batch_effect_plot_paths[1]]}
-        ]
+        id="batchEffect",
+        title="Batch effect evaluation",
+        paths="",          # ignored since subs exist
+        subsections = batch_subsections,
+        # subsections=[
+        #     {"id": "batch_Sentrix_id", "title": "Mean beta per Sentrix_ID", "paths": batch_effect_plot_paths},
+        #     {"id": "batch_Sentrix_Position", "title": "Mean beta per Sentrix_Position", "paths": [batch_effect_plot_paths[1]]}
+        # ]
     )
     
     
