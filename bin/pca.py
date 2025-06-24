@@ -71,7 +71,7 @@ def test_kw_to_json(
 
 
 @update_and_export_plot(
-    json_path="PCA_area.json", width=600, height=775, showlegend=False
+    json_path="PCA_area_plot.json", width=600, height=775, showlegend=False
 )
 def get_area_plot(
     number_of_pcs: int,

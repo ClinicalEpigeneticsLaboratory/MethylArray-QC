@@ -122,6 +122,51 @@
                             <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
+
+                        {% elif section.type == "plot+table" %}
+                        <div class="table-responsive">
+                            <table class="table w-100">
+                                <thead>
+                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in section.data %}
+                                    <tr>{% for v in row.values() %}
+                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if section.html %}
+                        <div class="plot-container">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">Loading plot...</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot" data-html='{{ section.html|tojson|safe }}'></div>
+                        </div>
+
+                        {% elif section.html_list %}
+                        {% for plot in section.html_list %}
+                        <div class="plot-container mb-4">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">Loading plot...</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
                         {% endif %}
 
                         {% if section.subsections %}
@@ -155,7 +200,8 @@
                                 container.innerHTML = raw;
                                 container.querySelectorAll('script').forEach(s => {
                                     const n = document.createElement('script');
-                                    if (s.src) n.src = s.src; else n.textContent = s.textContent;
+                                    if (s.src) n.src = s.src;
+                                    else n.textContent = s.textContent;
                                     s.replaceWith(n);
                                 });
                                 const loader = container.closest('.plot-container').querySelector('.plot-loading');

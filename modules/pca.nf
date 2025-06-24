@@ -14,7 +14,7 @@ process PCA {
 
     output:
     path "PCA_scatter_matrix_*.json", arity: "1..*", emit: scatter
-    path "PCA_area.json", optional: true, emit: area
+    path "PCA_area_plot.json", optional: true, emit: area
     path "PCA_PC_KW_test_*.json", arity: "1..*", emit: kruskal
 
     script:

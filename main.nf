@@ -66,6 +66,12 @@ workflow {
             println "Unique types from JSON: $list"
         }
 
+        unique_probe_types_str = unique_probe_types
+            .collect()
+            .map {
+                it.join(',')
+            }
+
         ctrl_fluorescence_plots_ch_out = CTRL_FLUORESCENCE_PLOTS(ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path, sample_sheet_abs_path, unique_grouping_cols, unique_probe_types)
         ctrl_fluorescence_plot_paths = ctrl_fluorescence_plots_ch_out
             .collect()
@@ -174,7 +180,8 @@ workflow {
         params_path,
         pca_kruskal_paths,
         pca_plot_paths,
-        epi_age_plot_paths
+        epi_age_plot_paths,
+        unique_probe_types_str
     )
 
     /* 

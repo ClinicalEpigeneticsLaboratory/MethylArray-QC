@@ -317,9 +317,14 @@ def generate_subsection_list(
     main_id: str,
     subsection_list: List[str],
     title_prefix: str,
-    paths: List[str]
+    plot_paths: List[str],
+    table_paths: List[str]
 
 ) -> List[Dict]:
+    
+    TITLE_MAP = {
+        "area_plot": "PCA (general): Area plot"
+    }
     
     subsections = []
 
@@ -327,19 +332,26 @@ def generate_subsection_list(
 
         title = ""
 
-        if title_prefix is None:
-            title = subsection
+        title_base = TITLE_MAP.get(subsection)
+
+        if title_base is None:
+            if title_prefix is None:
+                title = subsection
+            else:
+                title = f"{title_prefix} {subsection}"
         else:
-            title = f"{title_prefix} {subsection}"
+            title = title_base
 
         regex = re.compile(fr"(?<![a-zA-Z]){re.escape(subsection)}(?=(_|$|[^a-zA-Z]))")
 
-        subsection_paths = [path for path in paths if re.search(regex, path)]
+        matching_plots = [p for p in plot_paths if re.search(regex, p)] if plot_paths else []
+        matching_tables = [t for t in table_paths if re.search(regex, t)] if table_paths else []
 
         subsections.append({
             "id": f"{main_id}_{subsection}",
             "title": title,
-            "paths": subsection_paths
+            "plot_paths": matching_plots,
+            "table_paths": matching_tables
         })
 
     return subsections
@@ -359,39 +371,104 @@ def add_plot_section_with_subs(
     subsecs_out = []
     if subsections:
         for sub in subsections:
-            sub_paths = sub.get("paths") or sub.get("path")
-            sub_paths = sub_paths if isinstance(sub_paths, (list, tuple)) else [sub_paths]
-            valid = [
-                (p, json_fig_to_html(p))
-                for p in sub_paths
-                if p and p != "NO_FILE.txt"
-            ]
-            if not valid:
-                continue
+            plots = sub.get("plot_paths", [])
+            tables = sub.get("table_paths", [])
 
-            if len(valid) == 1:
-                p, html = valid[0]
+            # Parse plots and tables
+            plot_htmls = [
+                (p, json_fig_to_html(p))
+                for p in plots if p and p != "NO_FILE.txt"
+            ]
+
+            table_data = [
+                (t, load_table_data_json(t))
+                for t in tables if t and t != "NO_FILE.txt"
+            ]
+
+            # Determine section type
+            has_table = bool(table_data)
+            has_plots = bool(plot_htmls)
+
+            if has_table and has_plots:
+                # One table + one or many plots → plot+table
+                section_data = {
+                    "id": sub["id"],
+                    "title": sub["title"],
+                    "section_type": "plot+table",
+                    "data": table_data[0][1],  # Use first table only
+                }
+
+                if len(plot_htmls) == 1:
+                    section_data["html"] = plot_htmls[0][1]
+                else:
+                    section_data["html_list"] = [
+                        {"plot_html": html, "plot_path": str(p), "plot_name": f"{sub['id']}_{i}"}
+                        for i, (p, html) in enumerate(plot_htmls)
+                    ]
+
+                subsecs_out.append(make_section(**section_data))
+
+            elif has_table:
                 subsecs_out.append(make_section(
                     id=sub["id"],
                     title=sub["title"],
-                    section_type="plot",
-                    html=html
+                    section_type="table",
+                    data=table_data[0][1]
                 ))
-            else:
-                html_list = [
-                    {
-                        "plot_html": html,
-                        "plot_path": str(path),
-                        "plot_name": f"{sub['id']}_{idx}"
-                    }
-                    for idx, (path, html) in enumerate(valid)
-                ]
-                subsecs_out.append(make_section(
-                    id=sub["id"],
-                    title=sub["title"],
-                    section_type="plot-group",
-                    html_list=html_list
-                ))
+
+            elif has_plots:
+                if len(plot_htmls) == 1:
+                    subsecs_out.append(make_section(
+                        id=sub["id"],
+                        title=sub["title"],
+                        section_type="plot",
+                        html=plot_htmls[0][1]
+                    ))
+                else:
+                    html_list = [
+                        {"plot_html": html, "plot_path": str(p), "plot_name": f"{sub['id']}_{i}"}
+                        for i, (p, html) in enumerate(plot_htmls)
+                    ]
+                    subsecs_out.append(make_section(
+                        id=sub["id"],
+                        title=sub["title"],
+                        section_type="plot-group",
+                        html_list=html_list
+                    ))
+
+            # sub_paths = sub.get("paths") or sub.get("path")
+            # sub_paths = sub_paths if isinstance(sub_paths, (list, tuple)) else [sub_paths]
+            # valid = [
+            #     (p, json_fig_to_html(p))
+            #     for p in sub_paths
+            #     if p and p != "NO_FILE.txt"
+            # ]
+            # if not valid:
+            #     continue
+
+            # if len(valid) == 1:
+            #     p, html = valid[0]
+            #     subsecs_out.append(make_section(
+            #         id=sub["id"],
+            #         title=sub["title"],
+            #         section_type="plot",
+            #         html=html
+            #     ))
+            # else:
+            #     html_list = [
+            #         {
+            #             "plot_html": html,
+            #             "plot_path": str(path),
+            #             "plot_name": f"{sub['id']}_{idx}"
+            #         }
+            #         for idx, (path, html) in enumerate(valid)
+            #     ]
+            #     subsecs_out.append(make_section(
+            #         id=sub["id"],
+            #         title=sub["title"],
+            #         section_type="plot-group",
+            #         html_list=html_list
+            #     ))
 
     # If subsections exist, add the parent section (shell) with subsections only
     if subsecs_out:
@@ -547,7 +624,8 @@ def main():
     ctrl_fluorescence_subsections = generate_subsection_list(
         main_id="ctrlFluorescence",
         subsection_list=unique_ctrl_probe_types,
-        paths=ctrl_fluorescence_plot_paths,
+        plot_paths=ctrl_fluorescence_plot_paths,
+        table_paths=None,
         title_prefix=None,
     )
 
@@ -588,7 +666,8 @@ def main():
     batch_subsections = generate_subsection_list(
         main_id="batchEffect",
         subsection_list=["Sentrix_ID", "Sentrix_Position"],
-        paths=batch_effect_plot_paths,
+        table_paths=None,
+        plot_paths=batch_effect_plot_paths,
         title_prefix="Mean beta per ",
     )
 
@@ -605,7 +684,8 @@ def main():
     missing_data_subsections = generate_subsection_list(
         main_id="missingData",
         subsection_list=["sample", "probe"],
-        paths=[nan_distr_per_sample_path, heatmap_path],
+        plot_paths=[nan_distr_per_sample_path, heatmap_path],
+        table_paths=None,
         title_prefix="Missing data (NaN) distribution per ",
     )
 
@@ -620,30 +700,55 @@ def main():
     # report_sections = add_plot_section(report_sections, "nanPerProbe", "Heatmap showing NaN per probe/sample", heatmap_path)
     # report_sections = add_plot_section(report_sections, "nanPerSample", "NaN per sample plot", nan_distr_per_sample_path)
     
-    pca_kruskal_path = None
+    pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
+    pca_subsection_list.append("area_plot")
 
-    for pca_kruskal_path in pca_kruskal_paths:
-        if pca_kruskal_path is None:
-            raise ValueError("No pca_kruskal_path found!")
-        else: 
-            pca_kruskal_data = load_table_data_json(pca_kruskal_path)
-            pattern = r"Sample_Group|Sentrix_ID|Sentrix_Position"
-            match = re.search(pattern, pca_kruskal_path)
-            column = match.group() 
+    pca_subsections = generate_subsection_list(
+        main_id="pca",
+        subsection_list=sorted(pca_subsection_list),
+        plot_paths=pca_plot_paths,
+        table_paths=pca_kruskal_paths,
+        title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
+    )
 
-            report_sections.append({
-                "id": f"pcaKruskal{column}",
-                "title": f"PCA (Kruskal-Wallis, {column})",
-                "type": "table-rows",
-                "data": pca_kruskal_data
-            })
+    pca_subsections = sorted(
+        pca_subsections,
+        key=lambda d: 0 if "area_plot" in d["id"] else 1
+    )
 
-    report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
+    report_sections = add_plot_section_with_subs(
+        report_sections,
+        id="pca",
+        title="PCA",
+        paths="",          # ignored since subs exist
+        subsections = pca_subsections,
+    )
+
+    # pca_kruskal_path = None
+
+    # for pca_kruskal_path in pca_kruskal_paths:
+    #     if pca_kruskal_path is None:
+    #         raise ValueError("No pca_kruskal_path found!")
+    #     else: 
+    #         pca_kruskal_data = load_table_data_json(pca_kruskal_path)
+    #         pattern = r"Sample_Group|Sentrix_ID|Sentrix_Position"
+    #         match = re.search(pattern, pca_kruskal_path)
+    #         column = match.group() 
+
+    #         report_sections.append({
+    #             "id": f"pcaKruskal{column}",
+    #             "title": f"PCA (Kruskal-Wallis, {column})",
+    #             "type": "table-rows",
+    #             "data": pca_kruskal_data
+    #         })
+
+    # report_sections = add_plot_section(report_sections, "pcaPlots", "PCA (plots)", pca_plot_paths)
     
     epi_age_subsections = generate_subsection_list(
         main_id="epiAge",
         subsection_list=flat_config_ordered["epi_clocks"].split(","),
-        paths=epi_age_plot_paths,
+        plot_paths=epi_age_plot_paths,
+        table_paths=None,
         title_prefix="Epigenetic clock: ",
     )
 
