@@ -58,6 +58,7 @@ write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
 preprocessing_data <- list()
 preprocessing_data <- list(
     Microarray_platform = sesame::sdfPlatform(sdfs[[1]]),
+    SeSAME_prep_code = prep_code,
     IDAT_count_in_input_dir = length(
         list.files(
             path = "idats",
