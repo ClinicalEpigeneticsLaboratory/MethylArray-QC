@@ -187,6 +187,7 @@ def make_section(
     html: str = None,
     data: dict = None,
     html_list: List[str] = None,
+    data_list: List[dict] = None,
     subsections: dict = None,
     description: str = None,
 ) -> dict:
@@ -199,6 +200,7 @@ def make_section(
         html (str, optional): HTML for a single plot added to "plot" or "plot+table" report section. Defaults to None.
         data (dict, optional): a dictionary containing data used to generate a table in "table" or "plot+table" report section. Defaults to None.
         html_list (List[str], optional): A list of HTML strings for multiple plots added to a "plot-group" report section. Defaults to None.
+        data_list (List[dict], optional): A list of dictionaries used to generate tables added to a "table-row-group" report section. Defaults to None.
         subsections (dict, optional): A dictionary containing data used to generate subsections within a report section. Defaults to None.
         description (str, optional): A description of report section. Defaults to None.
         
@@ -219,6 +221,8 @@ def make_section(
     elif section_type == "plot+table":
         sect["html"] = html or ""
         sect["data"] = data or {}
+    elif section_type == "table-row-group":
+        sect["data_list"] = data_list or []  # reuse the html_list arg for generality
     if subsections:
         sect["subsections"] = subsections
     return sect
@@ -247,6 +251,8 @@ def generate_subsection_list(
     """    
     TITLE_MAP = {
         "area_plot": "PCA (general): Area plot",
+        "PC_KW": "PCA: Kruskal-Wallis test results for each column",
+        "scatter_matrix": "PCA: scatter matrix for each column",
         "probe": "Heatmap showing missing (NaN) values across samples and probes"
     }
     
@@ -280,7 +286,7 @@ def generate_subsection_list(
 
     return subsections
 
-def add_plot_section_with_subs(
+def add_section_with_subs(
     report_sections: List[Dict],
     id: str,
     title: str,
@@ -306,7 +312,48 @@ def add_plot_section_with_subs(
     # Build subsections first
     subsecs_out = []
     if subsections:
+        print("Received subsections:")
         for sub in subsections:
+            print(sub["id"], sub.get("type"), "data_list" in sub)
+
+            if sub.get("type") == "table-row-group":
+
+                if "data_list" in sub and isinstance(sub["data_list"], list):
+                    # ✅ Use provided data_list directly
+                    subsecs_out.append(make_section(
+                        id=sub["id"],
+                        title=sub["title"],
+                        section_type="table-row-group",
+                        data_list=sub["data_list"],
+                        description=description
+                    ))
+                    continue
+
+                table_paths = sub.get("table_paths", [])
+                if isinstance(table_paths, str):
+                    table_paths = [table_paths]
+
+                # Load all tables listed in table_paths
+                tables_data = []
+                for tpath in table_paths:
+                    if tpath and tpath not in ["no_ao_plot.txt", "no_ctrl_fluorescence_plots.txt", "no_epi_age.txt", "no_pca_kruskal.txt", "no_sex_inference.txt"]:
+                        table_data = load_table_data_json(tpath)
+                        tables_data.append({
+                            "title": Path(tpath).stem,
+                            "data": table_data
+                        })
+
+                # Add a single subsection with all these tables
+                subsecs_out.append(make_section(
+                    id=sub["id"],
+                    title=sub["title"],
+                    section_type="table-row-group",
+                    data_list=tables_data, 
+                    description=description
+                ))
+
+                continue  # Skip rest of loop for this subsection
+
             plots = sub.get("plot_paths", [])
             tables = sub.get("table_paths", [])
 
@@ -330,7 +377,7 @@ def add_plot_section_with_subs(
                 section_data = {
                     "id": sub["id"],
                     "title": sub["title"],
-                    "section_type": "plot+table",
+                    "type": "plot+table",
                     "data": table_data[0][1],  # Use first table only
                 }
 
@@ -345,10 +392,16 @@ def add_plot_section_with_subs(
                 subsecs_out.append(make_section(**section_data, description=description))
 
             elif has_table:
+                table_content = table_data[0][1]
+                if isinstance(table_content, list):
+                    section_type = "table-rows"
+                else:
+                    section_type = "table"
+
                 subsecs_out.append(make_section(
                     id=sub["id"],
                     title=sub["title"],
-                    section_type="table",
+                    section_type=section_type,
                     data=table_data[0][1],
                     description=description
                 ))
@@ -532,7 +585,7 @@ def main():
             title_prefix=None,
         )
 
-        report_sections = add_plot_section_with_subs(
+        report_sections = add_section_with_subs(
             report_sections,
             id="ctrlFluorescence",
             title="Control probe fluorescence plots",
@@ -585,7 +638,7 @@ def main():
         title_prefix="Mean beta per ",
     )
 
-    report_sections = add_plot_section_with_subs(
+    report_sections = add_section_with_subs(
         report_sections,
         id="batchEffect",
         title="Batch effect evaluation",
@@ -604,7 +657,7 @@ def main():
         title_prefix="Missing data (NaN) distribution per ",
     )
 
-    report_sections = add_plot_section_with_subs(
+    report_sections = add_section_with_subs(
         report_sections,
         id="missingData",
         title="Missing data evaluation",
@@ -618,52 +671,116 @@ def main():
     )
     
     pca_plot_paths = pca_plot_paths.split(',')
-    pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
-    pca_subsection_list.append("area_plot")
+    # pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
+    # pca_subsection_list.append("area_plot")
+    # pca_subsection_list = ["area_plot", "PC_KW", "scatter_matrix"]
+
+    pca_subsection_list = ["area_plot", "scatter_matrix"]
+
+    pca_subsections = generate_subsection_list(
+        main_id="pca",
+        subsection_list=pca_subsection_list,
+        plot_paths=pca_plot_paths,
+        table_paths=None,
+        title_prefix="PCA: "
+    )
 
     pca_descr = ""
 
-    if "no_pca_kruskal.txt" not in pca_kruskal_paths:
-        pca_kruskal_paths = pca_kruskal_paths.split(',')
-        pca_subsections = generate_subsection_list(
-            main_id="pca",
-            subsection_list=sorted(pca_subsection_list),
-            plot_paths=pca_plot_paths,
-            table_paths=pca_kruskal_paths,
-            title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
-        )
+    #if "no_pca_kruskal.txt" not in pca_kruskal_paths:
+    # if pca_kruskal_paths != "no_pca_kruskal.txt":
+    pca_kruskal_paths = pca_kruskal_paths.split(',')
 
+    table_group_data = []
+
+    for path in pca_kruskal_paths:
+        if "no_pca_kruskal.txt" not in path:
+            table_data = load_table_data_json(path)
+            colname = Path(path).stem.split("_")[-1]
+            table_group_data.append({
+                "title": f"Kruskal-Wallis for {colname}",
+                "data": table_data
+            })
+
+    pca_kw_subsection = {
+        "id": "pca_PC_KW",
+        "title": "PCA: Kruskal-Wallis test results for each column",
+        "type": "table-row-group",
+        "data_list": table_group_data
+    }
+
+    # pca_kw_subsection = make_section(
+    #     id="pca_PC_KW",
+    #     title="PCA: Kruskal-Wallis test results for each column",
+    #     section_type="table-row-group",
+    #     data_list=table_group_data
+    # )
+    # pca_subsections.append(pca_kw_subsection)
+
+    pca_subsections.append(pca_kw_subsection)
+    # pca_kruskal_paths = pca_kruskal_paths.split(',')
+    # pca_subsections = generate_subsection_list(
+    #     main_id="pca",
+    #     subsection_list=pca_subsection_list,
+    #     #subsection_list=sorted(pca_subsection_list),
+    #     plot_paths=pca_plot_paths,
+    #     table_paths=pca_kruskal_paths,
+    #     title_prefix="PCA: "
+    #     #title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
+    # )
+
+    print("table_group_data:", table_group_data)
+
+    if table_group_data:
         pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
             <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-            <li>one subsection for each column provided in workflow parameters - each containing:\
-            <ul>\
-                <li>results of Kruskal-Wallis test for each principal component</li>\
-                <li>scatter matrix plot for first n components (n specified by the user)</li>\
-            </ul>\
-            </li></ul>"
+            <li>results of Kruskal-Wallis test for each principal component (if there are at list 2 unique values in a selected column)</li>\
+            <li>scatter matrix plot for first n components (n specified by the user)</li>\
+            </ul>"
     else:
-        pca_subsections = generate_subsection_list(
-            main_id="pca",
-            subsection_list=sorted(pca_subsection_list),
-            plot_paths=pca_plot_paths,
-            table_paths=None,
-            title_prefix="PCA: scatter matrix - ",
-        )
-
         pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
             <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-            <li>one subsection for each column provided in workflow parameters - each containing:\
-            <ul>\
-                <li>scatter matrix plot for first n components (n specified by the user)</li>\
-            </ul>\
-            </li></ul>"
+            <li>scatter matrix plot for first n components (n specified by the user)</li>\
+            </ul>"
+    # pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+    #     <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+    #     <li>one subsection for each column provided in workflow parameters - each containing:\
+    #     <ul>\
+    #         <li>results of Kruskal-Wallis test for each principal component</li>\
+    #         <li>scatter matrix plot for first n components (n specified by the user)</li>\
+    #     </ul>\
+    #     </li></ul>"
+# else:
+#     pca_subsections = generate_subsection_list(
+#         main_id="pca",
+#         subsection_list=sorted(pca_subsection_list),
+#         plot_paths=pca_plot_paths,
+#         table_paths=None,
+#         title_prefix="PCA: ",
+#     )
 
-    pca_subsections = sorted(
-        pca_subsections,
-        key=lambda d: 0 if "area_plot" in d["id"] else 1
-    )
+    # pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+    #     <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+    #     <li>one subsection for each column provided in workflow parameters - each containing:\
+    #     <ul>\
+    #         <li>scatter matrix plot for first n components (n specified by the user)</li>\
+    #     </ul>\
+    #     </li></ul>"
 
-    report_sections = add_plot_section_with_subs(
+    # pca_subsections = sorted(
+    #     pca_subsections,
+    #     key=lambda d: 0 if "area_plot" in d["id"] else 1
+    # )
+
+    # print(f"pca_subsections: {pca_subsections}")
+    # print(f"Type of first element: {type(pca_subsections[0])}")
+    # print(type(pca_subsections))  # should be list
+    # print(type(pca_subsections[0]))  # should be dict
+    # print(pca_subsections[0].keys())  # should be dict
+
+    for sub in pca_subsections:
+        print(f"SUBSECTION: {sub['id']}, type={sub.get('type')}, has data_list={bool(sub.get('data_list'))}")
+    report_sections = add_section_with_subs(
         report_sections,
         id="pca",
         title="PCA",
@@ -683,7 +800,7 @@ def main():
             title_prefix="Epigenetic clock: ",
         )
 
-        report_sections = add_plot_section_with_subs(
+        report_sections = add_section_with_subs(
             report_sections,
             id="epiAge",
             title="Epigenetic age plots",
@@ -696,6 +813,12 @@ def main():
                 <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
         )
+
+    for section in report_sections:
+        if section["id"] == "pca":
+            for sub in section.get("subsections", []):
+                print(f"📦 SUB INSIDE PCA: {sub['id']} | type={sub.get('type')} | has data_list={bool(sub.get('data_list'))}")
+
 
     # Final template data
     report_jinja_data = {

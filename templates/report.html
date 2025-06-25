@@ -55,11 +55,19 @@
 <body>
     <div class="container mt-3">
         <h2>Methylation Array QC report</h2>
-        <p>Left-click on a report (sub)section header to hide or show its contents. Hover over specific plot elements to display e.g. details for specific samples.</p>
+        <p>Left-click on a report (sub)section header to hide or show its contents. Hover over specific plot elements to
+            display e.g. details for specific samples.</p>
         <div class="accordion" id="accordion">
 
             {% macro render_section(section, parent_id="accordion") %}
-            {% if section.html or section.html_list or section.data or section.subsections %}
+            {% if section.type == "table-row-group"
+            or section.data_list is defined
+            or section.html
+            or section.html_list
+            or section.data
+            or section.subsections %} 
+            <p>🔧 Inside render_section for {{ section.id }} (type: '{{ section.type }}')</p>
+            <p>🚨 data_list length: {{ section.data_list | length if section.data_list is defined else 'undefined' }}</p>
             <div class="card mb-3">
                 <div class="card-header">
                     <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
@@ -71,6 +79,7 @@
                         {% if section.description and parent_id == "accordion" %}
                         <p class="text-muted mt-2">{{ section.description }}</p>
                         {% endif %}
+
                         {% if section.type == "table" %}
                         <div class="table-responsive">
                             <table class="table w-100">
@@ -133,6 +142,37 @@
                             <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
+                        {% elif section.type == "table-row-group" %}
+                        <p>🚧 Rendering table-row-group: {{ section.id }}</p>
+                        <p>🧪 section.data_list exists? {{ section.data_list is defined }} | type: {{ section.data_list.__class__.__name__ }}</p>
+                        <p>🧪 data_list length: {{ section.data_list | length }}</p>
+                        {% for table in section.data_list %}
+                        <h5>{{ table.title }}</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        {% for col in table.data[0].keys() %}
+                                        <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table.data %}
+                                    <tr>
+                                        {% for val in row.values() %}
+                                        <td>
+                                            {% if val is string or number or boolean %}{{ val }}
+                                            {% else %}
+                                            <pre>{{ val | tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
 
                         {% elif section.type == "plot+table" %}
                         <div class="table-responsive">
@@ -152,7 +192,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        {% endif %}
                         {% if section.html %}
                         <div class="plot-container">
                             <div class="plot-loading">
@@ -177,10 +216,16 @@
                         </div>
                         {% endfor %}
                         {% endif %}
+                        {% endif %}
 
+                        {% if section.subsections %}
+                        <p>📂 Section '{{ section.id }}' has subsections: {{ section.subsections | map(attribute='id') |
+                            list }}</p>
+                        {% endif %}
                         {% if section.subsections %}
                         <div class="accordion mt-3" id="accordion-{{ section.id }}">
                             {% for sub in section.subsections %}
+                            <p>🧪 Rendering subsection: {{ sub }} (type={{ sub.type if sub is mapping else 'not a dict' }})</p>
                             {{ render_section(sub, "accordion-" ~ section.id) }}
                             {% endfor %}
                         </div>
