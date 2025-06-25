@@ -78,6 +78,9 @@ workflow {
             .map {
                 it.join(',')
             }
+    } else {
+        ctrl_fluorescence_plot_paths = Channel.value("$projectDir/assets/no_ctrl_fluorescence.txt")
+        unique_probe_types_str = Channel.value("no_probe_types")
     }
 
     // preprocess_ch_out.raw_mynorm_path: imputed mynorm path
@@ -98,12 +101,14 @@ workflow {
         ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
         ao_plot_path = ao_results.ao_plot
     } else {
-        ao_plot_path = "$projectDir/assets/NO_FILE.txt"
+        ao_plot_path = Channel.value("$projectDir/assets/no_ao_plot.txt")
     }
 
     // run sex_inference process when parameter infer_sex is set to true
     if(params.infer_sex) {
         sex_inference_path = SEX_INFERENCE(impute_ch_out.imputed_mynorm, cpus, sample_sheet_abs_path)
+    } else {
+        sex_inference_path = Channel.value("$projectDir/assets/no_sex_inference.txt")
     }
 
     batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"])
@@ -141,11 +146,15 @@ workflow {
             it.join(',')
         }
 
-    pca_kruskal_paths = pca_ch_out.kruskal
+    if(pca_ch_out.kruskal) {
+        pca_kruskal_paths = pca_ch_out.kruskal
         .collect()
         .map {
             it.join(',')
         }
+    } else {
+        pca_kruskal_paths = Channel.value("$projectDir/assets/no_pca_kruskal.txt")
+    }
 
     if(params.infer_epi_age) {
         // previously: epi_age_res_path
@@ -160,6 +169,8 @@ workflow {
             .map {
                 it.join(',')
             }
+    } else {
+        epi_age_plot_paths = Channel.value("$projectDir/assets/no_epi_age.txt")
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)

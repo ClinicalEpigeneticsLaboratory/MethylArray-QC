@@ -153,7 +153,7 @@ def add_plot_section(report_sections: dict, id: str, title: str, paths: str|Path
     if isinstance(paths, str):
         paths = [paths]
 
-    valid_paths = [(p, json_fig_to_html(p)) for p in paths if p and p != "NO_FILE.txt"]
+    valid_paths = [(p, json_fig_to_html(p)) for p in paths if p and p not in ["no_ao_plot.txt", "no_ctrl_fluorescence_plots.txt", "no_epi_age.txt", "no_pca_kruskal.txt", "no_sex_inference.txt"]]
 
     if not valid_paths:
         return report_sections
@@ -313,12 +313,12 @@ def add_plot_section_with_subs(
             # Parse plots and tables
             plot_htmls = [
                 (p, json_fig_to_html(p))
-                for p in plots if p and p != "NO_FILE.txt"
+                for p in plots if p and p not in ["no_ao_plot.txt", "no_ctrl_fluorescence_plots.txt", "no_epi_age.txt", "no_pca_kruskal.txt", "no_sex_inference.txt"]
             ]
 
             table_data = [
                 (t, load_table_data_json(t))
-                for t in tables if t and t != "NO_FILE.txt"
+                for t in tables if t and t not in ["no_ao_plot.txt", "no_ctrl_fluorescence_plots.txt", "no_epi_age.txt", "no_pca_kruskal.txt", "no_sex_inference.txt"]
             ]
 
             # Determine section type
@@ -392,7 +392,7 @@ def add_plot_section_with_subs(
     valid_main = [
         (p, json_fig_to_html(p))
         for p in paths_list
-        if p and p != "NO_FILE.txt"
+        if p and p not in ["no_ao_plot.txt", "no_ctrl_fluorescence_plots.txt", "no_epi_age.txt", "no_pca_kruskal.txt", "no_sex_inference.txt"]
     ]
     if not valid_main:
         return report_sections
@@ -467,14 +467,8 @@ def main():
     output_report_path = "qc_report.html"
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(',')
-    ctrl_fluorescence_plot_paths = ctrl_fluorescence_plot_paths.split(',')
-    pca_plot_paths = pca_plot_paths.split(',')
-    pca_kruskal_paths = pca_kruskal_paths.split(',')
-    epi_age_plot_paths = epi_age_plot_paths.split(',')
-    unique_ctrl_probe_types = sorted(unique_ctrl_probe_types.split(','))
 
     config = load_table_data_json(config_json_path)
-    sex_inference_data = load_table_data_json(sex_inference_path)
     qc_summary = load_table_data_json(qc_summary_path)
     preprocess_summary = load_table_data_json(preprocess_summary_path)
     imputation_summary = load_table_data_json(imputation_summary_path)
@@ -526,22 +520,26 @@ def main():
         "description": 'This section contains a table with QC statistics generated for provided IDAT files using SeSAME R package. For detailed explanations, refer to <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/QC.html">SeSAME documentation</a>.'
     })
 
-    ctrl_fluorescence_subsections = generate_subsection_list(
-        main_id="ctrlFluorescence",
-        subsection_list=unique_ctrl_probe_types,
-        plot_paths=ctrl_fluorescence_plot_paths,
-        table_paths=None,
-        title_prefix=None,
-    )
+    if unique_ctrl_probe_types != "no_probe_types":
+        ctrl_fluorescence_plot_paths = ctrl_fluorescence_plot_paths.split(',')
+        unique_ctrl_probe_types = sorted(unique_ctrl_probe_types.split(','))
 
-    report_sections = add_plot_section_with_subs(
-        report_sections,
-        id="ctrlFluorescence",
-        title="Control probe fluorescence plots",
-        paths="",          # ignored since subs exist
-        subsections = ctrl_fluorescence_subsections,
-        description="This section contains control probe fluorescence plots showing the intensity at different types of control probes present at Illumina microarrays. For details on how to interpret the results, see <a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a>."
-    )
+        ctrl_fluorescence_subsections = generate_subsection_list(
+            main_id="ctrlFluorescence",
+            subsection_list=unique_ctrl_probe_types,
+            plot_paths=ctrl_fluorescence_plot_paths,
+            table_paths=None,
+            title_prefix=None,
+        )
+
+        report_sections = add_plot_section_with_subs(
+            report_sections,
+            id="ctrlFluorescence",
+            title="Control probe fluorescence plots",
+            paths="",          # ignored since subs exist
+            subsections = ctrl_fluorescence_subsections,
+            description="This section contains control probe fluorescence plots showing the intensity at different types of control probes present at Illumina microarrays. For details on how to interpret the results, see <a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a>."
+        )
 
     report_sections.append({
         "id": "preprocessingSummary",
@@ -559,7 +557,7 @@ def main():
         "description": "This section contains imputation statistics after handling missing values based on user-specified thresholds and imputation methods"
     })
 
-    if ao_plot_path != "NO_FILE.txt":
+    if "no_ao_plot.txt" not in ao_plot_path:
         report_sections = add_plot_section(
             report_sections, 
             "anomalyDetection", 
@@ -568,13 +566,16 @@ def main():
             description="This section contains a plot visualising the identifiication of anomalies using Isolation Forest algorithm (for details see: <a href='https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html'>scikit-learn documentation</a>). Each sample is represented by one bar and a user-specified threshold is represented by red dashed line. Samples with bars exceeding threshold line should be considered as anomalies. "
         )
     
-    report_sections.append({
-        "id": "sexInference",
-        "title": "Sex inference",
-        "type": "table-rows",
-        "data": sex_inference_data,
-        "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. "
-    })
+    if "no_sex_inference.txt" not in sex_inference_path:
+        sex_inference_data = load_table_data_json(sex_inference_path)
+
+        report_sections.append({
+            "id": "sexInference",
+            "title": "Sex inference",
+            "type": "table-rows",
+            "data": sex_inference_data,
+            "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. "
+        })
     
     batch_subsections = generate_subsection_list(
         main_id="batchEffect",
@@ -616,16 +617,46 @@ def main():
             </ul>"
     )
     
+    pca_plot_paths = pca_plot_paths.split(',')
     pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
     pca_subsection_list.append("area_plot")
 
-    pca_subsections = generate_subsection_list(
-        main_id="pca",
-        subsection_list=sorted(pca_subsection_list),
-        plot_paths=pca_plot_paths,
-        table_paths=pca_kruskal_paths,
-        title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
-    )
+    pca_descr = ""
+
+    if "no_pca_kruskal.txt" not in pca_kruskal_paths:
+        pca_kruskal_paths = pca_kruskal_paths.split(',')
+        pca_subsections = generate_subsection_list(
+            main_id="pca",
+            subsection_list=sorted(pca_subsection_list),
+            plot_paths=pca_plot_paths,
+            table_paths=pca_kruskal_paths,
+            title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
+        )
+
+        pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+            <li>one subsection for each column provided in workflow parameters - each containing:\
+            <ul>\
+                <li>results of Kruskal-Wallis test for each principal component</li>\
+                <li>scatter matrix plot for first n components (n specified by the user)</li>\
+            </ul>\
+            </li></ul>"
+    else:
+        pca_subsections = generate_subsection_list(
+            main_id="pca",
+            subsection_list=sorted(pca_subsection_list),
+            plot_paths=pca_plot_paths,
+            table_paths=None,
+            title_prefix="PCA: scatter matrix - ",
+        )
+
+        pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+            <li>one subsection for each column provided in workflow parameters - each containing:\
+            <ul>\
+                <li>scatter matrix plot for first n components (n specified by the user)</li>\
+            </ul>\
+            </li></ul>"
 
     pca_subsections = sorted(
         pca_subsections,
@@ -638,37 +669,33 @@ def main():
         title="PCA",
         paths="",          # ignored since subs exist
         subsections = pca_subsections,
-        description="This section contains the results of PCA analysis divided into the following subsections:<ul>\
-            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-            <li>one subsection for each column provided in workflow parameters - each containing:\
-            <ul>\
-                <li>results of Kruskal-Wallis test for each principal component</li>\
-                <li>scatter matrix plot for first n components (n specified by the user)</li>\
-            </ul>\
-            </li></ul>"
+        description=pca_descr
     )
     
-    epi_age_subsections = generate_subsection_list(
-        main_id="epiAge",
-        subsection_list=flat_config_ordered["epi_clocks"].split(","),
-        plot_paths=epi_age_plot_paths,
-        table_paths=None,
-        title_prefix="Epigenetic clock: ",
-    )
+    if "no_epi_age.txt" not in epi_age_plot_paths:
+        epi_age_plot_paths = epi_age_plot_paths.split(',')
+        
+        epi_age_subsections = generate_subsection_list(
+            main_id="epiAge",
+            subsection_list=flat_config_ordered["epi_clocks"].split(","),
+            plot_paths=epi_age_plot_paths,
+            table_paths=None,
+            title_prefix="Epigenetic clock: ",
+        )
 
-    report_sections = add_plot_section_with_subs(
-        report_sections,
-        id="epiAge",
-        title="Epigenetic age plots",
-        paths="",          # ignored since subs exist
-        subsections = epi_age_subsections,
-        description="This section contains the results of epigenetic age inference using \
-            one or more of epigenetic clocks supported by <a href='https://github.com/yiluyucheng/dnaMethyAge'>dnaMethyAge R package</a> \
-            (see the package website for full list of clocks and publications). Each subsection contains results for one clock. \
-            For each clock, 2 types of plots are generated: <ul><li>a regression trendline of chronological and epigenetic age \
-            <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
-            trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
-    )
+        report_sections = add_plot_section_with_subs(
+            report_sections,
+            id="epiAge",
+            title="Epigenetic age plots",
+            paths="",          # ignored since subs exist
+            subsections = epi_age_subsections,
+            description="This section contains the results of epigenetic age inference using \
+                one or more of epigenetic clocks supported by <a href='https://github.com/yiluyucheng/dnaMethyAge'>dnaMethyAge R package</a> \
+                (see the package website for full list of clocks and publications). Each subsection contains results for one clock. \
+                For each clock, 2 types of plots are generated: <ul><li>a regression trendline of chronological and epigenetic age \
+                <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
+                trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
+        )
 
     # Final template data
     report_jinja_data = {

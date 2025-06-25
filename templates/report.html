@@ -59,6 +59,7 @@
         <div class="accordion" id="accordion">
 
             {% macro render_section(section, parent_id="accordion") %}
+            {% if section.html or section.html_list or section.data or section.subsections %}
             <div class="card mb-3">
                 <div class="card-header">
                     <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
@@ -151,7 +152,7 @@
                                 </tbody>
                             </table>
                         </div>
-
+                        {% endif %}
                         {% if section.html %}
                         <div class="plot-container">
                             <div class="plot-loading">
@@ -177,8 +178,6 @@
                         {% endfor %}
                         {% endif %}
 
-                        {% endif %}
-
                         {% if section.subsections %}
                         <div class="accordion mt-3" id="accordion-{{ section.id }}">
                             {% for sub in section.subsections %}
@@ -186,16 +185,15 @@
                             {% endfor %}
                         </div>
                         {% endif %}
-
                     </div>
                 </div>
             </div>
+            {% endif %}
             {% endmacro %}
 
             {% for section in report_sections %}
             {{ render_section(section) }}
             {% endfor %}
-
         </div>
     </div>
 
