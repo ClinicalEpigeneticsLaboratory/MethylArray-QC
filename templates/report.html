@@ -66,8 +66,6 @@
             or section.html_list
             or section.data
             or section.subsections %} 
-            <p>🔧 Inside render_section for {{ section.id }} (type: '{{ section.type }}')</p>
-            <p>🚨 data_list length: {{ section.data_list | length if section.data_list is defined else 'undefined' }}</p>
             <div class="card mb-3">
                 <div class="card-header">
                     <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
@@ -75,7 +73,7 @@
                     </a>
                 </div>
                 <div id="{{ section.id }}" class="collapse" data-bs-parent="#{{ parent_id }}">
-                    <div class="card-body">
+                    <div class="card-body" style="text-align: justify;">
                         {% if section.description and parent_id == "accordion" %}
                         <p class="text-muted mt-2">{{ section.description }}</p>
                         {% endif %}
@@ -127,7 +125,7 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ section.html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ section.html|tojson|safe }}'></div>
                         </div>
 
                         {% elif section.type == "plot-group" %}
@@ -139,13 +137,10 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
                         {% elif section.type == "table-row-group" %}
-                        <p>🚧 Rendering table-row-group: {{ section.id }}</p>
-                        <p>🧪 section.data_list exists? {{ section.data_list is defined }} | type: {{ section.data_list.__class__.__name__ }}</p>
-                        <p>🧪 data_list length: {{ section.data_list | length }}</p>
                         {% for table in section.data_list %}
                         <h5>{{ table.title }}</h5>
                         <div class="table-responsive">
@@ -200,7 +195,7 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ section.html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ section.html|tojson|safe }}'></div>
                         </div>
 
                         {% elif section.html_list %}
@@ -212,20 +207,14 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot" data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
                         {% endif %}
                         {% endif %}
-
-                        {% if section.subsections %}
-                        <p>📂 Section '{{ section.id }}' has subsections: {{ section.subsections | map(attribute='id') |
-                            list }}</p>
-                        {% endif %}
                         {% if section.subsections %}
                         <div class="accordion mt-3" id="accordion-{{ section.id }}">
                             {% for sub in section.subsections %}
-                            <p>🧪 Rendering subsection: {{ sub }} (type={{ sub.type if sub is mapping else 'not a dict' }})</p>
                             {{ render_section(sub, "accordion-" ~ section.id) }}
                             {% endfor %}
                         </div>
