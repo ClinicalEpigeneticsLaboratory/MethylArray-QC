@@ -696,7 +696,7 @@ def main():
     for path in pca_kruskal_paths:
         if "no_pca_kruskal.txt" not in path:
             table_data = load_table_data_json(path)
-            colname = Path(path).stem.split("_")[-1]
+            colname = table_data[0]["Column"]
             table_group_data.append({
                 "title": f"Kruskal-Wallis for {colname}",
                 "data": table_data
