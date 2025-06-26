@@ -61,7 +61,7 @@ preprocessing_data <- list(
     SeSAME_prep_code = prep_code,
     IDAT_count_in_input_dir = length(
         list.files(
-            path = "idats",
+            path = idats,
             pattern = "\\.idat(\\.gz)?$",
             full.names = TRUE,
             recursive = TRUE
