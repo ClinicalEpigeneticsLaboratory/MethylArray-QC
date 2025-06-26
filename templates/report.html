@@ -65,7 +65,7 @@
             or section.html
             or section.html_list
             or section.data
-            or section.subsections %} 
+            or section.subsections %}
             <div class="card mb-3">
                 <div class="card-header">
                     <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
@@ -125,7 +125,8 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ section.html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ section.html|tojson|safe }}'></div>
                         </div>
 
                         {% elif section.type == "plot-group" %}
@@ -137,7 +138,8 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
                         {% elif section.type == "table-row-group" %}
@@ -195,7 +197,8 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ section.html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ section.html|tojson|safe }}'></div>
                         </div>
 
                         {% elif section.html_list %}
@@ -207,7 +210,8 @@
                                         style="width:100%">Loading plot...</div>
                                 </div>
                             </div>
-                            <div class="lazy-plot d-flex justify-content-center" data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ plot.plot_html|tojson|safe }}'></div>
                         </div>
                         {% endfor %}
                         {% endif %}
@@ -240,6 +244,69 @@
                             try {
                                 const raw = JSON.parse(container.dataset.html);
                                 container.innerHTML = raw;
+
+                                // Re-execute any embedded scripts
+                                container.querySelectorAll('script').forEach(s => {
+                                    const n = document.createElement('script');
+                                    if (s.src) {
+                                        n.src = s.src;
+                                    } else {
+                                        n.textContent = s.textContent;
+                                    }
+                                    s.replaceWith(n);
+                                });
+
+                                const loader = container.closest('.plot-container').querySelector('.plot-loading');
+                                if (loader) loader.remove();
+
+                                // Find the plotly div that was inserted
+                                const plotDiv = container.querySelector('.js-plotly-plot');
+                                if (plotDiv && plotDiv.data && plotDiv.layout) {
+                                    // Re-render with custom config TODO: find a way to insert readable plotly filename!
+                                    //const filename = plotDiv.layout?.title?.text?.replace(/\s+/g, "_") || "plot";
+                                    const filename = plotDiv.id
+
+                                    Plotly.newPlot(plotDiv, plotDiv.data, plotDiv.layout, {
+                                        responsive: true,
+                                        modeBarButtons: [[
+                                            {
+                                                name: 'Download plot as svg',
+                                                icon: Plotly.Icons.camera,
+                                                click: function(gd) {
+                                                    Plotly.downloadImage(gd, {
+                                                        format: 'svg',
+                                                        filename: filename
+                                                    });
+                                                }
+                                            },
+                                            'zoom2d', 'pan2d', 'select2d', 'lasso2d',
+                                            'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d',
+                                            'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                                        ]],
+                                    });
+                                }
+
+                                observer.unobserve(container);
+                            } catch (err) {
+                                console.error('Failed lazy load:', err);
+                            }
+                        }
+                    }
+                }, { threshold: 0.1 });
+
+                observer.observe(container);
+            });
+        });
+    </script>
+    <!-- <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('.lazy-plot').forEach(container => {
+                const observer = new IntersectionObserver(entries => {
+                    for (let entry of entries) {
+                        if (entry.isIntersecting) {
+                            try {
+                                const raw = JSON.parse(container.dataset.html);
+                                container.innerHTML = raw;
                                 container.querySelectorAll('script').forEach(s => {
                                     const n = document.createElement('script');
                                     if (s.src) n.src = s.src;
@@ -258,7 +325,7 @@
                 observer.observe(container);
             });
         });
-    </script>
+    </script> -->
 </body>
 <footer>
     <p>Generated by <a href="https://github.com/ClinicalEpigeneticsLaboratory/MethylArray-QC">MethylArray-QC</a>.
