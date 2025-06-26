@@ -71,11 +71,11 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
         points="all",
         hover_data=data.columns.to_list(),
     )
+
     fig.update_layout(
         yaxis={"title": f"{epi_clock}_Accel"},
         title={
             "text": f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
-            "font": {"size": 20},
             "x": 0.15,
         },
     )

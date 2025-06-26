@@ -166,8 +166,8 @@ def get_scatter_matrix_json(
             fig=fig_scatter,
             json_path=f"PCA_scatter_matrix_{column}.json",
             showlegend=False,
-            height=len(component_names) * 150 + 175,
-            width=len(component_names) * 150,
+            height=len(component_names) * 125 + 100,
+            width=len(component_names) * 125,
         )
 
 

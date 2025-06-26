@@ -11,9 +11,10 @@ import plotly.graph_objects as go
 
 def update_and_export_plot(
     json_path: Path | str,
-    height: int = 650,
-    width: int = 650,
-    font_size: int = 22,
+    height: int = 625,
+    width: int = 625,
+    font_size: int = 16,
+    title_font_size: int = 16,
     template: str = "ggplot2",
     legend_title: str = "",
     showlegend: bool = True,
@@ -27,6 +28,7 @@ def update_and_export_plot(
         height (int): Height of the figure.
         width (int): Width of the figure.
         font_size (int): Font size used in the figure.
+        title_font_size (int): Title font size used in the figure.
         template (str): Plotly template to apply.
         legend_title (str): Title of the legend.
         showlegend (bool): Whether to show the legend.
@@ -60,6 +62,7 @@ def update_and_export_plot(
                 showlegend=showlegend,
                 legend={"title": legend_title},
                 font={"size": font_size},
+                title={"font":{"size": title_font_size}}
             )
 
             # Export to JSON
