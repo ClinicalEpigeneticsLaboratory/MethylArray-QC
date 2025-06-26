@@ -312,10 +312,7 @@ def add_section_with_subs(
     # Build subsections first
     subsecs_out = []
     if subsections:
-        print("Received subsections:")
         for sub in subsections:
-            print(sub["id"], sub.get("type"), "data_list" in sub)
-
             if sub.get("type") == "table-row-group":
 
                 if "data_list" in sub and isinstance(sub["data_list"], list):
@@ -516,7 +513,6 @@ def main():
     epi_age_plot_paths = sys.argv[15]
     unique_ctrl_probe_types = sys.argv[16]
 
-
     output_report_path = "qc_report.html"
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(',')
@@ -557,7 +553,6 @@ def main():
 
     report_sections = []
 
-    # Add table section for workflow parameters
     report_sections.append({
         "id": "workflowParams",
         "title": "Workflow parameters",
@@ -756,12 +751,6 @@ def main():
                 <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
         )
-
-    for section in report_sections:
-        if section["id"] == "pca":
-            for sub in section.get("subsections", []):
-                print(f"📦 SUB INSIDE PCA: {sub['id']} | type={sub.get('type')} | has data_list={bool(sub.get('data_list'))}")
-
 
     # Final template data
     report_jinja_data = {
