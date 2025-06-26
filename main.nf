@@ -97,7 +97,7 @@ workflow {
         ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.imputation_summary_path)
     }
 
-    if(processed_samples_count > 2) {
+    if(processed_samples_count > 10) {
         ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
         ao_plot_path = ao_results.ao_plot
     } else {
@@ -135,25 +135,28 @@ workflow {
     nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path)
     nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
 
-    // pca_ch_out.area: area plot path
-    // pca_ch_out.scatter: scatter matrix plot paths
-    // pca_ch_out.kruskal: Kruskal-Wallis test results
-    pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
-    pca_plot_paths = pca_ch_out.scatter
-        .merge(pca_ch_out.area)
-        .collect()
-        .map {
-            it.join(',')
-        }
+    if(processed_samples_count > 10) {
+        // pca_ch_out.area: area plot path
+        // pca_ch_out.scatter: scatter matrix plot paths
+        // pca_ch_out.kruskal: Kruskal-Wallis test results
+        pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
+        pca_plot_paths = pca_ch_out.scatter
+            .merge(pca_ch_out.area)
+            .collect()
+            .map {
+                it.join(',')
+            }
 
-    if(pca_ch_out.kruskal) {
-        pca_kruskal_paths = pca_ch_out.kruskal
-        .collect()
-        .map {
-            it.join(',')
-        }
+        if(pca_ch_out.kruskal) {
+            pca_kruskal_paths = pca_ch_out.kruskal
+            .collect()
+            .map {
+                it.join(',')
+            }
+        } 
     } else {
         pca_kruskal_paths = Channel.value("$projectDir/assets/no_pca_kruskal.txt")
+        pca_plot_paths = Channel.value("$projectDir/assets/no_pca_plot.txt")
     }
 
     if(params.infer_epi_age) {

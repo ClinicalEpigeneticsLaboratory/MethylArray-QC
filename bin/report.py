@@ -670,124 +670,67 @@ def main():
             </ul>"
     )
     
-    pca_plot_paths = pca_plot_paths.split(',')
-    # pca_subsection_list = flat_config_ordered["pca_columns"].split(",")
-    # pca_subsection_list.append("area_plot")
-    # pca_subsection_list = ["area_plot", "PC_KW", "scatter_matrix"]
-
-    pca_subsection_list = ["area_plot", "scatter_matrix"]
-
-    pca_subsections = generate_subsection_list(
-        main_id="pca",
-        subsection_list=pca_subsection_list,
-        plot_paths=pca_plot_paths,
-        table_paths=None,
-        title_prefix="PCA: "
-    )
-
-    pca_descr = ""
-
-    #if "no_pca_kruskal.txt" not in pca_kruskal_paths:
-    # if pca_kruskal_paths != "no_pca_kruskal.txt":
     pca_kruskal_paths = pca_kruskal_paths.split(',')
+    pca_plot_paths = pca_plot_paths.split(',')
 
-    table_group_data = []
+    all_pca_paths = pca_kruskal_paths + pca_plot_paths
+    no_kruskal_present = any("no_pca_kruskal.txt" in p for p in all_pca_paths)
+    no_plot_present = any("no_pca_plot.txt" in p for p in all_pca_paths)
 
-    for path in pca_kruskal_paths:
-        if "no_pca_kruskal.txt" not in path:
-            table_data = load_table_data_json(path)
-            colname = table_data[0]["Column"]
-            table_group_data.append({
-                "title": f"Kruskal-Wallis for {colname}",
-                "data": table_data
-            })
+    if not no_kruskal_present and not no_plot_present:
+        if "no_pca_plot.txt" not in pca_plot_paths:
+            pca_subsection_list = ["area_plot", "scatter_matrix"]
 
-    pca_kw_subsection = {
-        "id": "pca_PC_KW",
-        "title": "PCA: Kruskal-Wallis test results for each column",
-        "type": "table-row-group",
-        "data_list": table_group_data
-    }
+            pca_subsections = generate_subsection_list(
+                main_id="pca",
+                subsection_list=pca_subsection_list,
+                plot_paths=pca_plot_paths,
+                table_paths=None,
+                title_prefix="PCA: "
+            )
 
-    # pca_kw_subsection = make_section(
-    #     id="pca_PC_KW",
-    #     title="PCA: Kruskal-Wallis test results for each column",
-    #     section_type="table-row-group",
-    #     data_list=table_group_data
-    # )
-    # pca_subsections.append(pca_kw_subsection)
+            pca_descr = ""
 
-    pca_subsections.append(pca_kw_subsection)
-    # pca_kruskal_paths = pca_kruskal_paths.split(',')
-    # pca_subsections = generate_subsection_list(
-    #     main_id="pca",
-    #     subsection_list=pca_subsection_list,
-    #     #subsection_list=sorted(pca_subsection_list),
-    #     plot_paths=pca_plot_paths,
-    #     table_paths=pca_kruskal_paths,
-    #     title_prefix="PCA: "
-    #     #title_prefix="PCA: scatter matrix + Kruskal-Wallis - ",
-    # )
+        table_group_data = []
 
-    print("table_group_data:", table_group_data)
+        for path in pca_kruskal_paths:
+            if "no_pca_kruskal.txt" not in path:
+                table_data = load_table_data_json(path)
+                colname = table_data[0]["Column"]
+                table_group_data.append({
+                    "title": f"Kruskal-Wallis for {colname}",
+                    "data": table_data
+                })
 
-    if table_group_data:
-        pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-            <li>results of Kruskal-Wallis test for each principal component (if there are at list 2 unique values in a selected column)</li>\
-            <li>scatter matrix plot for first n components (n specified by the user)</li>\
-            </ul>"
-    else:
-        pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-            <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-            <li>scatter matrix plot for first n components (n specified by the user)</li>\
-            </ul>"
-    # pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-    #     <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-    #     <li>one subsection for each column provided in workflow parameters - each containing:\
-    #     <ul>\
-    #         <li>results of Kruskal-Wallis test for each principal component</li>\
-    #         <li>scatter matrix plot for first n components (n specified by the user)</li>\
-    #     </ul>\
-    #     </li></ul>"
-# else:
-#     pca_subsections = generate_subsection_list(
-#         main_id="pca",
-#         subsection_list=sorted(pca_subsection_list),
-#         plot_paths=pca_plot_paths,
-#         table_paths=None,
-#         title_prefix="PCA: ",
-#     )
+        pca_kw_subsection = {
+            "id": "pca_PC_KW",
+            "title": "PCA: Kruskal-Wallis test results for each column",
+            "type": "table-row-group",
+            "data_list": table_group_data
+        }
 
-    # pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-    #     <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-    #     <li>one subsection for each column provided in workflow parameters - each containing:\
-    #     <ul>\
-    #         <li>scatter matrix plot for first n components (n specified by the user)</li>\
-    #     </ul>\
-    #     </li></ul>"
+        pca_subsections.append(pca_kw_subsection)
 
-    # pca_subsections = sorted(
-    #     pca_subsections,
-    #     key=lambda d: 0 if "area_plot" in d["id"] else 1
-    # )
+        if table_group_data:
+            pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+                <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+                <li>results of Kruskal-Wallis test for each principal component (if there are at list 2 unique values in a selected column)</li>\
+                <li>scatter matrix plot for first n components (n specified by the user)</li>\
+                </ul>"
+        else:
+            pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
+                <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
+                <li>scatter matrix plot for first n components (n specified by the user)</li>\
+                </ul>"
 
-    # print(f"pca_subsections: {pca_subsections}")
-    # print(f"Type of first element: {type(pca_subsections[0])}")
-    # print(type(pca_subsections))  # should be list
-    # print(type(pca_subsections[0]))  # should be dict
-    # print(pca_subsections[0].keys())  # should be dict
-
-    for sub in pca_subsections:
-        print(f"SUBSECTION: {sub['id']}, type={sub.get('type')}, has data_list={bool(sub.get('data_list'))}")
-    report_sections = add_section_with_subs(
-        report_sections,
-        id="pca",
-        title="PCA",
-        paths="",          # ignored since subs exist
-        subsections = pca_subsections,
-        description=pca_descr
-    )
+        report_sections = add_section_with_subs(
+            report_sections,
+            id="pca",
+            title="PCA",
+            paths="",          # ignored since subs exist
+            subsections = pca_subsections,
+            description=pca_descr
+        )
     
     if "no_epi_age.txt" not in epi_age_plot_paths:
         epi_age_plot_paths = epi_age_plot_paths.split(',')

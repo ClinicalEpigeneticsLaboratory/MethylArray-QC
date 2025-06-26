@@ -46,6 +46,8 @@ def test_kw_to_json(
 
     for component in component_names:
         df = components_data[[component, column]]
+
+        # penguin!
         kruskal_res = stats.kruskal(
             *[group[column].values for name, group in df.groupby(column)]
         )
@@ -239,12 +241,12 @@ def main():
             perc_of_cpgs=perc_pca_cpgs,
         )
 
-        if sample_sheet[column].nunique() >= 2:
-            test_kw_to_json(
-                components_data=components_df,
-                column=column,
-                component_names=component_col_names,
-            )
+        # if sample_sheet[column].nunique() >= 2:
+        test_kw_to_json(
+            components_data=components_df,
+            column=column,
+            component_names=component_col_names,
+        )
 
         if i == 0:
             get_area_plot(
