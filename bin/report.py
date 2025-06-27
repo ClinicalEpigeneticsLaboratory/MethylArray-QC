@@ -5,6 +5,7 @@ A module generating HTML report
 """
 
 import sys
+import time
 import datetime
 import json
 from jinja2 import Template
@@ -338,7 +339,8 @@ def add_section_with_subs(
                         table_data = load_table_data_json(tpath)
                         tables_data.append({
                             "title": Path(tpath).stem,
-                            "data": table_data
+                            "data": table_data,
+                            "filename": "table.csv"
                         })
 
                 # Add a single subsection with all these tables
@@ -347,7 +349,7 @@ def add_section_with_subs(
                     title=sub["title"],
                     section_type="table-row-group",
                     data_list=tables_data, 
-                    description=description
+                    description=description,
                 ))
 
                 continue  # Skip rest of loop for this subsection
@@ -552,6 +554,9 @@ def main():
         **flat_config_filtered
     }
 
+    # curr_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    curr_datetime = time.strftime('%Y-%m-%d_%H-%M-%S')
+
     report_sections = []
 
     report_sections.append({
@@ -559,6 +564,7 @@ def main():
         "title": "Workflow parameters",
         "type": "table",
         "data": flat_config_ordered,
+        "filename": f"methylarrayqc_workflow_params_{curr_datetime}"
     })
 
     report_sections.append({
@@ -566,7 +572,8 @@ def main():
         "title": "Data QC - summary",
         "type": "table-rows",
         "data": qc_summary,
-        "description": 'This section contains a table with QC statistics generated for provided IDAT files using SeSAME R package. For detailed explanations, refer to <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/QC.html">SeSAME documentation</a>.'
+        "description": 'This section contains a table with QC statistics generated for provided IDAT files using SeSAME R package. For detailed explanations, refer to <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/QC.html">SeSAME documentation</a>.',
+        "filename": "qc_summary"
     })
 
     if unique_ctrl_probe_types != "no_probe_types":
@@ -595,7 +602,8 @@ def main():
         "title": "Data preprocessing - summary",
         "type": "table",
         "data": preprocess_summary,
-        "description": "This section contains the summary of data preprocessing with SeSAME R package. For the details on the meaning of specific prep codes, please refer to <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/sesame.html'>SeSAME R package documentation</a>."
+        "description": "This section contains the summary of data preprocessing with SeSAME R package. For the details on the meaning of specific prep codes, please refer to <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/sesame.html'>SeSAME R package documentation</a>.",
+        "filename": "preprocessing_summary"
     })
 
     report_sections.append({
@@ -603,7 +611,8 @@ def main():
         "title": "Data imputation - summary",
         "type": "table",
         "data": imputation_summary,
-        "description": "This section contains imputation statistics after handling missing values based on user-specified thresholds and imputation methods"
+        "description": "This section contains imputation statistics after handling missing values based on user-specified thresholds and imputation methods",
+        "filename": "imputation_summary"
     })
 
     if "no_ao_plot.txt" not in ao_plot_path:
@@ -623,7 +632,8 @@ def main():
             "title": "Sex inference",
             "type": "table-rows",
             "data": sex_inference_data,
-            "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. "
+            "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. ",
+            "filename": "sex_inference_results"
         })
     
     batch_subsections = generate_subsection_list(
@@ -695,7 +705,8 @@ def main():
                 colname = table_data[0]["Column"]
                 table_group_data.append({
                     "title": f"Kruskal-Wallis for {colname}",
-                    "data": table_data
+                    "data": table_data,
+                    "filename": f"PCA_kruskal_{colname}"
                 })
 
         pca_kw_subsection = {
