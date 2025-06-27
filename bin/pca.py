@@ -65,7 +65,7 @@ def test_kw_to_json(
             "Column": column_vals,
             "Component": component_names,
             "Method": test_method,
-            "p_value": kruskal_pvals, 
+            "p-value": kruskal_pvals, 
         },
         #index=component_names,
     )
