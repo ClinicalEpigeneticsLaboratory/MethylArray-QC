@@ -113,7 +113,7 @@ def get_area_plot(
     fig_area.update_xaxes(title="Principal component")
     fig_area.update_layout(
         title_text=f"Area plot<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs})<br>with highest variance",
-        margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
     return fig_area
 
@@ -158,7 +158,8 @@ def get_scatter_matrix_json(
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
         title_text=f"PCA scatter matrix - {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
-        margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        #margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
 
     if fig_scatter:
