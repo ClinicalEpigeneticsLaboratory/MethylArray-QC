@@ -216,6 +216,7 @@ def make_section(
         sect["data"] = data or []
     elif section_type == "plot":
         sect["html"] = html or ""
+        sect["plot_name"] = sect['id']
     elif section_type == "plot-group":
         sect["html_list"] = html_list or []
     elif section_type == "plot+table":

@@ -126,7 +126,8 @@
                                 </div>
                             </div>
                             <div class="lazy-plot d-flex justify-content-center"
-                                data-html='{{ section.html|tojson|safe }}'></div>
+                                data-html='{{ section.html|tojson|safe }}'
+                                data-plot-name="{{ section.plot_name }}"></div>
                         </div>
 
                         {% elif section.type == "plot-group" %}
@@ -139,7 +140,8 @@
                                 </div>
                             </div>
                             <div class="lazy-plot d-flex justify-content-center"
-                                data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                                data-html='{{ plot.plot_html|tojson|safe }}'
+                                data-plot-name="{{ plot.plot_name }}"></div>
                         </div>
                         {% endfor %}
                         {% elif section.type == "table-row-group" %}
@@ -198,7 +200,8 @@
                                 </div>
                             </div>
                             <div class="lazy-plot d-flex justify-content-center"
-                                data-html='{{ section.html|tojson|safe }}'></div>
+                                data-html='{{ section.html|tojson|safe }}'
+                                data-plot-name="{{ section.plot_name }}"></div>
                         </div>
 
                         {% elif section.html_list %}
@@ -211,7 +214,8 @@
                                 </div>
                             </div>
                             <div class="lazy-plot d-flex justify-content-center"
-                                data-html='{{ plot.plot_html|tojson|safe }}'></div>
+                                data-html='{{ plot.plot_html|tojson|safe }}'
+                                data-plot-name="{{ plot.plot_name }}"></div>
                         </div>
                         {% endfor %}
                         {% endif %}
@@ -264,7 +268,7 @@
                                 if (plotDiv && plotDiv.data && plotDiv.layout) {
                                     // Re-render with custom config TODO: find a way to insert readable plotly filename!
                                     //const filename = plotDiv.layout?.title?.text?.replace(/\s+/g, "_") || "plot";
-                                    const filename = plotDiv.id
+                                    const filename = container.dataset.plotName || 'plot';
 
                                     Plotly.newPlot(plotDiv, plotDiv.data, plotDiv.layout, {
                                         responsive: true,
