@@ -14,6 +14,17 @@ files = [
 ]
 
 [[package]]
+name = "htmlmin"
+version = "0.1.12"
+description = "An HTML Minifier"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "htmlmin-0.1.12.tar.gz", hash = "sha256:50c1ef4630374a5d723900096a961cff426dff46b48f34d194a81bbe14eca178"},
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 description = "A very fast and expressive template engine."
@@ -636,4 +647,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "e3fdec66d8718fb989df89e8c980b2b60db8cc9acff4ee47e584863835c76887"
+content-hash = "77b62621a7ca5038343ab614510dbe739f87a7c9413d96480d0996c7075d2caa"
