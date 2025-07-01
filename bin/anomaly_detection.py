@@ -88,16 +88,16 @@ def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
         color_discrete_map={"Anomaly": "red", "non-Anomaly": "blue"},
     )
     fig.add_vline(x=offset, line_width=1, line_dash="dash", line_color="red")
-    fig.update_layout(
-        legend={
-            "yanchor": "bottom",
-            "y": 1.05,
-            "xanchor": "center",
-            "x": 0,
-            "orientation": "h",
-            "itemsizing": "trace",
-        }
-    )
+    # fig.update_layout(
+    #     legend={
+    #         "yanchor": "bottom",
+    #         "y": 1.05,
+    #         "xanchor": "center",
+    #         "x": 0,
+    #         "orientation": "h",
+    #         "itemsizing": "trace",
+    #     }
+    # )
     return fig
 
 

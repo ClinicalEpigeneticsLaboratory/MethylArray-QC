@@ -110,6 +110,15 @@ def get_area_plot(
         hover_data=area_plot_data_df.columns.to_list(),
     )
 
+    # fig_area = go.Figure()
+    # fig_area.add_trace(go.Scatter(
+    #     x=np.arange(1, number_of_pcs + 1),
+    #     y=np.cumsum(explained_var_ratio * 100),
+    #     fill="tozeroy",
+    #     mode="lines",
+    #     hoverinfo="x+y",
+    # ))
+
     fig_area.update_xaxes(title="Principal component")
     fig_area.update_layout(
         title_text=f"Area plot<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs})<br>with highest variance",
@@ -166,7 +175,7 @@ def get_scatter_matrix_json(
         export_decorated_fig_with_custom_name(
             fig=fig_scatter,
             json_path=f"PCA_scatter_matrix_{column}.json",
-            showlegend=False,
+            #showlegend=False,
             height=len(component_names) * 125 + 100,
             width=len(component_names) * 125,
         )

@@ -45,13 +45,13 @@ def get_ctrl_fluorescence_plot(
 
     fig.update_layout(
         yaxis={"title": f"log<sub>10</sub>{metric_name}<br>({ctrl_probe_type})"},
-        legend={
-            "yanchor": "bottom",
-            "y": 1.02,
-            "xanchor": "left",
-            "x": 0,
-            "orientation": "h",
-        },
+        # legend={
+        #     "yanchor": "bottom",
+        #     "y": 1.02,
+        #     "xanchor": "left",
+        #     "x": 0,
+        #     "orientation": "h",
+        # },
         scattermode="group",
     )
 

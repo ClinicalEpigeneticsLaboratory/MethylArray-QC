@@ -163,13 +163,13 @@ def get_epi_vs_chron_age_regr_plot(
 
     fig.update_layout(
         yaxis={"title": epi_clock},
-        legend={
-            "yanchor": "bottom",
-            "y": 1.02,
-            "xanchor": "left",
-            "x": 0,
-            "orientation": "h",
-        },
+        # legend={
+        #     "yanchor": "bottom",
+        #     "y": 1.02,
+        #     "xanchor": "left",
+        #     "x": 0,
+        #     "orientation": "h",
+        # },
     )
 
     if fig is not None:
