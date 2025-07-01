@@ -13,6 +13,37 @@ import plotly.io as pio
 from pathlib import Path
 from typing import Union, List, Dict
 import re
+import htmlmin
+
+def minify_html(rendered_html: str):
+    # Minify output
+    minified_html = htmlmin.minify(
+        rendered_html,
+        remove_comments=True,
+        remove_empty_space=True,
+        reduce_boolean_attributes=True,
+        keep_pre=True,  # Preserve formatting in <pre> tags
+    )
+
+    return minified_html
+
+def render_and_minify(report_sec_data: dict, in_template_path: str|Path, out_report_path: str|Path):
+    # Final template data
+    report_jinja_data = {
+        "report_sections": report_sec_data
+    }
+
+    with open(out_report_path, "w", encoding="utf-8") as output_file:
+        with open(in_template_path) as template_file:
+            j2_template = Template(template_file.read())
+
+            try:
+                rendered_html = j2_template.render(report_jinja_data)
+                minified_html = minify_html(rendered_html)
+            except Exception as e:
+                print("❌ Template rendering failed:", e)
+                sys.exit(2)
+            output_file.write(minified_html)
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
@@ -25,7 +56,8 @@ def json_fig_to_html(json_path: str) -> str:
     """    
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid = True)
-        return fig.to_html(full_html=False, include_plotlyjs=False, config={"responsive": True})
+        #return fig.to_html(full_html=False, include_plotlyjs=False, config={"responsive": True})
+        return fig.to_html(full_html=False, include_plotlyjs="cdn", config={"responsive": True})
     except Exception as e:
         print(f"❌ Failed to parse JSON Plotly figure from {json_path}: {e}")
         sys.exit(1)
@@ -764,21 +796,27 @@ def main():
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
         )
 
-    # Final template data
-    report_jinja_data = {
-        "report_sections": report_sections
-    }
+        render_and_minify(
+            report_sec_data=report_sections,
+            in_template_path=input_template_path,
+            out_report_path=output_report_path,
+        )
 
-    with open(output_report_path, "w", encoding="utf-8") as output_file:
-        with open(input_template_path) as template_file:
-            j2_template = Template(template_file.read())
+    # # Final template data
+    # report_jinja_data = {
+    #     "report_sections": report_sections
+    # }
 
-            try:
-                rendered_html = j2_template.render(report_jinja_data)
-            except Exception as e:
-                print("❌ Template rendering failed:", e)
-                sys.exit(2)
-            output_file.write(rendered_html)
+    # with open(output_report_path, "w", encoding="utf-8") as output_file:
+    #     with open(input_template_path) as template_file:
+    #         j2_template = Template(template_file.read())
+
+    #         try:
+    #             rendered_html = j2_template.render(report_jinja_data)
+    #         except Exception as e:
+    #             print("❌ Template rendering failed:", e)
+    #             sys.exit(2)
+    #         output_file.write(rendered_html)
 
 if __name__ == "__main__":
     main()
