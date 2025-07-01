@@ -35,6 +35,8 @@ quality_metrics <- do.call(rbind, lapply(qcs, as.data.frame))
 
 message("Dumping ...")
 quality_metrics$Sample_Name <- rownames(quality_metrics)
+rownames(quality_metrics) <- NULL
+quality_metrics <- quality_metrics[, c("Sample_Name", setdiff(names(quality_metrics), c("Sample_Name", "_row")))]
 write_parquet(quality_metrics, glue("qc", ".parquet"))
 
 write(
