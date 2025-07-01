@@ -4,16 +4,22 @@
 A module generating HTML report
 """
 
+import os
 import sys
 import time
 import datetime
 import json
-from jinja2 import Template
+from jinja2 import Template, FileSystemLoader, Environment
 import plotly.io as pio
 from pathlib import Path
 from typing import Union, List, Dict
 import re
 import htmlmin
+import base64
+
+def get_section_by_name(sections, name):
+    """Return the first dict in the list with section_name == name."""
+    return next((s for s in sections if s.get("id") == name), {})
 
 def minify_html(rendered_html: str):
     # Minify output
@@ -28,22 +34,32 @@ def minify_html(rendered_html: str):
     return minified_html
 
 def render_and_minify(report_sec_data: dict, in_template_path: str|Path, out_report_path: str|Path):
+    
+    if not isinstance(in_template_path, Path):
+        in_template_path = Path(in_template_path)
+    if not isinstance(out_report_path, Path):
+        out_report_path = Path(out_report_path)
+
+    # Register the filter
+    env = Environment(loader=FileSystemLoader(in_template_path.parent))
+    env.filters['get_section'] = get_section_by_name
+
+    j2_template = env.get_template(in_template_path.name)
+    
     # Final template data
     report_jinja_data = {
         "report_sections": report_sec_data
     }
 
-    with open(out_report_path, "w", encoding="utf-8") as output_file:
-        with open(in_template_path) as template_file:
-            j2_template = Template(template_file.read())
+    try:
+        rendered_html = j2_template.render(report_jinja_data)
+        minified_html = minify_html(rendered_html)
+    except Exception as e:
+        print("❌ Template rendering failed:", e)
+        sys.exit(2)
 
-            try:
-                rendered_html = j2_template.render(report_jinja_data)
-                minified_html = minify_html(rendered_html)
-            except Exception as e:
-                print("❌ Template rendering failed:", e)
-                sys.exit(2)
-            output_file.write(minified_html)
+    with open(out_report_path, "w", encoding="utf-8") as output_file:
+        output_file.write(minified_html)
 
 def json_fig_to_html(json_path: str) -> str:
     """A function generating HTML div for a figure exported as JSON
@@ -795,6 +811,25 @@ def main():
                 <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
         )
+
+        # Get the directory where the script resides
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Build absolute path to the logo file
+        logo_path = os.path.join(script_dir, "..", "assets", "PUM__logo.png")
+
+        logo_base64 = ""
+        with open(logo_path, "rb") as f:
+            logo_base64 = base64.b64encode(f.read()).decode()
+
+        # print(f"LOGO BASE64: {logo_base64}")
+
+        report_sections.append({
+            "id": "footer",
+            "footer_logo": logo_base64
+        })
+
+        # print(report_sections.keys())
 
         render_and_minify(
             report_sec_data=report_sections,
