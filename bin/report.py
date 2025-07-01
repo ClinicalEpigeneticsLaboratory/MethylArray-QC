@@ -608,14 +608,6 @@ def main():
     report_sections = []
 
     report_sections.append({
-        "id": "workflowParams",
-        "title": "Workflow parameters",
-        "type": "table",
-        "data": flat_config_ordered,
-        "filename": f"methylarrayqc_workflow_params_{curr_datetime}"
-    })
-
-    report_sections.append({
         "id": "qcSummary",
         "title": "Data QC - summary",
         "type": "table-rows",
@@ -811,6 +803,14 @@ def main():
                 <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>"
         )
+
+        report_sections.append({
+            "id": "workflowParams",
+            "title": "Workflow parameters",
+            "type": "table",
+            "data": flat_config_ordered,
+            "filename": f"methylarrayqc_workflow_params_{curr_datetime}"
+        })
 
         # Get the directory where the script resides
         script_dir = os.path.dirname(os.path.abspath(__file__))
