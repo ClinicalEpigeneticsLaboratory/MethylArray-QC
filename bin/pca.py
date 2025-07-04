@@ -43,31 +43,48 @@ def test_kw_to_json(
     kruskal_pvals = []
     test_method = []
     column_vals = []
+    infos = []
 
     for component in component_names:
-        df = components_data[[component, column]]
+        df = components_data[[component, column]].dropna()
 
-        # penguin!
-        kruskal_res = stats.kruskal(
-            *[group[column].values for name, group in df.groupby(column)]
+        grouped_data = [group[component].values for _, group in df.groupby(column)]
+        group_sizes = [len(g) for g in grouped_data]
+        all_groups_one_sample = all(size == 1 for size in group_sizes)
+        some_too_small = any(size < 2 for size in group_sizes)
+        no_within_group_variation = all(np.all(g == g[0]) for g in grouped_data)
+        identical_across_groups = np.allclose(
+            [np.mean(g) for g in grouped_data], np.mean([v for g in grouped_data for v in g])
         )
+
+        kruskal_res = stats.kruskal(*grouped_data)
         kruskal_pvals.append(kruskal_res.pvalue)
         test_method.append("Kruskal-Wallis test")
         column_vals.append(column)
 
+        info = ""
 
-    # kruskal_col_res = pd.DataFrame(
-    #     data={f"{column}_p_value": kruskal_pvals, "Method": test_method},
-    #     index=component_names,
-    # )
+        if len(grouped_data) < 2:
+            info = "Too few groups to compare"
+        elif all_groups_one_sample:
+            info = "Each group contains only one sample — insufficient data for test"
+        elif some_too_small:
+            info = "One or more groups have <2 samples — results may be unreliable"
+        elif no_within_group_variation:
+            info = "No variation across or within groups — test not meaningful"
+        elif identical_across_groups:
+            info = "Groups have near-identical means — low between-group variation"
+        else:
+            info = "OK"
+        infos.append(info)
     kruskal_col_res = pd.DataFrame(
         data={
             "Column": column_vals,
             "Component": component_names,
             "Method": test_method,
             "p-value": kruskal_pvals, 
+            "Info": infos
         },
-        #index=component_names,
     )
     kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json", orient='records', indent=2)
 
