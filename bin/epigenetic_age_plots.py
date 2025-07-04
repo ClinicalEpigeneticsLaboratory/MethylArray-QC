@@ -10,10 +10,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plot_export_utils import export_decorated_fig_with_custom_name
-from scipy import stats
+import pingouin as pg
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import median_absolute_error
-
 
 def get_med_ae(x: list, y: list) -> float:
     """A function calculating median absolute error for epigenetic age estimation
@@ -57,11 +56,10 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
     Returns:
         go.Figure: Epigenetic age acceleration boxplot figure
     """
-    kruskal_res = stats.kruskal(
-        *[
-            group[f"Age_Acceleration_{epi_clock}"].values
-            for name, group in data.groupby("Sample_Group")
-        ]
+    kruskal_res = pg.kruskal(
+        data=data,
+        dv=f"Age_Acceleration_{epi_clock}",  
+        between="Sample_Group"               
     )
     fig = px.box(
         data,
@@ -75,7 +73,7 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
     fig.update_layout(
         yaxis={"title": f"{epi_clock}_Accel"},
         title={
-            "text": f"Kruskal-Wallis p = {kruskal_res.pvalue: .2f}",
+            "text": f"Kruskal-Wallis p = {kruskal_res["p-unc"].iloc[0]: .2f}",
             "x": 0.15,
         },
     )
