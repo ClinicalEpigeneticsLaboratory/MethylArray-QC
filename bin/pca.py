@@ -14,7 +14,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from decorators import update_and_export_plot
 from plot_export_utils import export_decorated_fig_with_custom_name
-from scipy import stats
+import pingouin as pg
+#from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -57,8 +58,9 @@ def test_kw_to_json(
             [np.mean(g) for g in grouped_data], np.mean([v for g in grouped_data for v in g])
         )
 
-        kruskal_res = stats.kruskal(*grouped_data)
-        kruskal_pvals.append(kruskal_res.pvalue)
+        kruskal_res = pg.kruskal(data=df, dv=component, between=column)
+        pval = kruskal_res['p-unc'].values[0]  # Extract p-value
+        kruskal_pvals.append(pval)
         test_method.append("Kruskal-Wallis test")
         column_vals.append(column)
 
