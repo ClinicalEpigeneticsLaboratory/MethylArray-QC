@@ -11,6 +11,7 @@ process EPIGENETIC_AGE_PLOTS {
     output:
     path "Regr_Age_vs_Epi_Age_${epi_clock}.json", arity: "1..*", emit: regr
     path "Epi_Age_Accel_${epi_clock}.json", optional: true, arity: "1..*", emit: eaa
+    path "Epi_Age_Accel_${epi_clock}_post_hoc_res.json", optional: true, arity: "1..*", emit: eaa_post_hoc
 
     script:
     """

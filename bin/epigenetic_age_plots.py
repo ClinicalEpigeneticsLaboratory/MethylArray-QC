@@ -45,18 +45,50 @@ def add_med_ae_to_trendline_hover(hovertemplate: str, medae: float) -> str:
     """
     return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
 
+def get_pairwise_comp_res(data: pd.DataFrame, epi_clock: str) -> pd.DataFrame:
+    """A function computing pairwise post-hoc test (U-Mann-Whitney, 
+    FDR Benjamini-Hochberg correction)
 
-def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
+    Args:
+        data (pd.DataFrame): plot data used to generate epigenetic age acceleration 
+                            boxplots
+        epi_clock (str): the name of currently processed epigenetic clock
+
+    Returns:
+        pd.DataFrame: Results of the pairwise comparisons
+    """
+    posthoc = pg.pairwise_tests(
+        dv=f"Age_Acceleration_{epi_clock}",
+        between="Sample_Group",
+        effsize="hedges",
+        data=data,
+        parametric=False,
+        padjust="fdr_bh"
+    )
+
+    return pd.DataFrame({
+        'Group A': posthoc["A"],
+        'Group B': posthoc["B"],
+        'Post-hoc test': "U-Mann-Whitney",
+        'p-value (uncorrected)': posthoc["p-unc"].round(3),
+        'Multiple correction method': 'FDR Benjamini-Hochberg',
+        'p-value (corrected)': posthoc["p-corr"].round(3),
+        'Hedges g': posthoc["hedges"].round(3)
+    })
+
+def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFrame = None) -> go.Figure:
     """A function generating epigenetic age acceleration boxplot
 
     Args:
         data (pd.DataFrame): plot data used to generate boxplots
         epi_clock (str): the name of currently processed epigenetic clock
-
+        posthoc_res (pd.DataFrame): data frame with results of post-hoc pairwise test, used to plot the results (default: None)
+        
     Returns:
         go.Figure: Epigenetic age acceleration boxplot figure
     """
-    kruskal_res = pg.kruskal(
+
+    kw_res = pg.kruskal(
         data=data,
         dv=f"Age_Acceleration_{epi_clock}",  
         between="Sample_Group"               
@@ -73,7 +105,7 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
     fig.update_layout(
         yaxis={"title": f"{epi_clock}_Accel"},
         title={
-            "text": f"Kruskal-Wallis p = {kruskal_res["p-unc"].iloc[0]: .2f}",
+            "text": f"Kruskal-Wallis p = {kw_res["p-unc"].iloc[0]: .2f}",
             "x": 0.15,
         },
     )
@@ -83,7 +115,24 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str) -> go.Figure:
             fig=fig, json_path=f"Epi_Age_Accel_{epi_clock}.json", showlegend=False
         )
 
+def get_eaa_res(
+    data: pd.DataFrame, epi_clock: str
+) -> None:
+    """A function generating epigenetic age acceleration results
 
+    Args:
+        data (pd.DataFrame): plot data used to generate boxplots
+        epi_clock (str): the name of currently processed epigenetic clock
+        
+    Returns: None
+    """
+
+    # compute post-hoc tests if there are >= 3 groups
+    if data["Sample_Group"].nunique() >= 3:
+        pairwise_res = get_pairwise_comp_res(data=data, epi_clock=epi_clock)
+        pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json")
+    get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None)
+    
 def get_epi_vs_chron_age_regr_plot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
 ) -> None:
@@ -206,7 +255,8 @@ def main():
     )
 
     if "Sample_Group" in sample_sheet:
-        get_eaa_boxplot(data=data, epi_clock=epi_clock)
+        get_eaa_res(data=data, epi_clock=epi_clock)
+        #get_eaa_boxplot(data=data, epi_clock=epi_clock)
 
 
 if __name__ == "__main__":
