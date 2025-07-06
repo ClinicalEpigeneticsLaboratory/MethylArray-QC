@@ -336,6 +336,7 @@ def generate_subsection_list(
     tables: Optional[List[Dict]] = None,
     table_paths: Optional[List[str]] = None,
     table_titles: Optional[List[str]] = None,
+    sub_descr_dict: Optional[Dict[str, str]] = None,
 ) -> List[Dict]:
     """A function generating a list of subsections for report section, with associated data.
     Data are dynamically mapped to a specific subsection, based on a current subsection_list element,
@@ -352,6 +353,7 @@ def generate_subsection_list(
     Returns:
         List[Dict]: A list of dictionaries with defined structure and data for subsections of specific report section
     """
+
     TITLE_MAP = {
         "area_plot":      "PCA (general): Area plot",
         "PC_KW":          "PCA: Kruskal‑Wallis test results for each column",
@@ -404,6 +406,12 @@ def generate_subsection_list(
 
         if matching_tables:
             subsection_dict["tables"] = matching_tables
+        
+        if sub_descr_dict is not None and subsection in sub_descr_dict:
+            subsection_dict["description"] = sub_descr_dict[subsection]
+            subsection_dict["show_description_in_subsections"] = True
+        else:
+            subsection_dict["show_description_in_subsections"] = False
 
         subsections.append(subsection_dict)
 
@@ -432,6 +440,9 @@ def add_section_with_subs(
     if subsections:
         for sub in subsections:
             sid, stitle = sub["id"], sub["title"]
+            show_sub_descr = sub.get("show_description_in_subsections", False)
+            sub_descr = sub.get("description") if show_sub_descr else None
+
 
             # ----- Handle tables -----
             table_entries = sub.get("tables")
@@ -474,7 +485,7 @@ def add_section_with_subs(
                             id=sid, title=stitle,
                             section_type="table-row-group",
                             data_list=data_list,
-                            description=description
+                            description=sub_descr
                         )
                     )
                 continue
@@ -524,7 +535,7 @@ def add_section_with_subs(
                         id=sid,
                         title=stitle,               # subsection headline
                         section_type="plot+table",
-                        description=description,
+                        description=sub_descr,
                         **html_or_list,
                         **tab_kwargs
                     )
@@ -542,7 +553,7 @@ def add_section_with_subs(
                             data=t["data"],
                             table_title=t.get("table_title"),     # <‑‑ renamed
                             filename=t.get("filename"),
-                            description=description
+                            description=sub_descr
                         )
                     )
                 else:
@@ -559,7 +570,7 @@ def add_section_with_subs(
                                 }
                                 for t in tables
                             ],
-                            description=description
+                            description=sub_descr
                         )
                     )
 
@@ -569,7 +580,7 @@ def add_section_with_subs(
                         make_section(
                             id=sid, title=stitle, section_type="plot",
                             html=plot_htmls[0][1],
-                            description=description
+                            description=sub_descr
                         )
                     )
                 else:
@@ -580,7 +591,7 @@ def add_section_with_subs(
                                 {"plot_html": h, "plot_name": f"{sid}_{i}"}
                                 for i, (_, h) in enumerate(plot_htmls)
                             ],
-                            description=description
+                            description=sub_descr
                         )
                     )
 
@@ -718,12 +729,93 @@ def main():
         ctrl_fluorescence_plot_paths = ctrl_fluorescence_plot_paths.split(",")
         unique_ctrl_probe_types = sorted(unique_ctrl_probe_types.split(","))
 
+        CTRL_DESC = {
+            "STAINING": """
+                <p><b>STAINING controls (sample-independent)</b> verify the fluorescent staining of
+                probes after single‑base extension.<br><i>Expected</i>: a high signal in the
+                Cy3/Cy5 channel depending on colour balance.</p>
+            """,
+            "EXTENSION": """
+                <p><b>EXTENSION controls (sample-independent)</b> allow to check the performance of the single‑base extension
+                step.<br><i>Expected</i>: a clear, high signal indicating the polymerase and dNTPs worked
+                correctly.</p>
+            """,
+            "TARGET_REMOVAL": """
+                <p><b>TARGET REMOVAL controls (sample-independent)</b> measure residual signal after the
+                stripping step.<br><i>Expected</i>: very low intensity (near background).</p>
+            """,
+            "HYBRIDIZATION": """
+                <p><b>HYBRIDIZATION controls (sample-independent)</b> use synthetic targets instead of amplified DNA to confirm the
+                entire assay workflow.<br><i>Expected</i>: moderate to high signal.</p>
+            """,
+            "RESTORATION": """
+                <p><b>RESTORATION controls (sample-independent, FFPE‑specific)</b> assess the effectiveness of
+                the DNA restoration step in Infinium HD FFPE protocol.<br><i>Expected</i>: high signal suggesting successful repair of
+                FFPE‑derived DNA.</p>
+            """,
+            "NORM": """
+                <p><b>NORM controls (normalization control probe pairs, sample-independent)</b> 
+                target non-CpG regions within housekeeping genes and are 
+                used to measure dye performance and 
+                color channel balance. For the Green channel, 
+                CG controls values are used; for the Red 
+                channel, AT controls values are used. 
+                <br><i>Expected</i>: if there is no dye-bias, the intensity values 
+                from the two probes of each pair would be 
+                expected to be the same with a ratio close 
+                to 1</p>
+            """,
+            "BISULFITE_CONVERSION_I": """
+                <p><b>BISULFITE_CONVERSION_I controls (sample-dependent)</b> 
+                assess the efficiency of bisulfite conversion of the input DNA
+                using Infinium I probe design and allele-specific single 
+                base extension
+                <br><i>Expected</i>: High signal from converted 
+                (C→T) probes and low signal from unconverted (C) 
+                probes, indicating successful conversion. </p>
+            """,
+            "BISULFITE_CONVERSION_II": """
+            <p><b>BISULFITE_CONVERSION_II controls (sample-dependent)</b> 
+                assess the efficiency of bisulfite conversion of the input DNA
+                using Infinium II probe design and allele-specific single 
+                base extension
+                <br><i>Expected</i>: High signal for probes that 
+                target converted cytosines (C→T) and low signal 
+                for unconverted Cs. Good conversion efficiency 
+                results in high contrast.</p>
+            """,
+            "SPECIFICITY_I": """
+            <p><b>SPECIFICITY_I controls (sample-dependent)</b> 
+                are used to track the specificity of allele-specific extension for Infinium I probes
+                <br><i>Expected</i>: High signal for matched probes; low or no signal for mismatched probes. Large signal separation is desired.</p>
+
+            """,
+            "SPECIFICITY_II": """
+            <p><b>SPECIFICITY_II controls (sample-dependent)</b> 
+                are used to track the specificity of allele-specific extension for Infinium II probes
+                <br><i>Expected</i>: High signal for matched probes; low or no signal for mismatched probes. Large signal separation is desired.</p>
+            """,
+            "NON-POLYMORPHIC": """
+            <p><b>NON-POLYMORPHIC controls (sample-dependent)</b> 
+                are used to compare across samples the overall performance of the assay (from amplification to detection step)
+                <br><i>Expected</i>: Consistently high signal across samples, indicating robust assay performance.</p>
+            """,
+            "NEGATIVE": """
+            <p><b>NEGATIVE controls (sample-dependent)</b> 
+                are randomly permutated sequences that should not hybridize to the genomic DNA.
+                Their mean signal defines the background signal in the analysis.
+                <br><i>Expected</i>: Low signal near background. Elevated signal may indicate 
+                non-specific binding or contamination.</p>
+            """
+        }
+
         ctrl_fluorescence_subsections = generate_subsection_list(
             main_id="ctrlFluorescence",
             subsection_list=unique_ctrl_probe_types,
             plot_paths=ctrl_fluorescence_plot_paths,
             table_paths=None,
             title_prefix=None,
+            sub_descr_dict=CTRL_DESC
         )
 
         report_sections = add_section_with_subs(
@@ -737,70 +829,35 @@ def main():
                 fluorescence plots showing the intensity at 
                     different types of control probes present 
                     at Illumina microarrays: 
-                <table class="table table-responsive">
-                <thead>
-                    <tr>
-                    <th>Probe type</th>
-                    <th>Description</th>
-                    <th>Expected signal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                    <td rowspan="5"><strong>Sample-independent controls</strong><br><small>Used to evaluate each step in the lab protocol</small></td>
-                    <td><strong>STAINING</strong>: staining of extended probes</td>
-                    <td>-</td>
-                    </tr>
-                    <tr>
-                    <td><strong>EXTENSION</strong>: allele-specific single-base extension</td>
-                    <td>-</td>
-                    </tr>
-                    <tr>
-                    <td><strong>TARGET_REMOVAL</strong>: evaluation of stripping procedure after extension reaction</td>
-                    <td>Low signal, close to background</td>
-                    </tr>
-                    <tr>
-                    <td><strong>HYBRIDIZATION</strong>: evaluation of the entire assay performance using synthetic target sequences</td>
-                    <td>-</td>
-                    </tr>
-                    <tr>
-                    <td><strong>RESTORATION</strong>: for FFPE samples only; evaluates restoration step in Infinium HD FFPE protocol</td>
-                    <td>-</td>
-                    </tr>
-                    <tr>
-                    <td><strong>Sample-dependent controls</strong></td>
-                    <td colspan="2">These control probes depend on the biological sample and are not explicitly listed here.</td>
-                    </tr>
-                </tbody>
-                </table>
+                    <ul>
+                    <li><b>Sample-independent controls:</b>: the controls not dependent on sample quality which are used to evaluate steps of the laboratory protocol (in terms of specific reagents and BeadChip itself), such as hybridization and staining</li>
+                    <ul>
+                    <li>STAINING</li>
+                    <li>EXTENSION</li>
+                    <li>TARGET_REMOVAL</li>
+                    <li>HYBRIDIZATION</li>
+                    <li>RESTORATION</li>
+                    <li>NORM</li>
+                    </ul>
+                    <li><b>Sample-dependent controls:</b> probes used to assess sample DNA quality and the assay performance across samples</li>
+                    <ul>
+                    <li>BISULFITE_CONVERSION_I</li>
+                    <li>BISULFITE_CONVERSION_II</li>
+                    <li>SPECIFICITY_I</li>
+                    <li>SPECIFICITY_II</li>
+                    <li>NON-POLYMORPHIC</li>
+                    <li>NEGATIVE</li>
+                    </ul>
+                    </ul>
                 <br>If you need further details on how to interpret the results, please see: 
                     <ul>
                     <li><a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a></li>
                     <li><a href='https://support.illumina.com/content/dam/illumina-support/courses/eval-inf-controls/story_content/external_files/Infinium_Controls_Training_Guide.pdf'>Infinium Controls Training Guide</a></li>
                     <li><a href='https://support-docs.illumina.com/ARR/Inf_HD_Methylation/Content/ARR/Methylation/SystemControlsIntro_fINF_mMeth.htm'>Infinium HD Methylation Assay System Controls official documentation</a></li>
+                    <li><a href='https://support-docs.illumina.com/ARR/Inf_HD_Methylation/Content/ARR/Methylation/ControlBeadTypeIDs_fINF_mMeth.htm'>Infinium official Controls Table</a> (with useful tips on signal interpretation)</li>
+                    <li>Xu, Z., Langie, S.A.S., De Boever, P. et al. RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip. BMC Genomics 18, 4 (2017). https://doi.org/10.1186/s12864-016-3426-3</li>
                     </ul>
                 """,
-            # description="This section contains control probe \
-            #     fluorescence plots showing the intensity at \
-            #         different types of control probes present \
-            #         at Illumina microarrays: \
-            #         <ul>\
-            #         <li><b>Sample-independent controls:</b>: used to evaluate each step in the laboratory protocol (in terms of specific reagents and BeadChip itself)</li>\
-            #         <ul>\
-            #         <li><b>STAINING:</b> staining of extended probes</li>\
-            #         <li><b>EXTENSION:</b> allele-specific single-base extension</li>\
-            #         <li><b>TARGET_REMOVAL:</b> evaluation of stripping procedure after extension reaction (<b>expected:</b> low signal, close to background)</li>\
-            #         <li><b>HYBRIDIZATION:</b> evaluation of the entire assay performance with the use of synthetic target sequences instead of amplified DNA</li>\
-            #         <li><b>RESTORATION:</b> for FFPE samples only, evaluation of restoration step in Infinium HD FFPE protocol</li>\
-            #         </ul>\
-            #         <li>Sample-dependent controls</li>\
-            #         </ul>\
-            #         <br>If you need further details on how to interpret the results, please see: \
-            #         <ul>\
-            #         <li><a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a></li>\
-            #         <li><a href='https://support.illumina.com/content/dam/illumina-support/courses/eval-inf-controls/story_content/external_files/Infinium_Controls_Training_Guide.pdf'>Infinium Controls Training Guide</a></li>\
-            #         <li><a href='https://support-docs.illumina.com/ARR/Inf_HD_Methylation/Content/ARR/Methylation/SystemControlsIntro_fINF_mMeth.htm'>Infinium HD Methylation Assay System Controls official documentation</a></li>\
-            #         </ul>"
         )
 
     report_sections.append(
@@ -854,6 +911,7 @@ def main():
         table_paths=None,
         plot_paths=batch_effect_plot_paths,
         title_prefix="Mean beta per ",
+        sub_descr_dict=None
     )
 
     report_sections = add_section_with_subs(
@@ -879,6 +937,7 @@ def main():
         plot_paths=[nan_distr_per_sample_path, heatmap_path],
         table_paths=None,
         title_prefix="Missing data (NaN) distribution per ",
+        sub_descr_dict=None
     )
 
     report_sections = add_section_with_subs(
@@ -911,6 +970,7 @@ def main():
                 plot_paths=pca_plot_paths,
                 table_paths=None,
                 title_prefix="PCA: ",
+                sub_descr_dict=None
             )
 
             pca_descr = ""
@@ -984,6 +1044,7 @@ def main():
             plot_paths=epi_age_plot_paths,
             tables=epi_age_table_entries,
             title_prefix="Epigenetic clock: ",
+            sub_descr_dict=None
         )
 
         report_sections = add_section_with_subs(
@@ -1028,8 +1089,6 @@ def main():
             out_report_path=output_report_path,
         )
 
-        # for s in report_sections:
-        #     summarise_section(indent=2, sec=s)
 
 if __name__ == "__main__":
     main()
