@@ -66,15 +66,17 @@ def get_pairwise_comp_res(data: pd.DataFrame, epi_clock: str) -> pd.DataFrame:
         padjust="fdr_bh"
     )
 
-    return pd.DataFrame({
-        'Group A': posthoc["A"],
-        'Group B': posthoc["B"],
-        'Post-hoc test': "U-Mann-Whitney",
-        'p-value (uncorrected)': posthoc["p-unc"].round(3),
-        'Multiple correction method': 'FDR Benjamini-Hochberg',
-        'p-value (corrected)': posthoc["p-corr"].round(3),
-        'Hedges g': posthoc["hedges"].round(3)
-    })
+    return pd.DataFrame(
+        data = {
+            'Group A': posthoc["A"],
+            'Group B': posthoc["B"],
+            'Post-hoc test': "U-Mann-Whitney",
+            'p-value (uncorrected)': posthoc["p-unc"].round(3),
+            'Multiple correction method': 'FDR Benjamini-Hochberg',
+            'p-value (corrected)': posthoc["p-corr"].round(3),
+            'Hedges g': posthoc["hedges"].round(3)
+        },
+    )
 
 def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFrame = None) -> go.Figure:
     """A function generating epigenetic age acceleration boxplot
@@ -130,7 +132,7 @@ def get_eaa_res(
     # compute post-hoc tests if there are >= 3 groups
     if data["Sample_Group"].nunique() >= 3:
         pairwise_res = get_pairwise_comp_res(data=data, epi_clock=epi_clock)
-        pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json")
+        pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json", orient="records", indent=2)
     get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None)
     
 def get_epi_vs_chron_age_regr_plot(

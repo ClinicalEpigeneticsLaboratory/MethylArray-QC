@@ -177,7 +177,7 @@
                         {% for table in section.data_list %}
                         {% set table_id = "table-" ~ section.id ~ "-" ~ loop.index|string %}
                         <div class="d-flex align-items-center mb-2">
-                            <h5 class="mb-0">{{ table.title }}</h5>
+                            <h5 class="mb-0">{{ table.table_title }}</h5>
                             {% if table.filename %}
                             <a href="#"
                                 onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ table.filename }}.csv')"
@@ -214,37 +214,7 @@
                         {% endfor %}
 
                         {% elif section.type == "plot+table" %}
-                        {% set table_id = "table-" ~ section.id %}
-                        <div class="mb-2">
-                            <h5 class="mb-0 d-inline">
-                                {% if section.filename %}
-                                <a href="#"
-                                    onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ section.filename }}.csv')"
-                                    title="Download CSV" class="btn btn-lg d-inline-flex align-items-center"
-                                    style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
-                                    <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i>
-                                    Download CSV
-                                </a>
-                                {% endif %}
-                            </h5>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table w-100" id="{{table_id}}">
-                                <thead>
-                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in section.data %}
-                                    <tr>{% for v in row.values() %}
-                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
-                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
-                                        </td>
-                                        {% endfor %}
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                        
                         {% if section.html %}
                         <div class="plot-container">
                             <div class="plot-loading">
@@ -272,6 +242,76 @@
                             </div>
                         </div>
                         {% endfor %}
+                        {% endif %}
+                        {% if section.data_list %}
+                        {% for table in section.data_list %}
+                        {% set table_id = "table-" ~ section.id ~ "-" ~ loop.index|string %}
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0">{{ table.table_title }}</h5>
+                            {% if table.filename %}
+                            <a href="#"
+                                onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ table.filename }}.csv')"
+                                title="Download CSV" class="btn btn-sm ms-2 d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: whitesmoke; border-radius: 0.2rem;">
+                                <i class="bi bi-filetype-csv me-1"></i> Download CSV
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="{{ table_id }}">
+                                <thead>
+                                    <tr>
+                                        {% for col in table.data[0].keys() %}
+                                        <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table.data %}
+                                    <tr>
+                                        {% for val in row.values() %}
+                                        <td>
+                                            {% if val is string or number or boolean %}{{ val }}
+                                            {% else %}
+                                            <pre>{{ val | tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        {% set table_id = "table-" ~ section.id %}
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0">{{ section.table_title }}</h5>
+                            {% if section.filename %}
+                            <a href="#"
+                                onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ section.filename }}.csv')"
+                                title="Download CSV" class="btn btn-sm ms-2 d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: whitesmoke; border-radius: 0.2rem;">
+                                <i class="bi bi-filetype-csv me-1"></i> Download CSV
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table w-100" id="{{table_id}}">
+                                <thead>
+                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in section.data %}
+                                    <tr>{% for v in row.values() %}
+                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                         {% endif %}
                         {% endif %}
                         {% if section.subsections %}
