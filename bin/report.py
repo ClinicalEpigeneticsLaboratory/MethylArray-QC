@@ -327,64 +327,13 @@ def make_section(
         sect["subsections"] = subsections
     return sect
 
-# def make_section(
-#     id: str,
-#     title: str,
-#     section_type: str,
-#     html: str = None,
-#     data: dict = None,
-#     html_list: List[str] = None,
-#     data_list: List[dict] = None,
-#     subsections: dict = None,
-#     description: str = None,
-# ) -> dict:
-#     """A function creating a dictionary for single report section
-
-#     Args:
-#         id (str): an id assigned to div with report section
-#         title (str): a title of report section
-#         section_type (str): a type of section added - table, table-rows, plot, plot_group or plot+table
-#         html (str, optional): HTML for a single plot added to "plot" or "plot+table" report section. Defaults to None.
-#         data (dict, optional): a dictionary containing data used to generate a table in "table" or "plot+table" report section. Defaults to None.
-#         html_list (List[str], optional): A list of HTML strings for multiple plots added to a "plot-group" report section. Defaults to None.
-#         data_list (List[dict], optional): A list of dictionaries used to generate tables added to a "table-row-group" report section. Defaults to None.
-#         subsections (dict, optional): A dictionary containing data used to generate subsections within a report section. Defaults to None.
-#         description (str, optional): A description of report section. Defaults to None.
-
-#     Returns:
-#         dict: a dictionary defining single report section
-#     """
-#     sect = {"id": id, "title": title, "type": section_type}
-#     if description is not None:
-#         sect["description"] = description
-#     if section_type == "table":
-#         sect["data"] = data or {}
-#     elif section_type == "table-rows":
-#         sect["data"] = data or []
-#     elif section_type == "plot":
-#         sect["html"] = html or ""
-#         sect["plot_name"] = sect["id"]
-#     elif section_type == "plot-group":
-#         sect["html_list"] = html_list or []
-#     elif section_type == "plot+table":
-#         sect["html"] = html or ""
-#         sect["data"] = data or {}
-#     elif section_type == "table-row-group":
-#         sect["data_list"] = data_list or []  # reuse the html_list arg for generality
-#     if subsections:
-#         sect["subsections"] = subsections
-#     return sect
-
-
 def generate_subsection_list(
     main_id: str,
     subsection_list: List[str],
     title_prefix: Optional[str] = None,
     plot_paths: Optional[List[str]] = None,
     *,
-    # NEW preferred argument ─ structured table metadata
     tables: Optional[List[Dict]] = None,
-    # LEGACY arguments ─ still accepted for backwards compatibility
     table_paths: Optional[List[str]] = None,
     table_titles: Optional[List[str]] = None,
 ) -> List[Dict]:
@@ -673,260 +622,6 @@ def add_section_with_subs(
         )
 
     return report_sections
-
-# def add_section_with_subs(
-#     report_sections: List[Dict],
-#     id: str,
-#     title: str,
-#     paths: Union[str, Path, List[Union[str, Path]]],
-#     subsections: List[Dict] = None,
-#     description: str = None,
-# ) -> List[Dict]:
-#     """A function adding a plot report section with subsections. If `subsections` is non-empty and valid, only add subsections under a parent shell.
-#     If no valid subsections, add a standalone plot or plot-group for `paths`.
-
-#     Args:
-#         report_sections (List[Dict]): a list of dictionaries containing report sections
-#         id (str): an id assigned to div with report section
-#         title (str): a title of report section
-#         paths (Union[str, Path, List[Union[str, Path]]]): _description_
-#         subsections (List[Dict], optional): A list of dictionaries with defined structure and plot HTML data for subsections of specific report section. Defaults to None.
-#         description (str, optional): A description of report section. Defaults to None.
-
-#     Returns:
-#         List[Dict]: a list of dictionaries containing report sections with new section divided to subsections added
-
-#     """
-#     # Build subsections first
-#     subsecs_out = []
-#     if subsections:
-#         for sub in subsections:
-#             if sub.get("type") == "table-row-group":
-
-#                 if "data_list" in sub and isinstance(sub["data_list"], list):
-#                     # ✅ Use provided data_list directly
-#                     subsecs_out.append(
-#                         make_section(
-#                             id=sub["id"],
-#                             title=sub["title"],
-#                             section_type="table-row-group",
-#                             data_list=sub["data_list"],
-#                             description=description,
-#                         )
-#                     )
-#                     continue
-
-#                 table_paths = sub.get("table_paths", [])
-#                 if isinstance(table_paths, str):
-#                     table_paths = [table_paths]
-
-#                 # Load all tables listed in table_paths
-#                 tables_data = []
-#                 for tpath in table_paths:
-#                     if tpath and tpath not in [
-#                         "no_ao_plot.txt",
-#                         "no_ctrl_fluorescence_plots.txt",
-#                         "no_epi_age.txt",
-#                         "no_pca_kruskal.txt",
-#                         "no_sex_inference.txt",
-#                     ]:
-#                         table_data = load_table_data_json(tpath)
-#                         tables_data.append(
-#                             {
-#                                 "title": Path(tpath).stem,
-#                                 "data": table_data,
-#                                 "filename": "table.csv",
-#                             }
-#                         )
-
-#                 # Add a single subsection with all these tables
-#                 subsecs_out.append(
-#                     make_section(
-#                         id=sub["id"],
-#                         title=sub["title"],
-#                         section_type="table-row-group",
-#                         data_list=tables_data,
-#                         description=description,
-#                     )
-#                 )
-
-#                 continue  # Skip rest of loop for this subsection
-
-#             plots = sub.get("plot_paths", [])
-#             tables = sub.get("table_paths", [])
-
-#             # Parse plots and tables
-#             plot_htmls = [
-#                 (p, json_fig_to_html(p))
-#                 for p in plots
-#                 if p
-#                 and p
-#                 not in [
-#                     "no_ao_plot.txt",
-#                     "no_ctrl_fluorescence_plots.txt",
-#                     "no_epi_age.txt",
-#                     "no_pca_kruskal.txt",
-#                     "no_sex_inference.txt",
-#                 ]
-#             ]
-
-#             table_data = [
-#                 (t, load_table_data_json(t))
-#                 for t in tables
-#                 if t
-#                 and t
-#                 not in [
-#                     "no_ao_plot.txt",
-#                     "no_ctrl_fluorescence_plots.txt",
-#                     "no_epi_age.txt",
-#                     "no_pca_kruskal.txt",
-#                     "no_sex_inference.txt",
-#                 ]
-#             ]
-
-#             # Determine section type
-#             has_table = bool(table_data)
-#             has_plots = bool(plot_htmls)
-
-#             if has_table and has_plots:
-#                 table_content = table_data[0][1]
-
-#                 if isinstance(table_content, list):
-#                     safe_table = table_content
-#                 else:
-#                     safe_table = [table_content]
-
-#                 # One table + one or many plots → plot+table
-#                 section_data = {
-#                     "id": sub["id"],
-#                     "title": sub["title"],
-#                     "section_type": "plot+table",
-#                     "data": safe_table,  # Use first table only
-#                 }
-
-#                 if len(plot_htmls) == 1:
-#                     section_data["html"] = plot_htmls[0][1]
-#                 else:
-#                     section_data["html_list"] = [
-#                         {
-#                             "plot_html": html,
-#                             "plot_path": str(p),
-#                             "plot_name": f"{sub['id']}_{i}",
-#                         }
-#                         for i, (p, html) in enumerate(plot_htmls)
-#                     ]
-
-#                 subsecs_out.append(
-#                     make_section(**section_data, description=description)
-#                 )
-
-#             elif has_table:
-#                 table_content = table_data[0][1]
-#                 if isinstance(table_content, list):
-#                     section_type = "table-rows"
-#                 else:
-#                     section_type = "table"
-
-#                 subsecs_out.append(
-#                     make_section(
-#                         id=sub["id"],
-#                         title=sub["title"],
-#                         section_type=section_type,
-#                         data=table_data[0][1],
-#                         description=description,
-#                     )
-#                 )
-
-#             elif has_plots:
-#                 if len(plot_htmls) == 1:
-#                     subsecs_out.append(
-#                         make_section(
-#                             id=sub["id"],
-#                             title=sub["title"],
-#                             section_type="plot",
-#                             html=plot_htmls[0][1],
-#                             description=description,
-#                         )
-#                     )
-#                 else:
-#                     html_list = [
-#                         {
-#                             "plot_html": html,
-#                             "plot_path": str(p),
-#                             "plot_name": f"{sub['id']}_{i}",
-#                         }
-#                         for i, (p, html) in enumerate(plot_htmls)
-#                     ]
-#                     subsecs_out.append(
-#                         make_section(
-#                             id=sub["id"],
-#                             title=sub["title"],
-#                             section_type="plot-group",
-#                             html_list=html_list,
-#                             description=description,
-#                         )
-#                     )
-
-#     # If subsections exist, add the parent section (shell) with subsections only
-#     if subsecs_out:
-#         report_sections.append(
-#             make_section(
-#                 id=id,
-#                 title=title,
-#                 section_type="plot",  # no main plot here
-#                 html="",  # empty or placeholder content
-#                 subsections=subsecs_out,
-#                 description=description,
-#             )
-#         )
-#         return report_sections
-
-#     # No valid subsections: proceed with main paths
-#     paths_list = paths if isinstance(paths, (list, tuple)) else [paths]
-#     valid_main = [
-#         (p, json_fig_to_html(p))
-#         for p in paths_list
-#         if p
-#         and p
-#         not in [
-#             "no_ao_plot.txt",
-#             "no_ctrl_fluorescence_plots.txt",
-#             "no_epi_age.txt",
-#             "no_pca_kruskal.txt",
-#             "no_sex_inference.txt",
-#         ]
-#     ]
-#     if not valid_main:
-#         return report_sections
-
-#     if len(valid_main) == 1:
-#         p, html = valid_main[0]
-#         report_sections.append(
-#             make_section(
-#                 id=id,
-#                 title=title,
-#                 section_type="plot",
-#                 html=html,
-#                 description=description,
-#             )
-#         )
-#     else:
-#         html_list = [
-#             {"plot_html": html, "plot_path": str(path), "plot_name": f"{id}_{idx}"}
-#             for idx, (path, html) in enumerate(valid_main)
-#         ]
-#         report_sections.append(
-#             make_section(
-#                 id=id,
-#                 title=title,
-#                 section_type="plot-group",
-#                 html_list=html_list,
-#                 description=description,
-#             )
-#         )
-
-#     return report_sections
-
 
 def main():
     if len(sys.argv) != 17:
@@ -1291,8 +986,6 @@ def main():
             title_prefix="Epigenetic clock: ",
         )
 
-        # pprint.pprint(epi_age_subsections)
-
         report_sections = add_section_with_subs(
             report_sections,
             id="epiAge",
@@ -1327,11 +1020,7 @@ def main():
         with open(logo_path, "rb") as f:
             logo_base64 = base64.b64encode(f.read()).decode()
 
-        # print(f"LOGO BASE64: {logo_base64}")
-
         report_sections.append({"id": "footer", "footer_logo": logo_base64})
-
-        # print(report_sections.keys())
 
         render_and_minify(
             report_sec_data=report_sections,
@@ -1341,23 +1030,6 @@ def main():
 
         # for s in report_sections:
         #     summarise_section(indent=2, sec=s)
-
-    # # Final template data
-    # report_jinja_data = {
-    #     "report_sections": report_sections
-    # }
-
-    # with open(output_report_path, "w", encoding="utf-8") as output_file:
-    #     with open(input_template_path) as template_file:
-    #         j2_template = Template(template_file.read())
-
-    #         try:
-    #             rendered_html = j2_template.render(report_jinja_data)
-    #         except Exception as e:
-    #             print("❌ Template rendering failed:", e)
-    #             sys.exit(2)
-    #         output_file.write(rendered_html)
-
 
 if __name__ == "__main__":
     main()
