@@ -1,6 +1,6 @@
 process PCA {
     publishDir "${params.output}/PCA/Scatter_matrix", mode: 'copy', overwrite: true, pattern: 'PCA_scatter_matrix_*.json'
-    publishDir "${params.output}/PCA", mode: 'copy', overwrite: true, pattern: 'PCA_area.json'
+    publishDir "${params.output}/PCA", mode: 'copy', overwrite: true, pattern: 'PCA_area_plot.json'
     publishDir "${params.output}/PCA/Kruskal", mode: 'copy', overwrite: true, pattern: 'PCA_PC_KW_test_*.json'
     label 'python'
 
