@@ -19,6 +19,8 @@ import pingouin as pg
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+# TODO: what if there is a column Sample_Group, but there is only one group?
+
 # Computes Kruskal-Wallis results for a specific column and saves to JSON 
 def test_kw_to_json(
     components_data: pd.DataFrame, component_names: list, column: str
