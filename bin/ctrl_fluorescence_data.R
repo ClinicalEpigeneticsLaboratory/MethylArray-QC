@@ -150,12 +150,21 @@ control_all_df$log_10_metric <- NA
 control_all_df$log_10_metric <- log10(control_all_df$metric)
 
 if(!("Type" %in% colnames(control_all_df))) {
+    # EPICv2
     control_all_df$Probe_ID_split <- strsplit(as.character(control_all_df$Probe_ID), "_")
     control_all_df$Probe_ID <- sapply(control_all_df$Probe_ID_split, function(x) paste(x[1:2], collapse = "_"))
     control_all_df$Type <- sapply(control_all_df$Probe_ID_split, function(x) ifelse(length(x) > 2, paste(x[3:length(x)], collapse = "_"), NA))
     control_all_df$Subtype <- control_all_df$Type
     control_all_df$Type <- ifelse(control_all_df$Type %in% paste0("NORM_", c("A", "C", "T", "G")), "NORM", control_all_df$Type)
     control_all_df$Probe_ID_split <- NULL
+} else {
+    # EPIC/450K
+    control_all_df$Subtype <- control_all_df$Type
+    control_all_df$Type <- ifelse(
+        as.character(control_all_df$Type) %in% paste0("NORM_", c("A", "C", "T", "G")),
+        "NORM",
+        as.character(control_all_df$Type)
+    )
 }
 
 control_all_df$Type <- as.character(
