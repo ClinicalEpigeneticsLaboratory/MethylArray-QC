@@ -1,5 +1,7 @@
 process ANOMALY_DETECTION {
     publishDir "${params.output}/Anomaly_detection", mode: 'copy', overwrite: true, pattern: 'ao_*'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Anomaly_detection"
     label 'python'
 
     input:

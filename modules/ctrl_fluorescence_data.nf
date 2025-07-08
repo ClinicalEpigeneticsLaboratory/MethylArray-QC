@@ -1,5 +1,7 @@
 process CTRL_FLUORESCENCE_DATA{
     publishDir "${params.output}/Control_probes_QC", mode: 'copy', overwrite: true
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Control_probes_QC"
     label 'r_sesame'
 
     input:

@@ -1,6 +1,8 @@
 process EPIGENETIC_AGE_PLOTS {
     publishDir "${params.output}/Epi_age/Plots/Regression", mode: 'copy', overwrite: true, pattern: 'Regr_Age_vs_Epi_Age_*.json'
     publishDir "${params.output}/Epi_age/Plots/Accel", mode: 'copy', overwrite: true, pattern: 'Epi_Age_Accel_*.json'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Epi_age/Plots/Regression ${params.output}/Epi_age/Plots/Accel"
     label 'python'
 
     input:

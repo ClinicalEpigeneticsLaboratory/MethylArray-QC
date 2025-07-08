@@ -1,6 +1,8 @@
 // TODO: MEMORY PROBLEM!!! 
 process REPORT {
     publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.html'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p $params.output"
     label 'python'
     cache false
     memory { 4.GB * task.attempt }

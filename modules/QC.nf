@@ -1,5 +1,7 @@
 process QC {
     publishDir "${params.output}/QC", mode: 'copy', overwrite: true, pattern: 'qc*'
+        // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p $params.output/QC"
     label 'r_sesame'
 
     input:

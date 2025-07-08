@@ -1,5 +1,7 @@
 process BETA_DISTRIBUTION {
     publishDir "${params.output}/Beta_distribution", mode: 'copy', overwrite: true, pattern: '*.json'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Beta_distribution"    
     label 'python'
 
     input:

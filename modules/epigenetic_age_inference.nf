@@ -1,5 +1,7 @@
 process EPIGENETIC_AGE_INFERENCE{
     publishDir "${params.output}/Epi_age", mode: 'copy', overwrite: true
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Epi_age"
     label 'r_clock'
 
     input:

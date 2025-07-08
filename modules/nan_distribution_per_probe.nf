@@ -1,5 +1,7 @@
 process NAN_DISTRIBUTION_PER_PROBE {
     publishDir "$params.output/NaN_distribution", mode: 'copy', overwrite: true, pattern: '*.json'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p $params.output/NaN_distribution"
     label 'python'
 
     input:

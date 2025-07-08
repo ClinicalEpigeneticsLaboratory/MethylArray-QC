@@ -2,6 +2,8 @@ process PCA {
     publishDir "${params.output}/PCA/Scatter_matrix", mode: 'copy', overwrite: true, pattern: 'PCA_scatter_matrix_*.json'
     publishDir "${params.output}/PCA", mode: 'copy', overwrite: true, pattern: 'PCA_area_plot.json'
     publishDir "${params.output}/PCA/Kruskal", mode: 'copy', overwrite: true, pattern: 'PCA_PC_KW_test_*.json'
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/PCA/Scatter_matrix ${params.output}/PCA/Kruskal"
     label 'python'
 
     input:

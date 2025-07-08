@@ -1,5 +1,7 @@
 process IMPUTE {
     publishDir "${params.output}/Imputation", mode: 'copy', overwrite: true
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Imputation"
     label 'python'
 
     input:

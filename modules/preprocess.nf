@@ -1,5 +1,7 @@
 process PREPROCESS {
     publishDir "${params.output}/Preprocess", mode: 'copy', overwrite: true
+        // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p $params.output/Preprocess"
     label 'r_sesame'
 
     input:

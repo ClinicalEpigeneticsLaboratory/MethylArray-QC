@@ -1,6 +1,13 @@
 process BATCH_EFFECT {
+
     publishDir "${params.output}/Batch_effect/Mean_beta_per_${column}", mode: 'copy', overwrite: true
+    
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Batch_effect/Mean_beta_per_${column}"
+
     label 'python'
+        
+    debug true
 
     input:
     path imputed_mynorm_path
