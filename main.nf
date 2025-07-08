@@ -94,7 +94,7 @@ workflow {
     impute_ch_out = IMPUTE(preprocess_ch_out.raw_mynorm_path, params.p_threshold, params.s_threshold, params.imputer_type)
 
     if(impute_ch_out) {
-        ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_cpgs_beta_distr, params.nan_per_probe_n_cpgs, impute_ch_out.imputation_summary_path)
+        ADDITIONAL_VALIDATORS_AFTER_IMPUTE(params.n_rand_cpgs, params.nan_per_probe_n_cpgs, impute_ch_out.imputation_summary_path)
     }
 
     if(processed_samples_count > 10) {
@@ -111,7 +111,9 @@ workflow {
         sex_inference_path = Channel.value("$projectDir/assets/no_sex_inference.txt")
     }
 
-    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"])
+    beta_distr_ch_out = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_rand_cpgs)
+
+    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"], beta_distr_ch_out.n_rand_cpgs_path)
 
     // batch_effect_ch_out.sentrix_id: paths to batch effect evaluation boxplots for Sentrix IDs
     // batch_effect_ch_out.sentrix_position: path to batch effect evaluation boxplots for Sentrix Position
@@ -131,8 +133,14 @@ workflow {
             it.join(',')
         }
 
-    beta_distr_plot = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_cpgs_beta_distr)
-    nan_per_sample_plot = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path)
+    nan_per_sample_ch_out = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path)
+    
+    nan_per_sample_plot_paths = nan_per_sample_ch_out
+            .collect()
+            .map {
+                it.join(',')
+            }
+
     nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
 
     if(processed_samples_count > 10) {
@@ -166,14 +174,15 @@ workflow {
         epi_age_res_ch_out = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
         epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
 
-        epi_age_plot_paths = epi_age_plots_ch_out.regr
+        epi_age_paths = epi_age_plots_ch_out.regr
             .merge(epi_age_plots_ch_out.eaa)
+            .merge(epi_age_plots_ch_out.eaa_post_hoc)
             .collect()
             .map {
                 it.join(',')
             }
     } else {
-        epi_age_plot_paths = Channel.value("$projectDir/assets/no_epi_age.txt")
+        epi_age_paths = Channel.value("$projectDir/assets/no_epi_age.txt")
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
@@ -186,15 +195,15 @@ workflow {
         preprocess_ch_out.preprocess_summary_path,
         impute_ch_out.imputation_summary_path,
         ao_plot_path,
-        beta_distr_plot,
+        beta_distr_ch_out.beta_distr_plot,
         nan_per_probe_plot,
-        nan_per_sample_plot,
+        nan_per_sample_plot_paths,
         batch_effect_plot_paths,
         sex_inference_path,
         params_path,
         pca_kruskal_paths,
         pca_plot_paths,
-        epi_age_plot_paths,
+        epi_age_paths,
         unique_probe_types_str
     )
 

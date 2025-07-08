@@ -158,13 +158,13 @@
                     "default": "auto",
                     "pattern": "^(auto|0\\.[0-4]{1,2}|0\\.5)$"
                 },
-                "n_cpgs_beta_distr": {
+                "n_rand_cpgs": {
                     "type": "number",
                     "minimum": 1,
                     "default": 10000,
-                    "help_text": "Number of CpGs randomly selected for the kernel-density plot",
-                    "description": "Number of CpGs randomly selected for the kernel-density plot",
-                    "errorMessage": "n_cpgs_beta_distr must be an integer equal or larger than 1"
+                    "help_text": "Number of CpGs randomly selected for the kernel-density plot and batch effect evaluation plots",
+                    "description": "Number of CpGs randomly selected for the kernel-density plot and batch effect evaluation plots",
+                    "errorMessage": "n_rand_cpgs must be an integer equal or larger than 1"
                 },
                 "nan_per_probe_n_cpgs": {
                     "type": "integer",

@@ -6,12 +6,13 @@ process BATCH_EFFECT {
     path imputed_mynorm_path
     path sample_sheet_path
     each column
+    path n_rand_cpgs_path
 
     output:
     path "${column}_*.json", arity: "1..*"
 
     script:
     """
-    batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column}
+    batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column} ${n_rand_cpgs_path}
     """
 }

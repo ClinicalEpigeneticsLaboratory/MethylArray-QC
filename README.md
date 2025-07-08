@@ -9,9 +9,9 @@ The pipeline performs the following steps:
 3. **Imputation**: Handles missing data based on user-specified thresholds and imputation methods.
 4. **Anomaly Detection**: Identifies anomalies using multiple machine learning algorithms (e.g., LOF, Isolation Forest, One-Class SVM).
 5. **Sex inference (optional)**: Optional, infers sex using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes) and compares it with sex declared in sample sheet.
-6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites
-7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k)
-8. **NaN distribution per sample plot**: shows the percentage of NaN probes per sample
+6. **Batch effect evaluation plots**: show mean methylation level per Sentrix_ID or Sentrix_Position across n randomly selected CpG sites (CpG count selected by the user, default: 10k)
+7. **Beta distribution plot**: shows the KDE distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k, CpG list exported from the process and used in batch effect process)
+8. **NaN distribution per sample plot**: shows the percentage of NaN probes per sample (10 samples/plot)
 9. **NaN distribution per probe plot**: shows a heatmap showing the distribution of NaN values across probes and samples
 10. **PCA analysis**: generates:
    - scatter matrix for the first n components (specified by the user) with samples colored on visualisation using sample sheet columns selected by the user (Sentrix_ID, Sentrix_Position and/or Sample_Group)
@@ -22,6 +22,7 @@ The pipeline performs the following steps:
       - general
       - if Sample_Group column present in sample sheet - trendlines for specific groups and general trendline
    - boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)
+   - for >= 3 groups: results of post-hoc test for epigenetic age acceleration (U-Mann-Whitney test with Benjamini-Hochberg FDR correction)
 12. **Control probe intensity data**: generates:
    - a JSON file with a list of unique control probe types provided for the inferred platform
    - a PARQUET file with computed control probe intensity data
@@ -87,8 +88,8 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **Sex inference**:
    - `params.infer_sex`: Boolean (`true` or `false`) stating whether sex inference will be performed
 
-- **Beta distribution**:
-   - `params.n_cpgs_beta_distr`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot
+- **Beta distribution/batch effect evaluation**:
+   - `params.n_rand_cpgs`: Integer (default: 10000) specifying the number of CpGs randomly selected for beta distribution plot and batch effect evaluation plots (the same set of CpGs is used in both analyses)
 
 - **NaN distribution per probe**:
    - `params.nan_per_probe_n_cpgs`: Integer (default: 1000) specifying the number of CpGs randomly selected for NaN distribution per probe plot
@@ -140,7 +141,7 @@ nextflow run main.nf -params-file params.json
   "s_threshold": 0.2,
   "imputer_type": "knn",
   "contamination": "auto",
-  "n_cpgs_beta_distr": 10000,
+  "n_rand_cpgs": 10000,
   "nan_per_probe_n_cpgs": 1000,
   "perc_pca_cpgs": 10,
   "pca_number_of_components": 5,
@@ -172,8 +173,8 @@ The pipeline produces the following outputs:
    - figures as JSON files (numbered from 1 to n...) in directories corresponding to columns (`Mean_beta_per_Sentrix_ID`, `Mean_beta_per_Sentrix_Position`) created automatically within output directory.
 7. **Beta distribution plot (`beta_distribution.json`)**:
    - figure as JSON file.   
-8. **NaN distribution per sample plot (`nan_distribution_per_sample.json`)**:
-   - figure as JSON file
+8. **NaN distribution per sample plot (`nan_distribution_per_sample_*.json`)**:
+   - figures as JSON files (numbered from 1 to n...)
 9. **NaN distribution per probe plot (`nan_distribution_per_probe.json`)**:
    - figure as JSON file
 10. **PCA (`PCA_scatter_matrix_Sentrix_ID.json` + `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_scatter_matrix_Sentrix_Position.json` + `PCA_PC_KW_test_Sentrix_Position.json` and/or `PCA_scatter_matrix_Sample_Group.json` + `PCA_PC_KW_test_Sample_Group.json`, `PCA_area.json`)**:
@@ -184,6 +185,7 @@ The pipeline produces the following outputs:
    - results of epigenetic age inference and epigenetic age accelereation for all selected clocks, as parquet file,
    - linear regression trendline plot for each clock (`Regression` subdirectory), as JSON file,
    - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory), as JSON file.
+   - (if there are >= groups in `Sample_Group` column) a JSON file with results of post-hoc test for epigenetic age acceleration (U-Mann-Whitney test with Benjamini-Hochberg FDR correction)
 12. **Control intensity data**:
    - a JSON file with unique control probe types provided for the platform inferred from the input IDATs
    - a PARQUET file with computed control probe intensity metrics
@@ -238,7 +240,7 @@ The pipeline produces the following outputs:
    - PCA scatter matrix plots for first n components: `PCA_scatter_matrix_Sentrix_ID.json`, `PCA_scatter_matrix_Sentrix_Position.json` and/or`PCA_scatter_matrix_Sample_Group.json`,
    - results of Kruskal-Wallis test for all components:
    `PCA_PC_KW_test_Sentrix_ID.json`, `PCA_PC_KW_test_Sentrix_Position.json` and/or`PCA_PCA_PC_KW_test_Sample_Group.json`,
-   - PCA area plot for all components in the analysis: `PCA_area.json`.
+   - PCA area plot for all components in the analysis: `PCA_area_plot.json`.
 ### 11. Epigenetic age inference
 - Uses an R script `epigenetic_age_inference.R` to infer epigenetic age using `dnaMethyAge` R package and a Python script `epigenetic_age_plots.py` to generate figures for each epigenetic clock:
    - linear regression trendline between chronological and epigenetic age (overall and per group, if this information provided)
@@ -247,6 +249,7 @@ The pipeline produces the following outputs:
    - results of epigenetic age inference and epigenetic age accelereation for all selected clocks: `epi_clocks_res.parquet`,
    - linear regression trendline plot for each clock (`Regression` subdirectory): `Regr_Age_vs_Epi_Age_${epi_clock}.json`,
    - (if `Sample_Group` column provided in sample sheet) epigenetic age acceleration grouped boxplots (group/color: `Sample_Group`) for each clock (`EAA` subdirectory): `Epi_Age_Accel_${epi_clock}.json`
+   - (if there are >= 3 groups in `Sample_Group` column) results of post-hoc test for epigenetic age acceleration (U-Mann-Whitney test with Benjamini-Hochberg FDR correction): `Epi_Age_Accel_${epi_clock}_post_hoc_res.json` in `EAA` subdirectory
 ### 12. Control intensity data:
 -  Uses an R script (`ctrl_fluorescence_data.R`) to compute intensity metrics (either maximum intensity or total intensity) to be plotted on control intensity plots
 - Output:
@@ -259,10 +262,8 @@ The pipeline produces the following outputs:
 
 ## Known Issues and TODOs
 - Implement tests for workflow and for specific processes
-- Implement the output summary HTML report with embedded figures and tables
 - anomaly detection: implement more models
 - add exemplary workflow (or other way to run a tool with exemplary data)
 - fluorescence on control probes: 
    - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
-   - loads of plots are generated: to decide which plots to generate and put in the final report
 - add non-interactive mode for app

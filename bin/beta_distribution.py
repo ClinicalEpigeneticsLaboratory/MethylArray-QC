@@ -6,10 +6,12 @@ A module generating beta distribution plot
 
 import sys
 from pathlib import Path
-
+import json
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import plotly.figure_factory as ff
+# from scipy.stats import gaussian_kde
 from decorators import update_and_export_plot
 
 
@@ -57,7 +59,7 @@ def main():
         sys.exit(1)
 
     path_to_imputed_mynorm = Path(sys.argv[1])
-    n_cpgs_beta_distr = int(sys.argv[2])
+    n_rand_cpgs = int(sys.argv[2])
 
     # Load data
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
@@ -68,12 +70,18 @@ def main():
 
     # Get the list of randomly selected CpGs and filter data
     cpgs_to_plot = rng.choice(
-        a=imputed_mynorm.index.to_list(), size=n_cpgs_beta_distr, replace=False
+        a=imputed_mynorm.index.to_list(), size=n_rand_cpgs, replace=False
     )
+
+    random_cpgs_list = cpgs_to_plot.tolist()
+
+    with open("random_cpgs_to_plot.json", "w", encoding="utf-8") as f:
+        json.dump(random_cpgs_list, f, indent=2)
+
     plot_data = imputed_mynorm.loc[cpgs_to_plot]
     plot_data = plot_data.T
 
-    get_beta_distr_plot(n_cpgs_beta_distr=n_cpgs_beta_distr, plot_data=plot_data)
+    get_beta_distr_plot(n_cpgs_beta_distr=n_rand_cpgs, plot_data=plot_data)
 
 
 if __name__ == "__main__":
