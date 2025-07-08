@@ -1,7 +1,12 @@
+// TODO: MEMORY PROBLEM!!! 
 process REPORT {
     publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.html'
     label 'python'
     cache false
+    memory { 4.GB * task.attempt }
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 3
+    //debug true
 
     input:
     path html_template
