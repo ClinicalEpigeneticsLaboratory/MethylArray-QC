@@ -636,6 +636,15 @@ def add_section_with_subs(
 
 def main():
     if len(sys.argv) != 17:
+
+        # sys.argv[0] is the script name itself
+        print("Script name:", sys.argv[0])
+
+        # sys.argv[1:] contains all arguments passed to the script
+        print("Arguments:")
+        for i, arg in enumerate(sys.argv[1:], start=1):
+            print(f"Argument {i}: {arg}")
+
         print(
             "Usage: python report.py <html_template: str|Path> \
                 <qc_summary_path: str|Path> \
@@ -663,7 +672,10 @@ def main():
     ao_plot_path = sys.argv[6]
     beta_distr_plot_path = sys.argv[7]
     heatmap_path = sys.argv[8]
-    nan_distr_per_sample_path = sys.argv[9]
+    
+    nan_distr_per_sample_paths = sys.argv[9]
+    nan_distr_per_sample_paths = nan_distr_per_sample_paths.split(",")
+
     batch_effect_plot_paths = sys.argv[10]
     sex_inference_path = sys.argv[11]
     config_json_path = sys.argv[12]
@@ -931,10 +943,12 @@ def main():
         description="This section contains a plot showing the kernel density (KDE) distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k). Samples with a distribution significantly deviating from the others may be potential outliers.",
     )
 
+    missing_data_plot_paths = nan_distr_per_sample_paths.append(heatmap_path)
+
     missing_data_subsections = generate_subsection_list(
         main_id="missingData",
         subsection_list=["sample", "probe"],
-        plot_paths=[nan_distr_per_sample_path, heatmap_path],
+        plot_paths=missing_data_plot_paths,
         table_paths=None,
         title_prefix="Missing data (NaN) distribution per ",
         sub_descr_dict=None
@@ -948,7 +962,7 @@ def main():
         subsections=missing_data_subsections,
         description="This section contains plots allowing to identify samples and probes with high fraction of missing values:\
             <ul>\
-                <li>a barplot representing the percentage of missing (NaN) probes per sample</li>\
+                <li>a barplots representing the percentage of missing (NaN) probes per sample</li>\
                 <li>a heatmap representing the distribution of missing (NaN) values across samples (in columns) and randomly selected n probes (in rows; n specified by the user)</li>\
             </ul>",
     )

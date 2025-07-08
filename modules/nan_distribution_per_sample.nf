@@ -7,7 +7,7 @@ process NAN_DISTRIBUTION_PER_SAMPLE {
     path sample_sheet_path
 
     output:
-    path "nan_distribution_per_sample.json"
+    path "nan_distribution_per_sample_*.json", arity: "1..*"
 
     script:
     """
