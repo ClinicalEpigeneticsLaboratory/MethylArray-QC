@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 
-# TODO: remove probe type names from the legend (only the group should be displayed)
+# TODO: remove probe type names when probe type is equal to subtype from the legend (only the group should be displayed)
 
 """
 A module generating figures for control probe fluorescence evaluation
