@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 
-# TODO: there is a bug when a probe type consists of 2 words without underscore!!!
+# TODO: remove probe type names from the legend (only the group should be displayed)
 
 """
 A module generating figures for control probe fluorescence evaluation
