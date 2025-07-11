@@ -66,7 +66,7 @@ def ao(
     anomaly_results.to_parquet("ao_results.parquet")
     return anomaly_results, abs(algorithm_instance.offset_)
 
-
+# TODO: not all sample names are displayed when there are lots of samples (to solve)
 @update_and_export_plot("ao_plot.json")
 def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
     """A function generating anomaly detection plot
