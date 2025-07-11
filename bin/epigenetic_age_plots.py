@@ -135,6 +135,7 @@ def get_eaa_res(
         pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json", orient="records", indent=2)
     get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None)
     
+# TODO: a bug - no hover displayed over points!
 def get_epi_vs_chron_age_regr_plot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
 ) -> None:
