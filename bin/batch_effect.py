@@ -29,14 +29,12 @@ def get_single_fig(
     Returns:
         go.Figure: a single figure for specific column and set of column items
     """
+    fig = None  # initialize to avoid reference before assignment
     ids_to_plot = list(sample_sheet.loc[sample_sheet["Plot_num"] == row_num, column])
 
     # Check if we have valid Sentrix_IDs to plot
     if ids_to_plot:
         row_sample_sheet = sample_sheet.loc[sample_sheet[column].isin(ids_to_plot), :]
-        
-        print("row_sample_sheet[column]:")
-        print(row_sample_sheet[column].value_counts(dropna=False))
 
         sample_ids = row_sample_sheet["Sample_Name"]
         
@@ -54,9 +52,16 @@ def get_single_fig(
         grouped_row_reset = grouped_row.reset_index(names="CpG")
 
         # Melt the grouped row into long format for plotly
-        grouped_row_melted = grouped_row_reset.melt(
-            id_vars="CpG", var_name=column, value_name="Mean beta value"
+        grouped_row_melted = (
+            grouped_row_reset
+            .melt(id_vars="CpG", var_name=column, value_name="Mean beta value")
+            .assign(**{"Mean beta value": lambda df: df["Mean beta value"].round(4)})
         )
+        grouped_row_melted["Mean beta value"] = grouped_row_melted["Mean beta value"].astype(np.float32)
+
+        if not grouped_row_melted["Mean beta value"].notna().any():
+            print(f"All mean beta values are NaN for {column} row {row_num}. Skipping plot.")
+            return None
 
         fig = px.box(grouped_row_melted, x=column, y="Mean beta value")
         fig.update_layout(boxgap=0.05)
@@ -110,10 +115,13 @@ def get_all_figs(
         )
 
         if fig is not None:
+            print(f"✅ Writing plot to: {column}_{row_num}.json")
             export_decorated_fig_with_custom_name(
                 fig=fig,
                 json_path=f"{column}_{row_num}.json",
             )
+        else:
+            print(f"⚠️ No figure generated for {column}, row {row_num}.")
 
 
 def main():

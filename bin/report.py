@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import datetime
+from dateutil import parser
 import json
 from jinja2 import Template, FileSystemLoader, Environment
 import plotly.io as pio
@@ -152,46 +153,64 @@ def get_run_times(config: dict) -> str:
             2) workflow completion date and time,\n\
             3) workflow duration
     """
-    start = get_formatted_time(config=config, type_value="start")
-    complete = get_formatted_time(config=config, type_value="complete")
-    duration = get_formatted_time(config=config, type_value="duration")
+    # start = get_formatted_time(config=config, type_value="start")
+    # complete = get_formatted_time(config=config, type_value="complete")
+    # duration = get_formatted_time(config=config, type_value="duration")
+    start = config["Workflow_start"]
+    complete = config["Workflow_end"]
+    duration = config["Workflow_duration"]
     return f"{start} - {complete} (duration: {duration})"
 
 
-def get_formatted_time(config: dict, type_value: str) -> str:
-    """A function generating formatted string for workflow start/completion/duration time
+# def get_formatted_time(config: dict, type_value: str) -> str:
+#     """A function generating formatted string for workflow start/completion/duration time
 
-    Args:
-        config (dict): workflow parameters, from JSON
-        type_value (str): start, complete or duration
+#     Args:
+#         config (dict): workflow parameters, from JSON
+#         type_value (str): start, complete or duration
 
-    Returns:
-        str: formatted string with respective date and time
-    """
+#     Returns:
+#         str: formatted string with respective date and time
+#     """
 
-    allowed_types = ["start", "complete", "duration"]
-    if type_value not in allowed_types:
-        raise ValueError(
-            f"Incorrect value for 'type_VALUE' parameter provided — must be one of: {', '.join(allowed_types)}"
-        )
+#     allowed_types = ["start", "complete", "duration"]
+#     if type_value not in allowed_types:
+#         raise ValueError(
+#             f"Incorrect value for 'type_VALUE' parameter provided — must be one of: {', '.join(allowed_types)}"
+#         )
+    
+#     iso_string = config.get(f"Workflow_{type_value}")
+#     if not iso_string:
+#         return "Not available"
 
-    time_data = config.get(f"Workflow_{type_value}")
+#     if type_value == "duration":
+#         # fallback to old logic
+#         seconds = config.get(f"Workflow_{type_value}", {}).get("seconds", 0)
+#         return str(datetime.timedelta(seconds=seconds))
 
-    if not time_data:
-        return "Not available"
+#     try:
+#         dt = parser.isoparse(iso_string)
+#         return dt.strftime("%d %B %Y %H:%M:%S")
+#     except Exception:
+#         return "Invalid timestamp"
 
-    if type_value == "duration":
-        seconds = time_data.get("seconds", "NA")
-        formatted_time = str(datetime.timedelta(seconds=seconds))
-        return formatted_time
-    else:
-        day = int(time_data.get("dayOfMonth", "NA"))
-        month = time_data.get("month", "NA").capitalize()
-        year = int(time_data.get("year", "NA"))
-        hour = int(time_data.get("hour", "NA"))
-        minute = int(time_data.get("minute", "NA"))
-        second = int(time_data.get("second", "NA"))
-        return f"{day:02d} {month} {year} {hour:02d}:{minute:02d}:{second:02d}"
+    # time_data = config.get(f"Workflow_{type_value}")
+
+    # if not time_data:
+    #     return "Not available"
+
+    # if type_value == "duration":
+    #     seconds = time_data.get("seconds", "NA")
+    #     formatted_time = str(datetime.timedelta(seconds=seconds))
+    #     return formatted_time
+    # else:
+    #     day = int(time_data.get("dayOfMonth", "NA"))
+    #     month = time_data.get("month", "NA").capitalize()
+    #     year = int(time_data.get("year", "NA"))
+    #     hour = int(time_data.get("hour", "NA"))
+    #     minute = int(time_data.get("minute", "NA"))
+    #     second = int(time_data.get("second", "NA"))
+    #     return f"{day:02d} {month} {year} {hour:02d}:{minute:02d}:{second:02d}"
 
 
 def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
@@ -683,6 +702,10 @@ def main():
     pca_plot_paths = sys.argv[14]
     epi_age_paths = sys.argv[15]
     unique_ctrl_probe_types = sys.argv[16]
+
+    print("Arguments:")
+    for i, arg in enumerate(sys.argv[1:], start=1):
+        print(f"Argument {i}: {arg}")
 
     output_report_path = "qc_report.html"
 

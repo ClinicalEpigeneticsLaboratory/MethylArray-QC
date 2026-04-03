@@ -21,6 +21,8 @@ include { REPORT } from './modules/report.nf'
 
 workflow {
 
+    def workflow_start = java.time.Instant.now()
+
     validateParameters()
 
     def input_abs_path = file(params.input).toAbsolutePath()
@@ -186,7 +188,22 @@ workflow {
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
-    params_path = file("${params.output}/params.json")
+
+    def workflow_end = java.time.Instant.now()
+    def workflowMeta = workflow
+
+    def params_map_all = paramsSummaryMap(workflow)
+    def params_path = file("${params.output}/params.json")
+
+    def paramExporter = new JsonWorkflowParamExporter(
+        params as HashMap,
+        params_map_all,
+        workflowMeta,
+        nextflow.version.toString(),
+        workflow_start,
+        workflow_end
+    )
+    params_path.text = paramExporter.toJSON()
 
     REPORT(
         report_template_path,
@@ -207,6 +224,30 @@ workflow {
         unique_probe_types_str
     )
 
+    workflow.onComplete = {
+        // def params_map_all = paramsSummaryMap(workflow)
+        // def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+        // def paramExporter = new JsonWorkflowParamExporter()
+        // file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
+        println("Workflow completed")
+    }
+
+    workflow.onError = {
+        // def params_map_all = paramsSummaryMap(workflow)
+        // def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+        // def paramExporter = new JsonWorkflowParamExporter()
+        // file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
+        println("Workflow completed with errors")
+    }
+
+
+    /*
+    Left here for now due to sometimes appearing error (unknown cause): 
+    Variable `workflow` already defined in the process scope
+    when this declaration is within workflow scope
+    */
+    log.info paramsSummaryLog(workflow)
+
     /* 
     Moved saving params to the end of the workflow to add parameters such as workflow duration etc.
     
@@ -216,26 +257,160 @@ workflow {
     Assignment of a handler neccessary due to unresolved Nextflow bug: https://github.com/nextflow-io/nextflow/issues/5261
     https://github.com/nextflow-io/nextflow/issues/5445
     */
-    workflow.onComplete = {
-        def params_map_all = paramsSummaryMap(workflow)
-        def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
-        def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
-        println("Workflow completed")
-    }
 
-    workflow.onError = {
-        def params_map_all = paramsSummaryMap(workflow)
-        def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
-        def paramExporter = new JsonWorkflowParamExporter()
-        file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
-        println("Workflow completed with errors")
-    }
+    // Extract values from channels before workflow.onComplete
+    // def qc_json_val
+    // qc_ch_out.qc_json.view { qc_json_val = it }
+
+    // def ctrl_fluor_vals
+    // ctrl_fluorescence_plot_paths.view { ctrl_fluor_vals = it.join(",") }
+
+    // def preprocess_summary_val
+    // preprocess_ch_out.preprocess_summary_path.view { preprocess_summary_val = it }
+
+    // def imputation_summary_val
+    // impute_ch_out.imputation_summary_path.view { imputation_summary_val = it }
+
+    // def ao_plot_val
+    // ao_plot_path.view { ao_plot_val = it }
+
+    // def beta_distr_plot_val
+    // beta_distr_ch_out.beta_distr_plot.view { beta_distr_plot_val = it }
+
+    // def nan_per_probe_plot_val
+    // nan_per_probe_plot.view { nan_per_probe_plot_val = it }
+
+    // def nan_per_sample_plot_vals
+    // nan_per_sample_plot_paths.collect().view { nan_per_sample_plot_vals = it.join(",") }
+
+    // def batch_effect_plot_vals
+    // batch_effect_plot_paths.collect().view { batch_effect_plot_vals = it.join(",") }
+
+    // def sex_inference_val
+    // sex_inference_path.view { sex_inference_val = it }
+
+    // def pca_kruskal_vals
+    // pca_kruskal_paths.collect().view { pca_kruskal_vals = it.join(",") }
+
+    // def pca_plot_vals
+    // pca_plot_paths.collect().view { pca_plot_vals =  it.join(",")}
+
+    // def epi_age_vals
+    // epi_age_paths.collect().view { epi_age_vals = it.join(",") }
+
+    // def unique_probe_types_str_val
+    // unique_probe_types_str.collect().view { unique_probe_types_str_val = it.join(",") }
+
+    // workflow.onComplete = {
+    //     def params_map_all = paramsSummaryMap(workflow)
+    //     def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+    //     def param_exporter = new JsonWorkflowParamExporter()
+        
+    //     def params_json_str = param_exporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
+
+    //     def report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
+        
+    //     def params_path = new File("${params.output}/params.json")
+
+    //     params_path.text = params_json_str
+
+    //     println("Running final report generation...")
+
+    //     def report_cmd = """
+    //         docker run --rm -v $projectDir:$projectDir \
+    //         -w $projectDir \
+    //         janbinkowski96/methyl-array-qc-python \
+    //         python3 bin/report.py \
+    //         ${report_template_path.toString()} \
+    //         ${qc_json_val.toString()} \
+    //         ${ctrl_fluor_vals.toString()} \
+    //         ${preprocess_summary_val.toString()} \
+    //         ${imputation_summary_val.toString()} \
+    //         ${ao_plot_val.toString()} \
+    //         ${beta_distr_plot_val.toString()} \
+    //         ${nan_per_probe_plot_val.toString()} \
+    //         ${nan_per_sample_plot_vals.toString()} \
+    //         ${batch_effect_plot_vals.toString()} \
+    //         ${sex_inference_val.toString()} \
+    //         ${params_path.toString()} \
+    //         ${pca_kruskal_vals.toString()} \
+    //         ${pca_plot_vals.toString()} \
+    //         ${epi_age_vals.toString()} \
+    //         ${unique_probe_types_str_val.toString()}
+    //     """
+    //     println "Executing: ${report_cmd}"
+    //     report_cmd.execute().waitFor()
+    //     //proc.in.eachLine { println it }
+    //     // proc.err.eachLine { System.err.println it }
+    //     // proc.waitFor()
+
+    //     println("Workflow completed")
+    // }
+
+    // workflow.onError = {
+    //     def params_map_all = paramsSummaryMap(workflow)
+    //     def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
+    //     def param_exporter = new JsonWorkflowParamExporter()
+        
+    //     def params_json_str = param_exporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
+
+    //     def report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
+        
+    //     def params_path = new File("${params.output}/params.json")
+
+    //     params_path.text = params_json_str
+
+    //     println("Running final report generation...")
+
+    //     // better solution: divide workflow into subworkflows (analysis and report separately) and export only analysis stats?
+    //     // def report_cmd = """
+    //     //     docker run --rm -v $projectDir:$projectDir \
+    //     //     -w $projectDir \
+    //     //     janbinkowski96/methyl-array-qc-python \
+    //     //     python3 bin/report.py \
+    //     //     ${report_template_path.toString()} \
+    //     //     ${qc_json_val.toString()} \
+    //     //     ${ctrl_fluor_vals.toString()} \
+    //     //     ${preprocess_summary_val.toString()} \
+    //     //     ${imputation_summary_val.toString()} \
+    //     //     ${ao_plot_val.toString()} \
+    //     //     ${beta_distr_plot_val.toString()} \
+    //     //     ${nan_per_probe_plot_val.toString()} \
+    //     //     ${nan_per_sample_plot_vals.toString()} \
+    //     //     ${batch_effect_plot_vals.toString()} \
+    //     //     ${sex_inference_val.toString()} \
+    //     //     ${params_path.toString()} \
+    //     //     ${pca_kruskal_vals.toString()} \
+    //     //     ${pca_plot_vals.toString()} \
+    //     //     ${epi_age_vals.toString()} \
+    //     //     ${unique_probe_types_str_val.toString()}
+    //     // """
+
+    //     // def report_cmd = [
+    //     //     "python", "report.py",
+    //     //     report_template_path.toString(),
+    //     //     qc_json_val.toString(),
+    //     //     ctrl_fluor_vals.toString(),
+    //     //     preprocess_summary_val.toString(),
+    //     //     imputation_summary_val.toString(),
+    //     //     ao_plot_val.toString(),
+    //     //     beta_distr_plot_val.toString(),
+    //     //     nan_per_probe_plot_val.toString(),
+    //     //     nan_per_sample_plot_vals.toString(),
+    //     //     batch_effect_plot_vals.toString(),
+    //     //     sex_inference_val.toString(),
+    //     //     params_path.toString(),
+    //     //     pca_kruskal_vals.toString(),
+    //     //     pca_plot_vals.toString(),
+    //     //     epi_age_vals.toString(),
+    //     //     unique_probe_types_str_val.toString()
+    //     // ]
+    //     println "Executing: ${report_cmd}"
+    //     report_cmd.execute().waitFor()
+    //     // proc.in.eachLine { println it }
+    //     // proc.err.eachLine { System.err.println it }
+    //     // proc.waitFor()
+
+    //     println("Workflow completed with errors")
+    // }
 }
-
-/*
-Left here for now due to sometimes appearing error (unknown cause): 
-Variable `workflow` already defined in the process scope
-when this declaration is within workflow scope
-*/
-log.info paramsSummaryLog(workflow)
