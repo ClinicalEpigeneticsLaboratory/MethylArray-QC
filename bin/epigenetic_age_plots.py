@@ -41,9 +41,13 @@ def add_med_ae_to_trendline_hover(hovertemplate: str, medae: float) -> str:
         medae (float): median absolute error
 
     Returns:
-        str: updated hovertemplate
+        str: updated hovertemplate with median absolute error inserted
+             before the <extra> tag so it renders in the main hover box
     """
-    return f"{hovertemplate}<br>Median Absolute Error: {medae:.2f}"
+    medae_text = f"<br>Median Absolute Error: {medae:.2f}"
+    if "<extra>" in hovertemplate:
+        return hovertemplate.replace("<extra>", f"{medae_text}<extra>", 1)
+    return f"{hovertemplate}{medae_text}"
 
 def get_pairwise_comp_res(data: pd.DataFrame, epi_clock: str) -> pd.DataFrame:
     """A function computing pairwise post-hoc test (U-Mann-Whitney, 
@@ -134,8 +138,7 @@ def get_eaa_res(
         pairwise_res = get_pairwise_comp_res(data=data, epi_clock=epi_clock)
         pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json", orient="records", indent=2)
     get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None)
-    
-# TODO: a bug - no hover displayed over points!
+
 def get_epi_vs_chron_age_regr_plot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
 ) -> None:
@@ -151,6 +154,27 @@ def get_epi_vs_chron_age_regr_plot(
 
     overall_medae = get_med_ae(x=data["Age"].values, y=data[f"mAge_{epi_clock}"].values)
 
+    valid_hover_cols = [c for c in hover_cols if c in data.columns]
+
+    # NOTE: Do NOT pass hover_data to px.scatter when trendline="ols".
+    # Plotly 5.24.1 generates broken customdata/hovertemplate when both
+    # are used together, silently killing scatter marker hover.
+    # Use hovertext (pre-built strings) instead of customdata/hovertemplate.
+
+    def _build_hover_texts(df: pd.DataFrame) -> list:
+        """Build hover text strings for each row in the DataFrame."""
+        texts = []
+        for _, row in df.iterrows():
+            parts = [f"Age: {row['Age']}", f"mAge_{epi_clock}: {row[f'mAge_{epi_clock}']:.2f}"]
+            for col in valid_hover_cols:
+                val = row[col]
+                if isinstance(val, float):
+                    parts.append(f"{col}: {val:.2f}")
+                else:
+                    parts.append(f"{col}: {val}")
+            texts.append("<br>".join(parts))
+        return texts
+
     if "Sample_Group" in data:
         fig = px.scatter(
             data,
@@ -158,8 +182,15 @@ def get_epi_vs_chron_age_regr_plot(
             y=f"mAge_{epi_clock}",
             color="Sample_Group",
             trendline="ols",
-            hover_data=hover_cols,
         )
+
+        # Set hover text on scatter (marker) traces using hovertext property
+        for trace in fig.data:
+            if getattr(trace, "mode", None) != "markers":
+                continue
+            group_df = data[data["Sample_Group"] == trace.name]
+            trace.hovertext = _build_hover_texts(group_df)
+            trace.hoverinfo = "text"
 
         # Overall trendline for all data points
         overall_trendline = px.scatter(
@@ -190,22 +221,27 @@ def get_epi_vs_chron_age_regr_plot(
                 x=group_data["Age"].values, y=group_data[f"mAge_{epi_clock}"].values
             )
 
-            # Identify the trace for this group
+            # Identify the trendline trace for this group
             group_trace_index = [
-                i for i, trace in enumerate(fig.data) if trace.name == group
-            ][1]
+                i for i, trace in enumerate(fig.data) if trace.name == group and getattr(trace, "mode", "") == "lines"
+            ][0]
             group_trace = fig.data[group_trace_index]
 
-            # Update the hovertemplate for this group's trace
+            # Update the hovertemplate for this group's trendline trace
             group_trace.hovertemplate = add_med_ae_to_trendline_hover(
                 hovertemplate=group_trace.hovertemplate, medae=group_medae
             )
     else:
         fig = px.scatter(
-            data, x="Age", y=f"mAge_{epi_clock}", trendline="ols", hover_data=hover_cols
+            data, x="Age", y=f"mAge_{epi_clock}", trendline="ols",
         )
 
-        trendline_trace = fig.data[1]  # The trendline trace is usually the second trace
+        # Set hover text on the scatter (marker) trace
+        marker_trace = next(t for t in fig.data if getattr(t, "mode", None) == "markers")
+        marker_trace.hovertext = _build_hover_texts(data)
+        marker_trace.hoverinfo = "text"
+
+        trendline_trace = next(t for t in fig.data if getattr(t, "mode", "") == "lines")
 
         trendline_trace.hovertemplate = add_med_ae_to_trendline_hover(
             hovertemplate=trendline_trace.hovertemplate, medae=overall_medae
