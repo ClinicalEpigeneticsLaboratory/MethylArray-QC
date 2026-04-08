@@ -19,8 +19,6 @@ import pingouin as pg
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-# TODO: what if there is a column Sample_Group, but there is only one group?
-
 # Computes Kruskal-Wallis results for a specific column and saves to JSON 
 def test_kw_to_json(
     components_data: pd.DataFrame, component_names: list, column: str
@@ -49,10 +47,19 @@ def test_kw_to_json(
     infos = []
 
     for component in component_names:
+        
         df = components_data[[component, column]].dropna()
 
         grouped_data = [group[component].values for _, group in df.groupby(column)]
         group_sizes = [len(g) for g in grouped_data]
+        
+        # if len(grouped_data) < 2:
+        #     kruskal_pvals.append(float("nan"))
+        #     test_method.append("Kruskal-Wallis test")
+        #     column_vals.append(column)
+        #     infos.append("Too few groups to compare — test skipped")
+        #     continue
+        
         all_groups_one_sample = all(size == 1 for size in group_sizes)
         some_too_small = any(size < 2 for size in group_sizes)
         no_within_group_variation = all(np.all(g == g[0]) for g in grouped_data)
@@ -272,12 +279,12 @@ def main():
             perc_of_cpgs=perc_pca_cpgs,
         )
 
-        # if sample_sheet[column].nunique() >= 2:
-        test_kw_to_json(
-            components_data=components_df,
-            column=column,
-            component_names=component_col_names,
-        )
+        if sample_sheet[column].nunique() >= 2:
+            test_kw_to_json(
+                components_data=components_df,
+                column=column,
+                component_names=component_col_names,
+            )
 
         if i == 0:
             get_area_plot(
