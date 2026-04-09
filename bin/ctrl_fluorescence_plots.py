@@ -1,7 +1,5 @@
 #!/usr/local/bin/python
 
-# TODO: remove probe type names when probe type is equal to subtype from the legend (only the group should be displayed)
-
 """
 A module generating figures for control probe fluorescence evaluation
 """
@@ -29,6 +27,10 @@ def get_ctrl_fluorescence_plot(
     
     probe_data = plot_data[plot_data['Type'] == ctrl_probe_type]
     
+    if probe_data.empty:
+        print(f"Warning: no probes found for type '{ctrl_probe_type}'. Skipping plot.", file=sys.stderr)
+        return
+
     if "Sample_Group" in probe_data.columns:
         fig = px.scatter(
             probe_data, x=column, y="log_10_metric", hover_data=hover_cols, color = "Sample_Group", symbol = "Subtype"
@@ -38,28 +40,28 @@ def get_ctrl_fluorescence_plot(
             probe_data, x=column, y="log_10_metric", hover_data=hover_cols, symbol = "Subtype"
         )
 
-    if probe_data['metric_type'].unique().tolist() == "total":
+    unique_metric_types = probe_data['metric_type'].unique()
+    if len(unique_metric_types) == 1 and unique_metric_types[0] == "total":
         metric_name = "Total Intensity"
     else:
         metric_name = "Max Intensity"
 
+    # When a trace's subtype equals the probe type, the subtype name is redundant in the
+    # legend. Plotly names such traces "{group}, {subtype}" — strip the subtype suffix.
+    separator = ", "
+    for trace in fig.data:
+        if trace.name and trace.name.endswith(separator + ctrl_probe_type):
+            trace.name = trace.name[: -len(separator + ctrl_probe_type)]
+
     fig.update_layout(
         yaxis={"title": f"log<sub>10</sub>{metric_name}<br>({ctrl_probe_type})"},
-        # legend={
-        #     "yanchor": "bottom",
-        #     "y": 1.02,
-        #     "xanchor": "left",
-        #     "x": 0,
-        #     "orientation": "h",
-        # },
         scattermode="group",
     )
 
-    if fig is not None:
-        export_decorated_fig_with_custom_name(
-            fig=fig,
-            json_path=f"{ctrl_probe_type}_by_{column}.json",
-        )
+    export_decorated_fig_with_custom_name(
+        fig=fig,
+        json_path=f"{ctrl_probe_type}_by_{column}.json",
+    )
 
 def main():
     if len(sys.argv) != 5:
