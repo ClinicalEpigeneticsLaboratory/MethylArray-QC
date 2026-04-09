@@ -53,12 +53,12 @@ def test_kw_to_json(
         grouped_data = [group[component].values for _, group in df.groupby(column)]
         group_sizes = [len(g) for g in grouped_data]
         
-        # if len(grouped_data) < 2:
-        #     kruskal_pvals.append(float("nan"))
-        #     test_method.append("Kruskal-Wallis test")
-        #     column_vals.append(column)
-        #     infos.append("Too few groups to compare — test skipped")
-        #     continue
+        if len(grouped_data) < 2:
+            kruskal_pvals.append(float("nan"))
+            test_method.append("Kruskal-Wallis test")
+            column_vals.append(column)
+            infos.append("Too few groups to compare — test skipped")
+            continue
         
         all_groups_one_sample = all(size == 1 for size in group_sizes)
         some_too_small = any(size < 2 for size in group_sizes)
