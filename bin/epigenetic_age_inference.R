@@ -15,6 +15,8 @@ library(arrow)
 library(dplyr)
 library(tidyr)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
 sample_sheet <- data.frame()
 sample_sheet <- read.table(file = sample_sheet_path, sep = ",", dec = ".", header = TRUE)
 
@@ -69,7 +71,7 @@ res_df <- res_df %>%
         names_from = c("clock")
     )
 
-arrow::write_parquet(res_df, "epi_clocks_res.parquet")
+write_parquet_portable(res_df, "epi_clocks_res.parquet")
 
 # TODO: consider adding a table section with epigenetic age inference to the report
 # write(

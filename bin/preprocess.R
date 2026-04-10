@@ -29,6 +29,8 @@ library(arrow)
 library(glue)
 library(jsonlite)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
 message("Parsing ...")
 
 sample_sheet <- data.frame()
@@ -53,7 +55,7 @@ mynorm <- openSesame(sdfs,
 message("Dumping ...")
 mynorm <- as.data.frame(mynorm)
 mynorm$CpG <- rownames(mynorm)
-write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
+write_parquet_portable(mynorm, "raw_mynorm.parquet")
 
 preprocessing_data <- list()
 preprocessing_data <- list(

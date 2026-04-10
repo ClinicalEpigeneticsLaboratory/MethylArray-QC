@@ -17,6 +17,8 @@ library(glue)
 library(stringr)
 library(jsonlite)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
 # problematic: mm285
 
 # Modified controls function from https://github.com/zwdzwd/sesame/
@@ -183,7 +185,7 @@ control_all_df$Subtype <- as.character(
     )
 )
 
-arrow::write_parquet(control_all_df, glue("ctrl_fluorescence", ".parquet"))
+write_parquet_portable(control_all_df, glue("ctrl_fluorescence", ".parquet"))
 
 unique_probe_types_json <- character()
 unique_probe_types_json <- toJSON(unique(control_all_df$Type))
