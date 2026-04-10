@@ -66,8 +66,7 @@ def ao(
     anomaly_results.to_parquet("ao_results.parquet")
     return anomaly_results, abs(algorithm_instance.offset_)
 
-# TODO: not all sample names are displayed when there are lots of samples (to solve)
-@update_and_export_plot("ao_plot.json")
+@update_and_export_plot("ao_plot.json", height_per_item=30)
 def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
     """A function generating anomaly detection plot
 
@@ -88,16 +87,6 @@ def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
         color_discrete_map={"Anomaly": "red", "non-Anomaly": "blue"},
     )
     fig.add_vline(x=offset, line_width=1, line_dash="dash", line_color="red")
-    # fig.update_layout(
-    #     legend={
-    #         "yanchor": "bottom",
-    #         "y": 1.05,
-    #         "xanchor": "center",
-    #         "x": 0,
-    #         "orientation": "h",
-    #         "itemsizing": "trace",
-    #     }
-    # )
     return fig
 
 
