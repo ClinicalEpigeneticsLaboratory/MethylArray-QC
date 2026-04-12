@@ -11,7 +11,7 @@ process EPIGENETIC_AGE_INFERENCE{
 
     output:
     path "epi_clocks_res.parquet", emit: epi_clocks_res_parquet
-    //path "epi_clocks_res.json", emit: epi_clocks_res_json
+    path "epi_clocks_res.json", emit: epi_clocks_res_json
 
     script:
     """

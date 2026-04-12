@@ -436,6 +436,24 @@ def generate_subsection_list(
 
     return subsections
 
+def load_table_data_ndjson(ndjson_path: str) -> list:
+    """A function loading NDJSON data as a list of row dicts (for table-rows sections).
+    NDJSON (Newline-Delimited JSON) has one JSON object per line, as produced by
+    writeLines(rows_ndjson, path) in bin/epigenetic_age_inference.R.
+
+    Args:
+        ndjson_path (str): path to a NDJSON file
+
+    Returns:
+        list: list of dicts, one per row (matches the table-rows section format)
+    """
+    try:
+        with open(ndjson_path) as f:
+            return [json.loads(line) for line in f if line.strip()]
+    except Exception as e:
+        print(f"❌ Failed to load NDJSON from {ndjson_path}: {e}")
+        return []
+    
 def add_section_with_subs(
     report_sections: list[dict],
     id: str,
@@ -1059,6 +1077,9 @@ def main():
     if "no_epi_age.txt" not in epi_age_paths:
         epi_age_paths = epi_age_paths.split(",")
         epi_age_table_pattern = "_post_hoc_res"
+        epi_age_summary_pattern = "epi_clocks_res.json"
+
+        epi_age_summary_paths = [x for x in epi_age_paths if Path(x).name == epi_age_summary_pattern]
         epi_age_table_paths = [x for x in epi_age_paths if epi_age_table_pattern in x] or None
 
         if epi_age_table_paths is not None:
@@ -1073,9 +1094,31 @@ def main():
         else:
             epi_age_table_entries = None
 
-        epi_age_plot_paths = [x for x in epi_age_paths if epi_age_table_pattern not in x]
+        epi_age_plot_paths = [
+            x for x in epi_age_paths
+            if epi_age_table_pattern not in x and Path(x).name != epi_age_summary_pattern
+        ]
 
-        epi_age_subsections = generate_subsection_list(
+        epi_age_subsections = []
+
+        if epi_age_summary_paths:
+            summary_data = load_table_data_ndjson(epi_age_summary_paths[0])
+            if summary_data:
+                epi_age_subsections.append({
+                    "id": "epiAge_summary",
+                    "title": "Summary: epigenetic age estimates and acceleration per sample",
+                    "plot_paths": [],
+                    "tables": [
+                        {
+                            "data": summary_data,
+                            "filename": "epi_clocks_res",
+                            "table_title": "Epigenetic age estimates and epigenetic age acceleration (all clocks)"
+                        }
+                    ],
+                    "show_description_in_subsections": False,
+                })
+
+        epi_age_subsections += generate_subsection_list(
             main_id="epiAge",
             subsection_list=flat_config_ordered["epi_clocks"].split(","),
             plot_paths=epi_age_plot_paths,

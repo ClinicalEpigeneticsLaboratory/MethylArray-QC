@@ -170,15 +170,15 @@ workflow {
     }
 
     if(params.infer_epi_age) {
-        // previously: epi_age_res_path
         // epi_age_res_ch_out.epi_clocks_res_parquet - epigenetic age inference results (PARQUET)
-        // TO CONSIDER: epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON)
+        // epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON)
         epi_age_res_ch_out = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
         epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
 
         epi_age_paths = epi_age_plots_ch_out.regr
             .mix(epi_age_plots_ch_out.eaa)
             .mix(epi_age_plots_ch_out.eaa_post_hoc)
+            .mix(epi_age_res_ch_out.epi_clocks_res_json)
             .collect()
             .map {
                 it.join(',')

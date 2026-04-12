@@ -1,3 +1,22 @@
+include { validateParameters; paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-schema'
+include { ADDITIONAL_VALIDATORS_INIT } from '../modules/additional_validators_init.nf'
+include { QC } from '../modules/QC.nf'
+include { CTRL_FLUORESCENCE_DATA } from '../modules/ctrl_fluorescence_data.nf'
+include { PREPROCESS } from '../modules/preprocess.nf'
+include { IMPUTE } from '../modules/impute.nf'
+include { ADDITIONAL_VALIDATORS_AFTER_IMPUTE } from '../modules/additional_validators_after_impute.nf'
+include { ANOMALY_DETECTION } from '../modules/anomaly_detection.nf'
+include { SEX_INFERENCE } from '../modules/sex_inference.nf'
+include { BATCH_EFFECT } from '../modules/batch_effect.nf'
+include { BETA_DISTRIBUTION } from '../modules/beta_distribution.nf'
+include { NAN_DISTRIBUTION_PER_SAMPLE } from '../modules/nan_distribution_per_sample.nf'
+include { NAN_DISTRIBUTION_PER_PROBE } from '../modules/nan_distribution_per_probe.nf'
+include { PCA } from '../modules/pca.nf'
+include { EPIGENETIC_AGE_INFERENCE } from '../modules/epigenetic_age_inference.nf'
+include { EPIGENETIC_AGE_PLOTS } from '../modules/epigenetic_age_plots.nf'
+include { CTRL_FLUORESCENCE_PLOTS } from '../modules/ctrl_fluorescence_plots.nf'
+include { REPORT } from '../modules/report.nf'
+
 workflow methylarrayqc_analysis {
     take:
         input_abs_path
@@ -16,7 +35,6 @@ workflow methylarrayqc_analysis {
         n_rand_cpgs
         nan_per_probe_n_cpgs
         perc_pca_cpgs
-        contamination
         pca_number_of_components
         pca_columns
         pca_matrix_PC_count
@@ -117,7 +135,7 @@ workflow methylarrayqc_analysis {
             .set{batch_effect_ch_out}
 
         batch_effect_plot_paths = batch_effect_ch_out.sentrix_id
-            .merge(batch_effect_ch_out.sentrix_position)
+            .mix(batch_effect_ch_out.sentrix_position)
             .collect()
             .map {
                 it.join(',')
@@ -139,7 +157,7 @@ workflow methylarrayqc_analysis {
             // pca_ch_out.kruskal: Kruskal-Wallis test results
             pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
             pca_plot_paths = pca_ch_out.scatter
-                .merge(pca_ch_out.area)
+                .mix(pca_ch_out.area)
                 .collect()
                 .map {
                     it.join(',')
@@ -158,15 +176,15 @@ workflow methylarrayqc_analysis {
         }
 
         if(params.infer_epi_age) {
-            // previously: epi_age_res_path
             // epi_age_res_ch_out.epi_clocks_res_parquet - epigenetic age inference results (PARQUET)
-            // TO CONSIDER: epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON)
+            // epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON, for report summary table)
             epi_age_res_ch_out = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
             epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
 
             epi_age_paths = epi_age_plots_ch_out.regr
-                .merge(epi_age_plots_ch_out.eaa)
-                .merge(epi_age_plots_ch_out.eaa_post_hoc)
+                .mix(epi_age_plots_ch_out.eaa)
+                .mix(epi_age_plots_ch_out.eaa_post_hoc)
+                .mix(epi_age_res_ch_out.epi_clocks_res_json)
                 .collect()
                 .map {
                     it.join(',')
@@ -177,5 +195,4 @@ workflow methylarrayqc_analysis {
 
         report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
         params_path = file("${params.output}/params.json")
-    emit:
 }
