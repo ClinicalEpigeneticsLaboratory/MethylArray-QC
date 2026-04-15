@@ -180,3 +180,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# NF test intermediate files
+.nf-test-*.nf
