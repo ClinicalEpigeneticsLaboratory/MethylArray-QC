@@ -69,11 +69,11 @@ def ao(
     return anomaly_results, offset
 
 @update_and_export_plot("ao_plot.json", height_per_item=30)
-def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
+def ao_plot(anomaly_results: pd.DataFrame, offset: float) -> go.Figure:
     """A function generating anomaly detection plot
 
     Args:
-        anomaly_results (str): The results of anomaly\
+        anomaly_results (pd.DataFrame): The results of anomaly\
             detection
         offset (float): the anomaly detection score\
             threshold differentiating anomaly from non-anomaly
