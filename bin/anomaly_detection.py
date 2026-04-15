@@ -63,8 +63,10 @@ def ao(
             abs(algorithm_instance.offset_) for _ in range(len(samples))
         ]
 
+        offset = abs(algorithm_instance.offset_)
+
     anomaly_results.to_parquet("ao_results.parquet")
-    return anomaly_results, abs(algorithm_instance.offset_)
+    return anomaly_results, offset
 
 @update_and_export_plot("ao_plot.json", height_per_item=30)
 def ao_plot(anomaly_results: str, offset: float) -> go.Figure:
