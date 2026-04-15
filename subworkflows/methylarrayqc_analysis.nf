@@ -42,6 +42,8 @@ workflow methylarrayqc_analysis {
         infer_epi_age
         epi_clocks
     main:
+        ADDITIONAL_VALIDATORS_INIT(input_abs_path, sample_sheet_abs_path, cpus, pca_number_of_components, pca_matrix_PC_count)
+
         def processed_samples_count = file("$sample_sheet_abs_path").countLines()-1
 
         // qc_ch_out.qc_parquet: QC stats exported as PARQUET
