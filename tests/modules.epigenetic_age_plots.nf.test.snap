@@ -1,0 +1,31 @@
+{
+    "Snapshot: EPIGENETIC_AGE_PLOTS output channels \u2013 HannumG2013": {
+        "content": [
+            {
+                "0": [
+                    "Regr_Age_vs_Epi_Age_HannumG2013.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "Epi_Age_Accel_HannumG2013.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "Epi_Age_Accel_HannumG2013_post_hoc_res.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "eaa": [
+                    "Epi_Age_Accel_HannumG2013.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "eaa_post_hoc": [
+                    "Epi_Age_Accel_HannumG2013_post_hoc_res.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "regr": [
+                    "Regr_Age_vs_Epi_Age_HannumG2013.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:09:47.480885"
+    }
+}

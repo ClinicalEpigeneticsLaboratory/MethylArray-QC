@@ -1,0 +1,25 @@
+{
+    "Snapshot: CTRL_FLUORESCENCE_DATA output channels structure": {
+        "content": [
+            {
+                "0": [
+                    "ctrl_fluorescence.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "ctrl_unique_probe_types.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "ctrl_fluorescence_data_path": [
+                    "ctrl_fluorescence.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "ctrl_fluorescence_unique_probe_types": [
+                    "ctrl_unique_probe_types.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:07:18.1635"
+    }
+}

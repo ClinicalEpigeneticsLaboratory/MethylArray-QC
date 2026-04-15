@@ -1,24 +1,24 @@
-// Tests for the SEX_INFERENCE process (modules/sex_inference.nf).
+// Tests for the NAN_DISTRIBUTION_PER_PROBE process
+// (modules/nan_distribution_per_probe.nf).
 //
-// All tests run in stub mode – no R/SeSAME containers needed.
+// All tests run in stub mode – no containers needed.
 // The process emits one unnamed output:
-//   inferred_sex.json
+//   nan_distribution_per_probe.json
 //
-// Note: for sex inference to produce meaningful results in real execution,
-// the sample sheet should contain a "Sex" column with FEMALE/MALE values.
-// Stub mode validates channel wiring independent of content.
+// The `nan_per_probe_n_cpgs` parameter controls how many CpG probes are
+// randomly sampled to visualise the NaN distribution across probes.
 
 nextflow_process {
 
-    name "Test Process SEX_INFERENCE"
-    script "modules/sex_inference.nf"
-    process "SEX_INFERENCE"
+    name "Test Process NAN_DISTRIBUTION_PER_PROBE"
+    script "modules/nan_distribution_per_probe.nf"
+    process "NAN_DISTRIBUTION_PER_PROBE"
 
     // ----------------------------------------------------------------
     // Happy path
     // ----------------------------------------------------------------
 
-    test("Happy path: SEX_INFERENCE runs and emits inferred_sex.json") {
+    test("Happy path: default n_cpgs=1000") {
         options "-stub"
 
         when {
@@ -28,8 +28,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 4
-                input[2] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = 1000
                 """
             }
         }
@@ -37,15 +36,76 @@ nextflow_process {
         then {
             assert process.success
             assert process.out[0].size() == 1
-            assert process.out[0][0].toString().endsWith("inferred_sex.json")
+            assert process.out[0][0].toString().endsWith("nan_distribution_per_probe.json")
         }
     }
 
     // ----------------------------------------------------------------
-    // Edge cases
+    // Edge cases – n_cpgs range
     // ----------------------------------------------------------------
 
-    test("Edge case: cpus=1 – single-threaded sex inference") {
+    test("Edge case: n_cpgs=100 (small sample)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = 100
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+        }
+    }
+
+    test("Edge case: n_cpgs=10000 (larger sample)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = 10000
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: n_cpgs=50000 (large sample – performance boundary)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = 50000
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: n_cpgs=1 (boundary minimum)") {
         options "-stub"
 
         when {
@@ -56,60 +116,12 @@ nextflow_process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = 1
-                input[2] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out[0].size() == 1
-        }
-    }
-
-    test("Edge case: sample sheet without Sex column still accepted by process signature") {
-        // In real execution this would produce a warning or use predicted sex only.
-        // Stub mode validates that the process accepts the input without erroring at
-        // the Nextflow orchestration level.
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 4
-                input[2] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
-                """
-            }
-        }
-
-        then {
-            assert process.success
-        }
-    }
-
-    test("Edge case: large dataset (15 samples) does not change output file name") {
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 8
-                input[2] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out[0][0].toString().endsWith("inferred_sex.json")
         }
     }
 
@@ -117,7 +129,7 @@ nextflow_process {
     // Snapshot
     // ----------------------------------------------------------------
 
-    test("Snapshot: SEX_INFERENCE output channel structure") {
+    test("Snapshot: NAN_DISTRIBUTION_PER_PROBE output channel structure") {
         options "-stub"
 
         when {
@@ -127,8 +139,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 4
-                input[2] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = 1000
                 """
             }
         }

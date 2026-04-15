@@ -1,0 +1,218 @@
+// Tests for the ADDITIONAL_VALIDATORS_INIT process
+// (modules/additional_validators_init.nf).
+//
+// This process validates pipeline parameters BEFORE the analysis starts.
+// It has NO declared output channels – success/failure is communicated
+// purely via the process exit code.
+//
+// In stub mode the Python script is not executed, so all invocations
+// succeed (exit 0) regardless of parameter values.  Assertions are
+// therefore limited to `process.success`.
+//
+// To test actual validation failures (e.g. pca_matrix_PC_count >
+// pca_number_of_components, or an unreadable IDAT directory), run the
+// tests WITHOUT stub mode using real Docker containers:
+//
+//   nf-test test tests/modules.additional_validators_init.nf.test \
+//     --profile docker
+//
+// The full error-state integration test scenarios are documented below
+// as commented-out test blocks ready to be enabled once containers are
+// available in the CI environment.
+
+nextflow_process {
+
+    name "Test Process ADDITIONAL_VALIDATORS_INIT"
+    script "modules/additional_validators_init.nf"
+    process "ADDITIONAL_VALIDATORS_INIT"
+
+    // ----------------------------------------------------------------
+    // Happy path (stub mode)
+    // ----------------------------------------------------------------
+
+    test("Happy path: valid parameters – process exits successfully") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = 4
+                input[3] = 5
+                input[4] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // No outputs declared – only exit code matters
+        }
+    }
+
+    test("Happy path: cpus=-1 (auto-detect) accepted by validator") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = -1
+                input[3] = 5
+                input[4] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: pca_matrix_PC_count == pca_number_of_components (boundary equal)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = 4
+                input[3] = 5
+                input[4] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: pca_matrix_PC_count < pca_number_of_components") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = 4
+                input[3] = 5
+                input[4] = 3
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: large sample sheet (15 samples) accepted") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 8
+                input[3] = 5
+                input[4] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Error state integration tests (require real execution – no stub)
+    // Uncomment and run with `--profile docker` to validate actual
+    // validator logic.
+    // ----------------------------------------------------------------
+
+    // test("Error state: pca_matrix_PC_count > pca_number_of_components – process fails") {
+    //     when {
+    //         params { output = "results" }
+    //         process {
+    //             """
+    //             input[0] = file("${projectDir}/tests/test_data/idats")
+    //             input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+    //             input[2] = 4
+    //             input[3] = 3   // pca_number_of_components
+    //             input[4] = 5   // pca_matrix_PC_count > components → invalid
+    //             """
+    //         }
+    //     }
+    //     then {
+    //         assert process.failed
+    //     }
+    // }
+
+    // test("Error state: cpus=0 (invalid – must be -1 or >= 1) – process fails") {
+    //     when {
+    //         params { output = "results" }
+    //         process {
+    //             """
+    //             input[0] = file("${projectDir}/tests/test_data/idats")
+    //             input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+    //             input[2] = 0
+    //             input[3] = 5
+    //             input[4] = 5
+    //             """
+    //         }
+    //     }
+    //     then {
+    //         assert process.failed
+    //     }
+    // }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: ADDITIONAL_VALIDATORS_INIT produces no output channels") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/idats")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = 4
+                input[3] = 5
+                input[4] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // No outputs declared – only exit code matters
+        }
+    }
+}

@@ -1,0 +1,264 @@
+// Tests for the PCA process (modules/pca.nf).
+//
+// All tests run in stub mode – no containers needed.
+// The process emits three output channels (two required, one optional):
+//   PCA_scatter_matrix_*.json  (arity: 1..*) → scatter channel
+//   PCA_area_plot.json         (optional)    → area channel
+//   PCA_PC_KW_test_*.json      (arity: 1..*) → kruskal channel
+//
+// scatter and kruskal use wildcard output patterns (arity: 1..*).
+// A `stub:` block in pca.nf creates one file per pattern:
+//   PCA_scatter_matrix_stub.json  → satisfies PCA_scatter_matrix_*.json
+//   PCA_area_plot.json            → optional, also created in stub
+//   PCA_PC_KW_test_stub.json      → satisfies PCA_PC_KW_test_*.json
+//
+// `pca_columns` is a comma-separated string of sample sheet columns to
+// use as grouping factors (e.g. "Sentrix_ID,Sentrix_Position").
+
+nextflow_process {
+
+    name "Test Process PCA"
+    script "modules/pca.nf"
+    process "PCA"
+
+    // ----------------------------------------------------------------
+    // Happy path
+    // ----------------------------------------------------------------
+
+    test("Happy path: default PCA settings") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – number of components
+    // ----------------------------------------------------------------
+
+    test("Edge case: pca_number_of_components=2 (minimum meaningful PCA)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 2
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 2
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: pca_number_of_components=10 (more components)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 10
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – perc_pca_cpgs
+    // ----------------------------------------------------------------
+
+    test("Edge case: perc_pca_cpgs=1 (1% of CpGs – fast computation)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 1
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: perc_pca_cpgs=50 (50% of CpGs)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 50
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – pca_columns
+    // ----------------------------------------------------------------
+
+    test("Edge case: single PCA column (Sentrix_ID only)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 5
+                input[4] = "Sentrix_ID"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: Sample_Group column included") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position,Sample_Group"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – pca_matrix_PC_count
+    // ----------------------------------------------------------------
+
+    test("Edge case: pca_matrix_PC_count=2 (smaller scatter matrix)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 2
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: PCA output channels structure") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = 10
+                input[3] = 5
+                input[4] = "Sentrix_ID,Sentrix_Position"
+                input[5] = 5
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

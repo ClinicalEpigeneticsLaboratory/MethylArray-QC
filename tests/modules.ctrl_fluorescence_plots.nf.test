@@ -1,23 +1,35 @@
-// Tests for the IMPUTE process (modules/impute.nf).
+// Tests for the CTRL_FLUORESCENCE_PLOTS process
+// (modules/ctrl_fluorescence_plots.nf).
 //
-// All tests run in stub mode – no Parquet files or Python containers needed.
-// The process emits four outputs:
-//   imputed_mynorm.parquet       → imputed_mynorm channel
-//   impute_nan_per_sample.parquet → nan_per_sample channel
-//   impute_nan_per_probe.parquet  → nan_per_probe channel
-//   imputation_summary.json       → imputation_summary_path channel
+// All tests run in stub mode – no containers needed.
+// The process uses `each column` and `each ctrl_probe_type` inputs, producing
+// a cartesian product of tasks. Each task emits one dynamic-name output:
+//   ${ctrl_probe_type}_by_${column}.json  (arity: 1..*)
+//
+// NOTE: Because the output pattern uses variable substitution and a wildcard,
+// stub mode may produce an empty match unless the process has an explicit
+// `stub:` block. If tests fail with "No output files found", add to
+// ctrl_fluorescence_plots.nf:
+//
+//   stub:
+//   """
+//   touch ${ctrl_probe_type}_by_${column}.json
+//   """
+//
+// In a process test each `each` input is provided as a single scalar value;
+// cartesian-product behaviour is tested at the subworkflow level.
 
 nextflow_process {
 
-    name "Test Process IMPUTE"
-    script "modules/impute.nf"
-    process "IMPUTE"
+    name "Test Process CTRL_FLUORESCENCE_PLOTS"
+    script "modules/ctrl_fluorescence_plots.nf"
+    process "CTRL_FLUORESCENCE_PLOTS"
 
     // ----------------------------------------------------------------
     // Happy path
     // ----------------------------------------------------------------
 
-    test("Happy path: IMPUTE runs with knn imputer and default thresholds") {
+    test("Happy path: column=Sentrix_ID, ctrl_probe_type=BISULFITE_CONVERSION_I") {
         options "-stub"
 
         when {
@@ -27,111 +39,9 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.2
-                input[2] = 0.2
-                input[3] = "knn"
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out.imputed_mynorm.size()          == 1
-            assert process.out.nan_per_sample.size()          == 1
-            assert process.out.nan_per_probe.size()           == 1
-            assert process.out.imputation_summary_path.size() == 1
-            assert process.out.imputed_mynorm[0].toString().endsWith("imputed_mynorm.parquet")
-            assert process.out.nan_per_sample[0].toString().endsWith("impute_nan_per_sample.parquet")
-            assert process.out.nan_per_probe[0].toString().endsWith("impute_nan_per_probe.parquet")
-            assert process.out.imputation_summary_path[0].toString().endsWith("imputation_summary.json")
-        }
-    }
-
-    // ----------------------------------------------------------------
-    // Edge cases – threshold values
-    // ----------------------------------------------------------------
-
-    test("Edge case: high probe threshold (p_threshold=0.5) permits more NaN per probe") {
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.5
-                input[2] = 0.2
-                input[3] = "knn"
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out.imputed_mynorm.size() == 1
-        }
-    }
-
-    test("Edge case: high sample threshold (s_threshold=0.5) permits more NaN per sample") {
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.2
-                input[2] = 0.5
-                input[3] = "knn"
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out.imputed_mynorm.size() == 1
-        }
-    }
-
-    test("Edge case: strict thresholds (p_threshold=0.05, s_threshold=0.05)") {
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.05
-                input[2] = 0.05
-                input[3] = "knn"
-                """
-            }
-        }
-
-        then {
-            assert process.success
-        }
-    }
-
-    test("Edge case: both thresholds at maximum (p=0.5, s=0.5)") {
-        options "-stub"
-
-        when {
-            params {
-                output = "results"
-            }
-            process {
-                """
-                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.5
-                input[2] = 0.5
-                input[3] = "knn"
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_I"
                 """
             }
         }
@@ -142,10 +52,10 @@ nextflow_process {
     }
 
     // ----------------------------------------------------------------
-    // Edge cases – imputer types
+    // Edge cases – column variations
     // ----------------------------------------------------------------
 
-    test("Edge case: imputer_type=soft") {
+    test("Edge case: column=Sentrix_Position") {
         options "-stub"
 
         when {
@@ -155,9 +65,101 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.2
-                input[2] = 0.2
-                input[3] = "soft"
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_Position"
+                input[3] = "BISULFITE_CONVERSION_I"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: column=Sample_Group") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sample_Group"
+                input[3] = "BISULFITE_CONVERSION_I"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – ctrl_probe_type variations
+    // ----------------------------------------------------------------
+
+    test("Edge case: ctrl_probe_type=BISULFITE_CONVERSION_II") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_II"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: ctrl_probe_type=SPECIFICITY_I") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "SPECIFICITY_I"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: ctrl_probe_type=NON_POLYMORPHIC") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "NON_POLYMORPHIC"
                 """
             }
         }
@@ -171,7 +173,7 @@ nextflow_process {
     // Snapshot
     // ----------------------------------------------------------------
 
-    test("Snapshot: IMPUTE output channels structure") {
+    test("Snapshot: CTRL_FLUORESCENCE_PLOTS output channel – Sentrix_ID x BISULFITE_CONVERSION_I") {
         options "-stub"
 
         when {
@@ -181,9 +183,9 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = 0.2
-                input[2] = 0.2
-                input[3] = "knn"
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_I"
                 """
             }
         }

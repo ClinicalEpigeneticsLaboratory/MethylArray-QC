@@ -1,0 +1,166 @@
+// Tests for the EPIGENETIC_AGE_INFERENCE process
+// (modules/epigenetic_age_inference.nf).
+//
+// All tests run in stub mode – no R clock containers needed.
+// The process emits two named outputs:
+//   epi_clocks_res.parquet → epi_clocks_res_parquet channel
+//   epi_clocks_res.json    → epi_clocks_res_json channel
+//
+// The `epi_clocks` parameter is a comma-separated list of clock identifiers,
+// e.g. "HannumG2013,HorvathS2013".
+// Note: real execution requires a sample sheet with an "Age" column.
+
+nextflow_process {
+
+    name "Test Process EPIGENETIC_AGE_INFERENCE"
+    script "modules/epigenetic_age_inference.nf"
+    process "EPIGENETIC_AGE_INFERENCE"
+
+    // ----------------------------------------------------------------
+    // Happy path
+    // ----------------------------------------------------------------
+
+    test("Happy path: two epigenetic clocks (HannumG2013,HorvathS2013)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.epi_clocks_res_parquet.size() == 1
+            assert process.out.epi_clocks_res_json.size()    == 1
+            assert process.out.epi_clocks_res_parquet[0].toString().endsWith("epi_clocks_res.parquet")
+            assert process.out.epi_clocks_res_json[0].toString().endsWith("epi_clocks_res.json")
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – clock count / selection
+    // ----------------------------------------------------------------
+
+    test("Edge case: single clock (HannumG2013)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.epi_clocks_res_parquet.size() == 1
+            assert process.out.epi_clocks_res_json.size()    == 1
+        }
+    }
+
+    test("Edge case: single clock (HorvathS2013)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.epi_clocks_res_parquet.size() == 1
+        }
+    }
+
+    test("Edge case: three clocks") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HannumG2013,HorvathS2013,LevineM2018"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: sample sheet without Age column still accepted at process level") {
+        // In real execution the R script would warn that Age is missing.
+        // Stub mode confirms the process can be invoked without orchestration-level errors.
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: EPIGENETIC_AGE_INFERENCE output channels structure") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[1] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[2] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "Snapshot: NAN_DISTRIBUTION_PER_SAMPLE output channel structure": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "nan_distribution_per_sample_stub.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:12:11.576583"
+    }
+}

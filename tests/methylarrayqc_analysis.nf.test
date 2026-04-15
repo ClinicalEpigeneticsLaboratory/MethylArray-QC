@@ -1,0 +1,1300 @@
+// Tests for the methylarrayqc_analysis subworkflow.
+//
+// All tests run in Nextflow stub mode (`options "-stub"`) so no actual IDAT
+// files or Docker containers are required.  Stub mode skips every process
+// script block and creates empty output files matching the declared output
+// patterns, while the Groovy orchestration layer (branching, channel wiring,
+// countLines) executes exactly as in production.
+//
+// Test-data files used:
+//   tests/test_data/sample_sheet_small.csv        –  5 samples  (≤ 10 → PCA/AO skipped)
+//   tests/test_data/sample_sheet_boundary_10.csv  – 10 samples  (≤ 10 → PCA/AO skipped)
+//   tests/test_data/sample_sheet_boundary_11.csv  – 11 samples  (> 10 → PCA/AO executed)
+//   tests/test_data/sample_sheet_large.csv        – 15 samples  (> 10 → PCA/AO executed)
+//   tests/test_data/sample_sheet_with_age_and_sex.csv – 15 samples with Sex & Age columns
+//   tests/test_data/idats/                        – empty placeholder IDAT directory
+
+nextflow_workflow {
+
+    name "Test Subworkflow methylarrayqc_analysis"
+    script "subworkflows/methylarrayqc_analysis.nf"
+    workflow "methylarrayqc_analysis"
+
+    // ================================================================
+    // HAPPY PATH – large dataset, all features enabled
+    // ================================================================
+
+    test("Happy path: large dataset (>10 samples), all features enabled") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = true
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = true
+                infer_epi_age           = true
+                epi_clocks              = "HannumG2013,HorvathS2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = true
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = true
+                input[20] = true
+                input[21] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            def tasks = workflow.trace.tasks().collect { it.name }
+
+            // Core processes must always run
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_INIT") }
+            assert tasks.any { it.contains("QC") }
+            assert tasks.any { it.contains("PREPROCESS") }
+            assert tasks.any { it.contains("IMPUTE") }
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_AFTER_IMPUTE") }
+            assert tasks.any { it.contains("BATCH_EFFECT") }
+            assert tasks.any { it.contains("BETA_DISTRIBUTION") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_SAMPLE") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_PROBE") }
+
+            // Large dataset (> 10 samples) → PCA and anomaly detection must run
+            assert tasks.any { it.contains("ANOMALY_DETECTION") }
+            assert tasks.any { it.contains("PCA") }
+
+            // Optional features enabled → these must run
+            assert tasks.any { it.contains("SEX_INFERENCE") }
+            assert tasks.any { it.contains("EPIGENETIC_AGE_INFERENCE") }
+            assert tasks.any { it.contains("EPIGENETIC_AGE_PLOTS") }
+            assert tasks.any { it.contains("CTRL_FLUORESCENCE_DATA") }
+            assert tasks.any { it.contains("CTRL_FLUORESCENCE_PLOTS") }
+        }
+    }
+
+    // ================================================================
+    // HAPPY PATH – small dataset, all features enabled
+    // ================================================================
+
+    test("Happy path: small dataset (≤10 samples), all features enabled – PCA and anomaly detection skipped") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = true
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = true
+                infer_epi_age           = true
+                epi_clocks              = "HannumG2013,HorvathS2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = true
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = true
+                input[20] = true
+                input[21] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            def tasks = workflow.trace.tasks().collect { it.name }
+
+            // Core processes must always run
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_INIT") }
+            assert tasks.any { it.contains("QC") }
+            assert tasks.any { it.contains("PREPROCESS") }
+            assert tasks.any { it.contains("IMPUTE") }
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_AFTER_IMPUTE") }
+            assert tasks.any { it.contains("BATCH_EFFECT") }
+            assert tasks.any { it.contains("BETA_DISTRIBUTION") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_SAMPLE") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_PROBE") }
+
+            // Small dataset (≤ 10 samples) → PCA and anomaly detection must NOT run
+            assert tasks.findAll { it.contains("ANOMALY_DETECTION") }.isEmpty()
+            assert tasks.findAll { it.contains("PCA") }.isEmpty()
+        }
+    }
+
+    // ================================================================
+    // CONDITIONAL BRANCH – ctrl_intens_plots
+    // ================================================================
+
+    test("Branch: ctrl_intens_plots=false – CTRL_FLUORESCENCE_DATA and CTRL_FLUORESCENCE_PLOTS not executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            def tasks = workflow.trace.tasks().collect { it.name }
+
+            assert tasks.findAll { it.contains("CTRL_FLUORESCENCE_DATA") }.isEmpty()
+            assert tasks.findAll { it.contains("CTRL_FLUORESCENCE_PLOTS") }.isEmpty()
+
+            // Core processes still run
+            assert tasks.any { it.contains("QC") }
+            assert tasks.any { it.contains("PREPROCESS") }
+            assert tasks.any { it.contains("IMPUTE") }
+        }
+    }
+
+    // ================================================================
+    // CONDITIONAL BRANCH – infer_sex
+    // ================================================================
+
+    test("Branch: infer_sex=false – SEX_INFERENCE not executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.findAll { it.contains("SEX_INFERENCE") }.isEmpty()
+        }
+    }
+
+    test("Branch: infer_sex=true – SEX_INFERENCE executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = true
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = true
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("SEX_INFERENCE") }
+        }
+    }
+
+    // ================================================================
+    // CONDITIONAL BRANCH – infer_epi_age
+    // ================================================================
+
+    test("Branch: infer_epi_age=false – EPIGENETIC_AGE_INFERENCE and EPIGENETIC_AGE_PLOTS not executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_INFERENCE") }.isEmpty()
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_PLOTS") }.isEmpty()
+        }
+    }
+
+    test("Branch: infer_epi_age=true with two clocks – two EPIGENETIC_AGE_PLOTS tasks executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = true
+                epi_clocks              = "HannumG2013,HorvathS2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = true
+                input[21] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+
+            // EPIGENETIC_AGE_INFERENCE runs once
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_INFERENCE") }.size() == 1
+
+            // EPIGENETIC_AGE_PLOTS uses `each epi_clock`, so one task per clock
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_PLOTS") }.size() == 2
+        }
+    }
+
+    test("Branch: infer_epi_age=true with single clock – one EPIGENETIC_AGE_PLOTS task executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = true
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = true
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_PLOTS") }.size() == 1
+        }
+    }
+
+    // ================================================================
+    // CONDITIONAL BRANCH – all optional features disabled
+    // ================================================================
+
+    test("Branch: all optional features disabled – only core processes run") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+
+            // Core processes must run
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_INIT") }
+            assert tasks.any { it.contains("QC") }
+            assert tasks.any { it.contains("PREPROCESS") }
+            assert tasks.any { it.contains("IMPUTE") }
+            assert tasks.any { it.contains("ADDITIONAL_VALIDATORS_AFTER_IMPUTE") }
+            assert tasks.any { it.contains("BATCH_EFFECT") }
+            assert tasks.any { it.contains("BETA_DISTRIBUTION") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_SAMPLE") }
+            assert tasks.any { it.contains("NAN_DISTRIBUTION_PER_PROBE") }
+
+            // Nothing optional must run
+            assert tasks.findAll { it.contains("ANOMALY_DETECTION") }.isEmpty()
+            assert tasks.findAll { it.contains("PCA") }.isEmpty()
+            assert tasks.findAll { it.contains("SEX_INFERENCE") }.isEmpty()
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_INFERENCE") }.isEmpty()
+            assert tasks.findAll { it.contains("EPIGENETIC_AGE_PLOTS") }.isEmpty()
+            assert tasks.findAll { it.contains("CTRL_FLUORESCENCE_DATA") }.isEmpty()
+            assert tasks.findAll { it.contains("CTRL_FLUORESCENCE_PLOTS") }.isEmpty()
+        }
+    }
+
+    // ================================================================
+    // EDGE CASES – sample count boundary (> 10 condition)
+    // ================================================================
+
+    test("Edge case: exactly 10 samples – PCA and anomaly detection not executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_boundary_10.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            // Condition is strictly > 10, so 10 samples must NOT trigger PCA/AO
+            assert tasks.findAll { it.contains("ANOMALY_DETECTION") }.isEmpty()
+            assert tasks.findAll { it.contains("PCA") }.isEmpty()
+        }
+    }
+
+    test("Edge case: exactly 11 samples – PCA and anomaly detection executed") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_boundary_11.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            // 11 > 10 → PCA and AO must run
+            assert tasks.any { it.contains("ANOMALY_DETECTION") }
+            assert tasks.any { it.contains("PCA") }
+        }
+    }
+
+    // ================================================================
+    // PARAMETER VARIATION TESTS
+    // ================================================================
+
+    test("Param: float contamination value (0.1) accepted by ANOMALY_DETECTION") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = 0.1
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = 0.1
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("ANOMALY_DETECTION") }
+        }
+    }
+
+    test("Param: maximum contamination value (0.5) accepted by ANOMALY_DETECTION") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = 0.5
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = 0.5
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("ANOMALY_DETECTION") }
+        }
+    }
+
+    test("Param: alternative prep_code SQCDPB passed to PREPROCESS") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "SQCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "SQCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("PREPROCESS") }
+        }
+    }
+
+    test("Param: collapse_prefix=true with method=mean passed to PREPROCESS") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = true
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = true
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("PREPROCESS") }
+        }
+    }
+
+    test("Param: ctrl_intens_metric=max accepted by CTRL_FLUORESCENCE_DATA") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = true
+                ctrl_intens_metric      = "max"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = true
+                input[9]  = "max"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            assert tasks.any { it.contains("CTRL_FLUORESCENCE_DATA") }
+        }
+    }
+
+    test("Param: BATCH_EFFECT spawns two tasks – one per Sentrix column") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def tasks = workflow.trace.tasks().collect { it.name }
+            // BATCH_EFFECT uses `each column` → one task for Sentrix_ID, one for Sentrix_Position
+            assert tasks.findAll { it.contains("BATCH_EFFECT") }.size() == 2
+        }
+    }
+
+    // ================================================================
+    // SNAPSHOT TESTS
+    // ================================================================
+
+    test("Snapshot: process set – minimal run (small dataset, no optional features)") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = false
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = false
+                infer_epi_age           = false
+                epi_clocks              = "HannumG2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2]  = 2
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = false
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = false
+                input[20] = false
+                input[21] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            // Snapshot the sorted list of unique process names that ran.
+            // This detects any accidental addition or removal of core steps.
+            def processNames = workflow.trace.tasks()
+                .collect { it.name.replaceAll(/\s*\(\d+\)$/, "").trim() }
+                .unique()
+                .sort()
+            assert snapshot(processNames).match()
+        }
+    }
+
+    test("Snapshot: process set – full run (large dataset, all features enabled)") {
+        options "-stub"
+
+        when {
+            params {
+                output                  = "results"
+                ctrl_intens_plots       = true
+                ctrl_intens_metric      = "total"
+                ctrl_intens_cols        = "Sentrix_ID,Sentrix_Position"
+                prep_code               = "QCDPB"
+                collapse_prefix         = false
+                collapse_prefix_method  = "mean"
+                p_threshold             = 0.2
+                s_threshold             = 0.2
+                imputer_type            = "knn"
+                contamination           = "auto"
+                n_rand_cpgs             = 10000
+                nan_per_probe_n_cpgs    = 1000
+                perc_pca_cpgs           = 10
+                pca_number_of_components = 5
+                pca_columns             = "Sentrix_ID,Sentrix_Position"
+                pca_matrix_PC_count     = 5
+                infer_sex               = true
+                infer_epi_age           = true
+                epi_clocks              = "HannumG2013,HorvathS2013"
+            }
+            workflow {
+                """
+                input[0]  = file("${projectDir}/tests/test_data/idats")
+                input[1]  = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2]  = 4
+                input[3]  = false
+                input[4]  = "mean"
+                input[5]  = 0.2
+                input[6]  = 0.2
+                input[7]  = "QCDPB"
+                input[8]  = true
+                input[9]  = "total"
+                input[10] = "Sentrix_ID,Sentrix_Position"
+                input[11] = "knn"
+                input[12] = "auto"
+                input[13] = 10000
+                input[14] = 1000
+                input[15] = 10
+                input[16] = 5
+                input[17] = "Sentrix_ID,Sentrix_Position"
+                input[18] = 5
+                input[19] = true
+                input[20] = true
+                input[21] = "HannumG2013,HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            def processNames = workflow.trace.tasks()
+                .collect { it.name.replaceAll(/\s*\(\d+\)$/, "").trim() }
+                .unique()
+                .sort()
+            assert snapshot(processNames).match()
+        }
+    }
+}

@@ -1,0 +1,246 @@
+// Tests for the REPORT process (modules/report.nf).
+//
+// All tests run in stub mode – no Python containers needed.
+// The process emits one unnamed output: qc_report.html
+//
+// Input channel types:
+//   path  – html_template, qc_summary_path, preprocess_summary_path,
+//            imputation_summary_path, ao_plot_path, beta_distribution_plot,
+//            nan_distribution_per_probe_plot, nan_distribution_per_sample_plot,
+//            sex_inference_path, params_path
+//   val   – ctrl_fluorescence_plot_paths, batch_effect_plot_paths,
+//            pca_kruskal_paths, pca_plot_paths, epi_age_paths,
+//            unique_probe_types_str
+//
+// `val` inputs carry comma-separated file path strings that are assembled
+// by the subworkflow (or main.nf) from upstream process outputs.
+// When the corresponding feature is disabled, a placeholder asset path is used.
+//
+// The REPORT process is retried up to 3 times on OOM (exit 137-140).
+
+nextflow_process {
+
+    name "Test Process REPORT"
+    script "modules/report.nf"
+    process "REPORT"
+
+    // ----------------------------------------------------------------
+    // Happy path – all optional paths use asset placeholders
+    // ----------------------------------------------------------------
+
+    test("Happy path: all placeholder paths – process completes and emits qc_report.html") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+            assert process.out[0][0].toString().endsWith("qc_report.html")
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – val inputs carry comma-separated path strings
+    // ----------------------------------------------------------------
+
+    test("Edge case: multiple ctrl_fluorescence plots passed as comma-separated val") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "/path/to/BISULFITE_CONVERSION_I_by_Sentrix_ID.json,/path/to/BISULFITE_CONVERSION_I_by_Sentrix_Position.json"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "/path/to/Sentrix_ID_batch.json,/path/to/Sentrix_Position_batch.json"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II,NON_POLYMORPHIC"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: all optional features active – real path strings in val inputs") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "/path/to/ctrl.json"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "/path/to/batch_Sentrix_ID.json,/path/to/batch_Sentrix_Position.json"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "/path/to/PCA_PC_KW_test_Sentrix_ID.json"
+                input[13] = "/path/to/PCA_scatter_Sentrix_ID.json,/path/to/PCA_area_plot.json"
+                input[14] = "/path/to/Regr_Age_HannumG2013.json,/path/to/epi_clocks_res.json"
+                input[15] = "BISULFITE_CONVERSION_I,SPECIFICITY_I"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: unique_probe_types_str='no_probe_types' sentinel") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: all sex inference / epi age / PCA / AO placeholder assets simultaneously") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: REPORT always emits exactly one file named qc_report.html") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].collect { file(it).name } == ["qc_report.html"]
+            assert snapshot(process.out).match()
+        }
+    }
+}

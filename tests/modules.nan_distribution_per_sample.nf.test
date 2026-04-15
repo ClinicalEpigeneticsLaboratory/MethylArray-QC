@@ -1,28 +1,28 @@
-// Tests for the BATCH_EFFECT process (modules/batch_effect.nf).
+// Tests for the NAN_DISTRIBUTION_PER_SAMPLE process
+// (modules/nan_distribution_per_sample.nf).
 //
 // All tests run in stub mode – no containers needed.
-// The process uses an `each column` input and outputs dynamic glob patterns:
-//   ${column}_*.json   (arity: 1..*)
+// The process produces dynamic output files with a wildcard pattern:
+//   nan_distribution_per_sample_*.json  (arity: 1..*)
 //
-// The process uses an `each` input (column) and outputs a dynamic glob:
-//   ${column}_*.json   (arity: 1..*)
-// A `stub:` block in batch_effect.nf creates `${column}_stub.json`, which
-// satisfies the glob pattern in stub mode.
+// The output pattern is nan_distribution_per_sample_*.json (arity: 1..*).
+// A `stub:` block in nan_distribution_per_sample.nf creates:
+//   nan_distribution_per_sample_stub.json  → satisfies the wildcard pattern
 //
-// In a process test the `each` input is provided as a single scalar value;
-// the fan-out behaviour (one task per column) is tested at the subworkflow level.
+// The number of output JSON files in real execution depends on how many
+// grouping columns are present in the sample sheet (one per column + overall).
 
 nextflow_process {
 
-    name "Test Process BATCH_EFFECT"
-    script "modules/batch_effect.nf"
-    process "BATCH_EFFECT"
+    name "Test Process NAN_DISTRIBUTION_PER_SAMPLE"
+    script "modules/nan_distribution_per_sample.nf"
+    process "NAN_DISTRIBUTION_PER_SAMPLE"
 
     // ----------------------------------------------------------------
     // Happy path
     // ----------------------------------------------------------------
 
-    test("Happy path: column=Sentrix_ID produces output JSON") {
+    test("Happy path: QC parquet + small sample sheet") {
         options "-stub"
 
         when {
@@ -32,9 +32,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
-                input[2] = "Sentrix_ID"
-                input[3] = file("${projectDir}/tests/test_data/stub.json")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
                 """
             }
         }
@@ -44,7 +42,7 @@ nextflow_process {
         }
     }
 
-    test("Happy path: column=Sentrix_Position produces output JSON") {
+    test("Happy path: QC parquet + large sample sheet (15 samples)") {
         options "-stub"
 
         when {
@@ -55,8 +53,6 @@ nextflow_process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
-                input[2] = "Sentrix_Position"
-                input[3] = file("${projectDir}/tests/test_data/stub.json")
                 """
             }
         }
@@ -70,7 +66,7 @@ nextflow_process {
     // Edge cases
     // ----------------------------------------------------------------
 
-    test("Edge case: small sample sheet (5 samples) accepted") {
+    test("Edge case: sample sheet with Sex and Age columns – more grouping columns") {
         options "-stub"
 
         when {
@@ -80,9 +76,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
-                input[2] = "Sentrix_ID"
-                input[3] = file("${projectDir}/tests/test_data/stub.json")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 """
             }
         }
@@ -92,7 +86,7 @@ nextflow_process {
         }
     }
 
-    test("Edge case: custom grouping column (Sample_Group)") {
+    test("Edge case: boundary sample sheet (10 samples)") {
         options "-stub"
 
         when {
@@ -102,9 +96,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
-                input[2] = "Sample_Group"
-                input[3] = file("${projectDir}/tests/test_data/stub.json")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_boundary_10.csv")
                 """
             }
         }
@@ -118,7 +110,7 @@ nextflow_process {
     // Snapshot
     // ----------------------------------------------------------------
 
-    test("Snapshot: BATCH_EFFECT output channel structure – Sentrix_ID column") {
+    test("Snapshot: NAN_DISTRIBUTION_PER_SAMPLE output channel structure") {
         options "-stub"
 
         when {
@@ -128,9 +120,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
-                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
-                input[2] = "Sentrix_ID"
-                input[3] = file("${projectDir}/tests/test_data/stub.json")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
                 """
             }
         }

@@ -1,0 +1,18 @@
+{
+    "Snapshot: CTRL_FLUORESCENCE_PLOTS output channel \u2013 Sentrix_ID x BISULFITE_CONVERSION_I": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "BISULFITE_CONVERSION_I_by_Sentrix_ID.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:08:13.048313"
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "Snapshot: BETA_DISTRIBUTION output channels structure": {
+        "content": [
+            {
+                "0": [
+                    "beta_distribution.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "random_cpgs_to_plot.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "beta_distr_plot": [
+                    "beta_distribution.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "n_rand_cpgs_path": [
+                    "random_cpgs_to_plot.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:06:30.879838"
+    }
+}

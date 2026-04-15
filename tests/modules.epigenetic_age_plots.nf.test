@@ -1,0 +1,168 @@
+// Tests for the EPIGENETIC_AGE_PLOTS process (modules/epigenetic_age_plots.nf).
+//
+// All tests run in stub mode – no Python containers needed.
+// The process uses `each epi_clock` and emits three channels per invocation:
+//   Regr_Age_vs_Epi_Age_${epi_clock}.json            → regr channel (required)
+//   Epi_Age_Accel_${epi_clock}.json                   → eaa channel (optional)
+//   Epi_Age_Accel_${epi_clock}_post_hoc_res.json      → eaa_post_hoc channel (optional)
+//
+// In a process test, `each epi_clock` is provided as a single scalar value;
+// the fan-out behaviour (one task per clock) is validated in the subworkflow tests.
+//
+// NOTE: The regression plot output name includes the clock name, so the output
+// file differs between tests. Snapshot tests are therefore clock-specific.
+
+nextflow_process {
+
+    name "Test Process EPIGENETIC_AGE_PLOTS"
+    script "modules/epigenetic_age_plots.nf"
+    process "EPIGENETIC_AGE_PLOTS"
+
+    // ----------------------------------------------------------------
+    // Happy path
+    // ----------------------------------------------------------------
+
+    test("Happy path: HannumG2013 clock – required regression plot emitted") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.regr.size() == 1
+            assert process.out.regr[0].toString().contains("HannumG2013")
+            assert process.out.regr[0].toString().endsWith(".json")
+        }
+    }
+
+    test("Happy path: HorvathS2013 clock – required regression plot emitted") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2] = "HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.regr.size() == 1
+            assert process.out.regr[0].toString().contains("HorvathS2013")
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – output file naming per clock
+    // ----------------------------------------------------------------
+
+    test("Edge case: output file name embeds the clock name (HannumG2013)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.regr[0].toString() ==~ /.*Regr_Age_vs_Epi_Age_HannumG2013\.json/
+        }
+    }
+
+    test("Edge case: output file name embeds the clock name (HorvathS2013)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2] = "HorvathS2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.regr[0].toString() ==~ /.*Regr_Age_vs_Epi_Age_HorvathS2013\.json/
+        }
+    }
+
+    test("Edge case: sample sheet without Age column still accepted at process level") {
+        // Stub mode validates orchestration-level wiring; script-level validation
+        // (e.g. missing Age) is tested in integration tests with real execution.
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: EPIGENETIC_AGE_PLOTS output channels – HannumG2013") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
+                input[2] = "HannumG2013"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

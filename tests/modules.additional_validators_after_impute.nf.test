@@ -1,0 +1,180 @@
+// Tests for the ADDITIONAL_VALIDATORS_AFTER_IMPUTE process
+// (modules/additional_validators_after_impute.nf).
+//
+// This process validates pipeline parameters AFTER imputation completes.
+// It checks that the requested visualisation CpG counts are compatible
+// with the number of CpGs retained after imputation.
+// It has NO declared output channels – success/failure via exit code only.
+//
+// In stub mode the Python script is not executed, so all invocations succeed
+// regardless of the imputation_summary.json content.
+//
+// To test actual validation logic (e.g. n_rand_cpgs > CpGs in imputed data),
+// run WITHOUT stub mode:
+//
+//   nf-test test tests/modules.additional_validators_after_impute.nf.test \
+//     --profile docker
+//
+// The imputation_summary.json test fixture is at:
+//   tests/test_data/imputation_summary.json
+
+nextflow_process {
+
+    name "Test Process ADDITIONAL_VALIDATORS_AFTER_IMPUTE"
+    script "modules/additional_validators_after_impute.nf"
+    process "ADDITIONAL_VALIDATORS_AFTER_IMPUTE"
+
+    // ----------------------------------------------------------------
+    // Happy path (stub mode)
+    // ----------------------------------------------------------------
+
+    test("Happy path: default n_rand_cpgs and nan_per_probe_n_cpgs accepted") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = 10000
+                input[1] = 1000
+                input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: small n_rand_cpgs=100 well within imputed CpG count") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = 100
+                input[1] = 100
+                input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: n_rand_cpgs=1 (boundary minimum)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = 1
+                input[1] = 1
+                input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Happy path: very large n_rand_cpgs (stub accepts any value)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = 1000000
+                input[1] = 500000
+                input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Error state integration tests (require real execution – no stub)
+    // Uncomment and run with `--profile docker` to validate actual
+    // validator logic.
+    // ----------------------------------------------------------------
+
+    // test("Error state: n_rand_cpgs exceeds CpG count in imputation_summary – process fails") {
+    //     // The imputation_summary.json fixture reports n_cpgs = 850000.
+    //     // Requesting more than that should trigger a validation error.
+    //     when {
+    //         params { output = "results" }
+    //         process {
+    //             """
+    //             input[0] = 9999999
+    //             input[1] = 1000
+    //             input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+    //             """
+    //         }
+    //     }
+    //     then {
+    //         assert process.failed
+    //     }
+    // }
+
+    // test("Error state: nan_per_probe_n_cpgs exceeds CpG count – process fails") {
+    //     when {
+    //         params { output = "results" }
+    //         process {
+    //             """
+    //             input[0] = 1000
+    //             input[1] = 9999999
+    //             input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+    //             """
+    //         }
+    //     }
+    //     then {
+    //         assert process.failed
+    //     }
+    // }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: ADDITIONAL_VALIDATORS_AFTER_IMPUTE produces no output channels") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = 10000
+                input[1] = 1000
+                input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // No outputs declared – only exit code matters
+        }
+    }
+}
