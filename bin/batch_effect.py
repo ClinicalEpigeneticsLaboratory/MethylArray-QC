@@ -11,13 +11,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plot_export_utils import export_decorated_fig_with_custom_name
+from typing import Optional
 
 def get_single_fig(
     sample_sheet: pd.DataFrame,
     filtered_mynorm: pd.DataFrame,
     row_num: int,
     column: str,
-) -> go.Figure:
+) -> Optional[go.Figure]:
     """A function generating a single batch effect evaluation figure
 
     Args:
@@ -27,9 +28,10 @@ def get_single_fig(
         column (str): currently processed column
 
     Returns:
-        go.Figure: a single figure for specific column and set of column items
+        go.Figure | None: a single figure for specific column and set of column items,
+            or None if there is no data to plot or all values are NaN (which happens 
+            when no valid Sentrix_IDs were found for the given row_num and column)
     """
-    fig = None  # initialize to avoid reference before assignment
     ids_to_plot = list(sample_sheet.loc[sample_sheet["Plot_num"] == row_num, column])
 
     # Check if we have valid Sentrix_IDs to plot
@@ -68,6 +70,8 @@ def get_single_fig(
         fig.update_xaxes(tickangle=90)
     else:
         print(f"Warning: No {column}s found for row {row_num}.")
+        return None
+    
     return fig
 
 def get_all_figs(
