@@ -18,4 +18,10 @@ process CTRL_FLUORESCENCE_DATA{
     """
     ctrl_fluorescence_data.R $idats $sample_sheet_path $cpus $metric
     """
+
+    stub:
+    """
+    touch ctrl_fluorescence.parquet
+    echo '["Unique mock probe types"]' > ctrl_unique_probe_types.json
+    """
 }
