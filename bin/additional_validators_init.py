@@ -39,7 +39,7 @@ def validate_params_cpus(cpus: int) -> None:
     assert cpus != 0, "params.cpus cannot be equal to 0!"
     assert (
         cpus <= max_available_cpus
-    ), "params.cpus cannot be larger than $max_available_cpus!"
+    ), f"params.cpus cannot be larger than {max_available_cpus}!"
 
 
 def validate_params_pca(
