@@ -750,10 +750,10 @@ def main():
     flat_config_ordered = {
         "Nextflow_version": nf_version,
         "Run_times": get_run_times(config),
-        "Workflow_success": flat_config.get("Workflow_success", "NA"),
-        "Workflow_errMsg": flat_config.get("Workflow_errMsg", "NA"),
-        "Workflow_errDetails": flat_config.get("Workflow_errDetails", "NA"),
-        "Workflow_exitStatus": flat_config.get("Workflow_exitStatus", "NA"),
+        "Workflow_success": "__WORKFLOW_SUCCESS__",
+        "Workflow_errMsg": "__WORKFLOW_ERR_MSG__",
+        "Workflow_errDetails": "__WORKFLOW_ERR_DETAILS__",
+        "Workflow_exitStatus": "__WORKFLOW_EXIT_STATUS__",
         "Workflow_cmdLine": flat_config.get("Workflow_cmdLine", "NA"),
         **flat_config_filtered,
     }

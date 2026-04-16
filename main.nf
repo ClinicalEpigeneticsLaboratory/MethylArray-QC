@@ -226,18 +226,42 @@ workflow {
         def formatter = java.time.format.DateTimeFormatter
             .ofPattern("dd MMMM yyyy HH:mm:ss", java.util.Locale.ENGLISH)
             .withZone(java.time.ZoneId.systemDefault())
-        def startStr = formatter.format(workflow.start)
+        def startStr    = formatter.format(workflow.start)
         def completeStr = formatter.format(workflow.complete)
-        def totalSecs = java.time.Duration.between(workflow.start, workflow.complete).toSeconds()
+        def totalSecs   = java.time.Duration.between(workflow.start, workflow.complete).toSeconds()
         def h = totalSecs.intdiv(3600)
         def m = (totalSecs % 3600).intdiv(60)
         def s = totalSecs % 60
-        def durationStr = "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}"
-        def runTimes = "${startStr} - ${completeStr} (duration: ${durationStr})"
+        def durationStr     = "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}"
+        def runTimes        = "${startStr} - ${completeStr} (duration: ${durationStr})"
+        def successStr      = workflow.success ? "true" : "false"
+        def exitStatusStr   = workflow.exitStatus != null ? workflow.exitStatus.toString() : "NA"
+        def htmlEscape      = { String raw -> raw.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;") }
+        def errMsgStr       = workflow.errorMessage  ? htmlEscape.call(workflow.errorMessage)  : "NA"
+        def errDetailsStr   = workflow.errorReport   ? htmlEscape.call(workflow.errorReport)   : "NA"
+
         def reportFile = new File("${params.output}/qc_report.html")
         if (reportFile.exists()) {
-            reportFile.text = reportFile.text.replace("__PIPELINE_RUN_TIMES__", runTimes)
+            reportFile.text = reportFile.text
+                .replace("__PIPELINE_RUN_TIMES__",   runTimes)
+                .replace("__WORKFLOW_SUCCESS__",      successStr)
+                .replace("__WORKFLOW_EXIT_STATUS__",  exitStatusStr)
+                .replace("__WORKFLOW_ERR_MSG__",      errMsgStr)
+                .replace("__WORKFLOW_ERR_DETAILS__",  errDetailsStr)
         }
+
+        def paramsFile = new File("${params.output}/params.json")
+        if (paramsFile.exists()) {
+            def paramsJson = new groovy.json.JsonSlurper().parseText(paramsFile.text)
+            paramsJson['Workflow_success']    = workflow.success
+            paramsJson['Workflow_exitStatus'] = workflow.exitStatus
+            paramsJson['Workflow_errMsg']     = workflow.errorMessage
+            paramsJson['Workflow_errDetails'] = workflow.errorReport
+            paramsJson['Workflow_complete']   = completeStr
+            paramsFile.text = groovy.json.JsonOutput.prettyPrint(
+                groovy.json.JsonOutput.toJson(paramsJson))
+        }
+
         println("Workflow completed")
     }
 
