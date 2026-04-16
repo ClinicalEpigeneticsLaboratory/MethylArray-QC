@@ -28,6 +28,7 @@
                 "methylarrayqc_analysis:BATCH_EFFECT",
                 "methylarrayqc_analysis:BETA_DISTRIBUTION",
                 "methylarrayqc_analysis:CTRL_FLUORESCENCE_DATA",
+                "methylarrayqc_analysis:CTRL_FLUORESCENCE_PLOTS",
                 "methylarrayqc_analysis:EPIGENETIC_AGE_INFERENCE",
                 "methylarrayqc_analysis:EPIGENETIC_AGE_PLOTS",
                 "methylarrayqc_analysis:IMPUTE",
@@ -43,6 +44,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.10.5"
         },
-        "timestamp": "2026-04-15T14:55:57.515942"
+        "timestamp": "2026-04-15T15:32:35.844726"
     }
 }
