@@ -1,3 +1,5 @@
+# Commands were ran manually, but this script serves as a reminder of the steps to run the tests and update snapshots.
+
 # 1. Smoke-test the config
 nf-test list
 
