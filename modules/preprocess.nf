@@ -21,4 +21,10 @@ process PREPROCESS {
     """
     preprocess.R ${idats} ${cpus} ${prep_code} ${collapse_prefix} ${collapse_prefix_method} ${sample_sheet_path}
     """
+
+    stub:
+    """
+    touch raw_mynorm.parquet
+    touch preprocessing_data_summary.json
+    """
 }

@@ -17,4 +17,9 @@ process CTRL_FLUORESCENCE_PLOTS {
     """
     ctrl_fluorescence_plots.py ${path_to_ctrl_fluorescence_data} ${path_to_sample_sheet} ${column} ${ctrl_probe_type}
     """
+
+    stub:
+    """
+    touch "${ctrl_probe_type}_by_${column}.json"
+    """
 }

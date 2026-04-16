@@ -16,4 +16,10 @@ process ANOMALY_DETECTION {
     """
     anomaly_detection.py ${mynorm} ${contamination}
     """
+
+    stub:
+    """
+    touch ao_results.parquet
+    touch ao_plot.json
+    """
 }

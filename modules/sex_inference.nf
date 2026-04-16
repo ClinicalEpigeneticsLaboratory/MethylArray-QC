@@ -16,4 +16,9 @@ process SEX_INFERENCE {
     """
     sex_inference.R ${imputed_mynorm_path} ${cpus} ${sample_sheet_path}
     """
+
+    stub:
+    """
+    touch inferred_sex.json
+    """
 }

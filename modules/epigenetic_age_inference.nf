@@ -17,4 +17,10 @@ process EPIGENETIC_AGE_INFERENCE{
     """
     epigenetic_age_inference.R $sample_sheet_path $imputed_mynorm_path $epi_clocks
     """
+
+    stub:
+    """
+    touch epi_clocks_res.parquet
+    touch epi_clocks_res.json
+    """
 }

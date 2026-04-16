@@ -15,4 +15,9 @@ process NAN_DISTRIBUTION_PER_SAMPLE {
     """
     nan_distribution_per_sample.py ${qc_path} ${sample_sheet_path}
     """
+
+    stub:
+    """
+    touch nan_distribution_per_sample_stub.json
+    """
 }

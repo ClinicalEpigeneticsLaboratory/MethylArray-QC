@@ -16,4 +16,10 @@ process BETA_DISTRIBUTION {
     """
     beta_distribution.py ${imputed_mynorm_path} ${n_rand_cpgs}
     """
+
+    stub:
+    """
+    touch beta_distribution.json
+    touch random_cpgs_to_plot.json
+    """
 }

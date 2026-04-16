@@ -15,4 +15,9 @@ process NAN_DISTRIBUTION_PER_PROBE {
     """
     nan_distribution_per_probe.py $raw_mynorm_path $nan_per_probe_n_cpgs
     """
+
+    stub:
+    """
+    touch nan_distribution_per_probe.json
+    """
 }

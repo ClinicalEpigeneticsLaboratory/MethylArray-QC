@@ -23,4 +23,11 @@ process PCA {
     """
     pca.py ${imputed_mynorm_path} ${sample_sheet_path} ${perc_pca_cpgs} ${pca_number_of_components} ${pca_columns} ${pca_matrix_PC_count}
     """
+
+    stub:
+    """
+    touch PCA_scatter_matrix_stub.json
+    touch PCA_area_plot.json
+    touch PCA_PC_KW_test_stub.json
+    """
 }

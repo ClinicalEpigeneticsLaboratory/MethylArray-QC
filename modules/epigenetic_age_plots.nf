@@ -20,4 +20,11 @@ process EPIGENETIC_AGE_PLOTS {
     epigenetic_age_plots.py ${epi_age_res_path} ${sample_sheet_path} ${epi_clock}
     sync
     """
+
+    stub:
+    """
+    touch "Regr_Age_vs_Epi_Age_${epi_clock}.json"
+    touch "Epi_Age_Accel_${epi_clock}.json"
+    touch "Epi_Age_Accel_${epi_clock}_post_hoc_res.json"
+    """
 }

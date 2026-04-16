@@ -13,4 +13,9 @@ process ADDITIONAL_VALIDATORS_INIT {
     """
     additional_validators_init.py $params_input $params_sample_sheet $params_cpus $params_pca_number_of_components $params_pca_matrix_PC_count
     """
+
+    stub:
+    """
+    # no output files declared for this validator process
+    """
 }

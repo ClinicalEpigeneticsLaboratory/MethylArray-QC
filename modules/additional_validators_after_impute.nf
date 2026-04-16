@@ -11,4 +11,9 @@ process ADDITIONAL_VALIDATORS_AFTER_IMPUTE {
     """
     additional_validators_after_impute.py $params_n_cpgs_beta_distr $params_nan_per_probe_n_cpgs $imputation_summary_path
     """
+
+    stub:
+    """
+    # no output files declared for this validator process
+    """
 }

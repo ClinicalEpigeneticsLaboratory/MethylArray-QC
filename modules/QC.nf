@@ -17,4 +17,10 @@ process QC {
     """
     QC.R ${idats} ${cpus} ${sample_sheet_path}
     """
+
+    stub:
+    """
+    touch qc.parquet
+    touch qc.json
+    """
 }

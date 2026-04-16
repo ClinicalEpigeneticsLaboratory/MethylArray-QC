@@ -20,4 +20,12 @@ process IMPUTE {
     """
     imputation.py ${mynorm} ${p_threshold} ${s_threshold} ${imputer_type}
     """
+
+    stub:
+    """
+    touch imputed_mynorm.parquet
+    touch impute_nan_per_sample.parquet
+    touch impute_nan_per_probe.parquet
+    touch imputation_summary.json
+    """
 }

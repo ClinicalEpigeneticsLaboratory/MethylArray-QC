@@ -22,4 +22,9 @@ process BATCH_EFFECT {
     """
     batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column} ${n_rand_cpgs_path}
     """
+
+    stub:
+    """
+    touch "${column}_stub.json"
+    """
 }
