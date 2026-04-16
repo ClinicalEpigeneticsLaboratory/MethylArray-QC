@@ -1,7 +1,6 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import java.time.Instant
-import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -26,31 +25,24 @@ class JsonWorkflowParamExporter {
     def workflowMetadata
     String nextflowVersion
     Instant workflowStart
-    Instant workflowEnd
 
     JsonWorkflowParamExporter(
         Map passedParamsMap,
         Map paramsMapFull,
         def workflowMetadata,
         String nextflowVersion,
-        Instant workflowStart,
-        Instant workflowEnd
+        Instant workflowStart
     ) {
         this.passedParamsMap = passedParamsMap
         this.paramsMapFull = paramsMapFull
         this.workflowMetadata = workflowMetadata
         this.nextflowVersion = nextflowVersion
         this.workflowStart = workflowStart
-        this.workflowEnd = workflowEnd
-    }
-
-    String getDuration() {
-        return Duration.between(this.workflowStart, this.workflowEnd).toString()
     }
 
     String formatInstant(Instant instant) {
         def zoned = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
-        def formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy HH:mm:ss")
+        def formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy HH:mm:ss", java.util.Locale.ENGLISH)
         return zoned.format(formatter)
     }
 
@@ -63,8 +55,6 @@ class JsonWorkflowParamExporter {
         flatMap['Container_Python'] = this.paramsMapFull['Core Nextflow options']['container']['withLabel:python']
         flatMap['nextflowVersion'] = this.nextflowVersion
         flatMap['Workflow_start'] = this.formatInstant(this.workflowStart)
-        flatMap['Workflow_end'] = this.formatInstant(this.workflowEnd)
-        flatMap['Workflow_duration'] = this.getDuration()
         flatMap['Workflow_complete'] = this.workflowMetadata.complete
         flatMap['Workflow_success'] = this.workflowMetadata.success
         flatMap['Workflow_errMsg'] = this.workflowMetadata.errorMessage

@@ -142,26 +142,19 @@ def get_nextflow_version(config: dict) -> str:
 
 
 def get_run_times(config: dict) -> str:
-    """A function generating a string containing information about:\n\
-            1) workflow start date and time,\n\
-            2) workflow completion date and time,\n\
-            3) workflow duration
+    """Returns a placeholder replaced with actual pipeline timing by workflow.onComplete.
+
+    Timing is patched post-generation because workflow.start / workflow.complete
+    (Nextflow's own timestamps) are only both available after the workflow ends,
+    which is after this script has already run.
+
     Args:
         config (dict): a config with all exported workflow parameters, as dict
 
     Returns:
-        str: a string containing:\n\
-            1) workflow start date and time,\n\
-            2) workflow completion date and time,\n\
-            3) workflow duration
+        str: placeholder string replaced by workflow.onComplete in main.nf
     """
-    # start = get_formatted_time(config=config, type_value="start")
-    # complete = get_formatted_time(config=config, type_value="complete")
-    # duration = get_formatted_time(config=config, type_value="duration")
-    start = config["Workflow_start"]
-    complete = config["Workflow_end"]
-    duration = config["Workflow_duration"]
-    return f"{start} - {complete} (duration: {duration})"
+    return "__PIPELINE_RUN_TIMES__"
 
 
 # def get_formatted_time(config: dict, type_value: str) -> str:
@@ -742,6 +735,7 @@ def main():
     substrings = [
         "nextflowVersion",
         "Workflow_start",
+        "Workflow_end",
         "Workflow_duration",
         "Workflow_complete",
         "success",

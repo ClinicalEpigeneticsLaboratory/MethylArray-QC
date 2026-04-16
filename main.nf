@@ -189,7 +189,6 @@ workflow {
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
 
-    def workflow_end = java.time.Instant.now()
     def workflowMeta = workflow
 
     def params_map_all = paramsSummaryMap(workflow)
@@ -200,8 +199,7 @@ workflow {
         params_map_all,
         workflowMeta,
         nextflow.version.toString(),
-        workflow_start,
-        workflow_end
+        workflow_start
     )
     params_path.text = paramExporter.toJSON()
 
@@ -225,10 +223,21 @@ workflow {
     )
 
     workflow.onComplete = {
-        // def params_map_all = paramsSummaryMap(workflow)
-        // def idat_list_size = file("$input_abs_path/{*.idat,*.idat.gz}").size()
-        // def paramExporter = new JsonWorkflowParamExporter()
-        // file("${params.output}/params.json").text = paramExporter.toJSON(params, params_map_all, workflow, nextflow.version, idat_list_size, processed_samples_count)
+        def formatter = java.time.format.DateTimeFormatter
+            .ofPattern("dd MMMM yyyy HH:mm:ss", java.util.Locale.ENGLISH)
+            .withZone(java.time.ZoneId.systemDefault())
+        def startStr = formatter.format(workflow.start)
+        def completeStr = formatter.format(workflow.complete)
+        def totalSecs = java.time.Duration.between(workflow.start, workflow.complete).toSeconds()
+        def h = totalSecs.intdiv(3600)
+        def m = (totalSecs % 3600).intdiv(60)
+        def s = totalSecs % 60
+        def durationStr = "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}"
+        def runTimes = "${startStr} - ${completeStr} (duration: ${durationStr})"
+        def reportFile = new File("${params.output}/qc_report.html")
+        if (reportFile.exists()) {
+            reportFile.text = reportFile.text.replace("__PIPELINE_RUN_TIMES__", runTimes)
+        }
         println("Workflow completed")
     }
 
