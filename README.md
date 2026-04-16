@@ -260,10 +260,17 @@ The pipeline produces the following outputs:
 - Output:
    - control intensity dotplots showing wither log<sub>10</sub>Maximum Intensity or log<sub>10</sub>Total Intensity for each category of control probes, grouped per selected column (JSON files, with names of form: `{ctrl_probe_type}_by_{column}.json`), 
 
+## Development
+
+Pipeline code was developed with the assistance of [ChatGPT](https://chatgpt.com/) (OpenAI) and [Claude Code](https://claude.ai/code)
+(Anthropic). AI-generated suggestions were manually reviewed and implemented by the
+authors. All commits reflect human authorship and editorial decisions.
+
 ## Known Issues and TODOs
-- Implement tests for workflow and for specific processes
 - anomaly detection: implement more models
 - add exemplary workflow (or other way to run a tool with exemplary data)
 - fluorescence on control probes: 
    - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
 - add non-interactive mode for app
+- add static mode for app
+- add multilingual support (PL/ENG) to the pipeline
