@@ -5,6 +5,7 @@ A module generating HTML report
 """
 
 import os
+import string
 import sys
 import time
 import datetime
@@ -123,20 +124,21 @@ def load_table_data_json(json_path: str) -> dict:
 
 
 def get_nextflow_version(config: dict) -> str:
-    """A function generating Nextflow version as formatted string
+    """A function returning the Nextflow version string from exported workflow config.
 
     Args:
         config (dict): a config with all exported workflow parameters, as dict
 
     Returns:
-        str: Nextflow version, e.g. 24.10.5 (f"{major}.{minor}.{patch}")
+        str: Nextflow version, e.g. "24.10.5", or "NA" if absent
     """
 
-    nf_ver = config.get("Nextflow_version", {})
-    major = nf_ver.get("major", "NA")
-    minor = nf_ver.get("minor", "NA")
-    patch = nf_ver.get("patch", "NA")
-    return f"{major}.{minor}.{patch}"
+    # nf_ver = config.get("nextflowVersion", {})
+    # major = nf_ver.get("major", "NA")
+    # minor = nf_ver.get("minor", "NA")
+    # patch = nf_ver.get("patch", "NA")
+    # return f"{major}.{minor}.{patch}"
+    return config.get("nextflowVersion", {})
 
 
 def get_run_times(config: dict) -> str:
@@ -738,7 +740,7 @@ def main():
     flat_config = flatten_dict(config)
 
     substrings = [
-        "Nextflow_version",
+        "nextflowVersion",
         "Workflow_start",
         "Workflow_duration",
         "Workflow_complete",
