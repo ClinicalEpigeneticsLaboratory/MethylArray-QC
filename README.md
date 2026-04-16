@@ -263,7 +263,7 @@ The pipeline produces the following outputs:
 ## Development
 
 Pipeline code was developed with the assistance of [ChatGPT](https://chatgpt.com/) (OpenAI) and [Claude Code](https://claude.ai/code)
-(Anthropic). AI-generated suggestions were manually reviewed and implemented by the
+(Anthropic). Claude Code was additionally used for automated code review and test generation. All AI-generated suggestions were manually reviewed and implemented by the
 authors. All commits reflect human authorship and editorial decisions.
 
 ## Known Issues and TODOs
