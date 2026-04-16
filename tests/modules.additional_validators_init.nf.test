@@ -13,8 +13,7 @@
 // pca_number_of_components, or an unreadable IDAT directory), run the
 // tests WITHOUT stub mode using real Docker containers:
 //
-//   nf-test test tests/modules.additional_validators_init.nf.test \
-//     --profile docker
+//   nf-test test tests/modules.additional_validators_init.nf.test
 //
 // The full error-state integration test scenarios are documented below
 // as commented-out test blocks ready to be enabled once containers are

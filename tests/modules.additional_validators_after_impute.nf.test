@@ -12,8 +12,7 @@
 // To test actual validation logic (e.g. n_rand_cpgs > CpGs in imputed data),
 // run WITHOUT stub mode:
 //
-//   nf-test test tests/modules.additional_validators_after_impute.nf.test \
-//     --profile docker
+//   nf-test test tests/modules.additional_validators_after_impute.nf.test
 //
 // The imputation_summary.json test fixture is at:
 //   tests/test_data/imputation_summary.json
@@ -91,7 +90,7 @@ nextflow_process {
         }
     }
 
-    test("Happy path: very large n_rand_cpgs (stub accepts any value)") {
+    test("Happy path: large n_rand_cpgs=800000 within imputed CpG count of 850000") {
         options "-stub"
 
         when {
@@ -100,7 +99,7 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = 1000000
+                input[0] = 800000
                 input[1] = 500000
                 input[2] = file("${projectDir}/tests/test_data/imputation_summary.json")
                 """

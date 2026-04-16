@@ -1,6 +1,6 @@
 {
   "n_samples": 5,
-  "n_cpgs": 850000,
+  "mynorm_imputed_n_cpgs": 850000,
   "p_threshold": 0.2,
   "s_threshold": 0.2,
   "imputer_type": "knn",
