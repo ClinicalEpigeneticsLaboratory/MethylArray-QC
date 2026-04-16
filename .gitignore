@@ -190,3 +190,6 @@ cython_debug/
 .claude/settings.local.json
 .claude/worktrees/
 .claude/agent-memory/
+
+# pipeline configs for manual testing
+test_configs/
