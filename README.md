@@ -127,7 +127,7 @@ or using `params.json` file containing at least `input`, `sample_sheet` and `out
 nextflow run main.nf -params-file params.json
 ```
 
-### Examplary `params.json` file:
+### Exemplary `params.json` file:
 ```json
 {
   "input": "/path/to/idats",
@@ -154,6 +154,35 @@ nextflow run main.nf -params-file params.json
   "ctrl_intens_cols": "Sentrix_ID,Sentrix_Position"
 }
 ```
+
+### 3. Exemplary Workflow (Demo with Public Data)
+
+To run the pipeline on a small public dataset and see all features in action,
+use the pre-configured example based on GEO series
+[GSE86831](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE86831)
+(15 EPIC array samples across five cell/tissue types, Pidsley et al. 2016).
+All commands must be run from the **repository root** directory:
+
+```bash
+# Step 1: download ~373 MB of IDAT files from NCBI GEO FTP
+chmod +x examples/fetch_example_data.sh
+bash examples/fetch_example_data.sh
+
+# Step 2: run the pipeline (Docker images pulled automatically on first run)
+nextflow run main.nf -params-file examples/params.json
+# or
+nextflow run main.nf -profile test
+# or
+make run_example
+
+# Step 3: open the report
+# examples/results/qc_report.html
+```
+
+See [examples/README.md](examples/README.md) for full documentation, runtime
+estimates, and dataset details. All pipeline features are exercised, including
+sex inference and epigenetic age — the sample sheet includes synthetic Age/Sex
+values for demonstration purposes.
 
 ## Output
 The pipeline produces the following outputs:
@@ -268,7 +297,6 @@ authors. All commits reflect human authorship and editorial decisions.
 
 ## Known Issues and TODOs
 - anomaly detection: implement more models
-- add exemplary workflow (or other way to run a tool with exemplary data)
 - fluorescence on control probes: 
    - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
 - add non-interactive mode for app

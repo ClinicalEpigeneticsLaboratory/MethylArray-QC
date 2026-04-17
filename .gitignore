@@ -193,3 +193,8 @@ cython_debug/
 
 # pipeline configs for manual testing
 test_configs/
+
+# Example workflow (downloaded data and pipeline results)
+examples/idats/
+examples/results/*
+!examples/results/.gitkeep
