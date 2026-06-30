@@ -198,3 +198,7 @@ test_configs/
 examples/idats/
 examples/results/*
 !examples/results/.gitkeep
+
+# Test run logs (keep the directory, ignore the logs)
+test_logs/*
+!test_logs/.gitkeep
