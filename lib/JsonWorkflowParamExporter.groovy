@@ -55,6 +55,10 @@ class JsonWorkflowParamExporter {
         flatMap['Container_Python'] = this.paramsMapFull['Core Nextflow options']['container']['withLabel:python']
         flatMap['nextflowVersion'] = this.nextflowVersion
         flatMap['Workflow_start'] = this.formatInstant(this.workflowStart)
+        // Timezone-independent start instant (UTC epoch seconds) so a container
+        // (typically UTC) can compute an accurate run duration regardless of the
+        // host timezone used to format Workflow_start above.
+        flatMap['Workflow_start_epoch'] = this.workflowStart.getEpochSecond()
         flatMap['Workflow_complete'] = this.workflowMetadata.complete
         flatMap['Workflow_success'] = this.workflowMetadata.success
         flatMap['Workflow_errMsg'] = this.workflowMetadata.errorMessage
