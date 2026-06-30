@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>MethylArrayQC report</title>
+    <!--
+      Print-only variant of templates/report.html, rendered to PDF by WeasyPrint
+      (see bin/report.py, pdf output format). WeasyPrint does not run JavaScript,
+      so the interactive Plotly figures are pre-rendered to static images with
+      Kaleido and inlined as <img> data URIs (json_fig_to_html returns the <img>
+      in pdf mode). Every section is shown expanded - there is no accordion. The
+      visual language (whitesmoke canvas, white cards with light headers, bordered
+      tables, brick-red accents, logo footer) deliberately mirrors report.html so
+      the PDF reads as a static copy of the interactive report.
+    -->
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.4cm 1.1cm 1.6cm 1.1cm;
+            @bottom-center {
+                content: "MethylArray-QC report — page " counter(page) " / " counter(pages);
+                font-size: 8px;
+                color: #6c757d;
+            }
+        }
+
+        /* Root background is propagated to the whole page canvas (whitesmoke,
+           matching report.html's body background). */
+        html { background: whitesmoke; }
+
+        body {
+            margin: 0;
+            color: #212529;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+                "Liberation Sans", "DejaVu Sans", Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .report-title { font-size: 1.9rem; font-weight: 700; margin: 0 0 .15rem; }
+        .report-intro { color: #6c757d; margin: 0 0 1rem; font-size: .95rem; }
+
+        .card {
+            border: 1px solid rgba(0, 0, 0, .175);
+            border-radius: .375rem;
+            background: #fff;
+            margin-bottom: 1rem;
+            break-inside: avoid;
+        }
+
+        .card-header {
+            background-color: #f0f0f0;
+            border-bottom: 1px solid rgba(0, 0, 0, .175);
+            border-radius: .375rem .375rem 0 0;
+            padding: .55rem .9rem;
+        }
+
+        .card-header .title { font-weight: 700; font-size: 1.05rem; color: #212529; }
+
+        .card-body { padding: .85rem .9rem; text-align: justify; }
+
+        /* Nested (sub-section) cards sit on the whitesmoke body to echo the
+           nested-accordion look of the HTML report. */
+        .subsections { margin-top: .65rem; }
+        .subsections .card { background: #fcfcfc; }
+        .subsections .card-header { background-color: #f6f6f6; }
+        .subsections .card-header .title { font-size: .98rem; }
+
+        .descr { color: #6c757d; margin: .15rem 0 .75rem; }
+        .descr ul { margin: .25rem 0 .25rem 1.1rem; padding: 0; }
+        .descr a { color: #B22222; text-decoration: none; word-break: break-word; }
+
+        table.tbl {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin: .25rem 0 .8rem;
+            font-size: .78rem;
+        }
+        table.tbl.sm { font-size: .66rem; }
+        table.tbl.xs { font-size: .56rem; }
+        table.tbl th, table.tbl td {
+            border-bottom: 1px solid #dee2e6;
+            padding: .32rem .42rem;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        table.tbl thead th {
+            border-bottom: 2px solid #adb5bd;
+            font-weight: 700;
+            background: #fafafa;
+        }
+        table.tbl tbody tr:nth-child(even) { background: #fbfbfb; }
+        table.tbl pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+            font-size: .72rem;
+        }
+
+        .table-title { font-weight: 600; font-size: 1rem; margin: .5rem 0 .15rem; }
+
+        .plot-img { text-align: center; margin: .5rem 0 1rem; break-inside: avoid; }
+        .plot-img img { max-width: 100%; height: auto; }
+
+        footer {
+            text-align: center;
+            padding: 14px 10px;
+            margin-top: 1rem;
+            border-top: 1px solid #dee2e6;
+            color: #000;
+            font-size: .85rem;
+        }
+        footer img { height: 40px; vertical-align: middle; margin-right: 10px; }
+        footer a { color: #B22222; text-decoration: none; }
+    </style>
+</head>
+
+<body>
+    <div style="padding: 0 .4rem;">
+        <h1 class="report-title">Methylation Array QC report</h1>
+        <p class="report-intro">Static PDF report. Sections that are collapsible in the
+            interactive HTML report are shown expanded here. For research use only.</p>
+
+        {# ---- table helpers ---------------------------------------------- #}
+        {% macro cell(v) %}{% if v is mapping or (v is iterable and v is not string) %}<pre>{{ v|tojson(indent=2) }}</pre>{% else %}{{ v }}{% endif %}{% endmacro %}
+
+        {% macro size_class(ncols) %}{% if ncols > 12 %}xs{% elif ncols > 7 %}sm{% endif %}{% endmacro %}
+
+        {# key/value table (section.type == "table") #}
+        {% macro render_kv(data) %}
+        <table class="tbl">
+            <thead><tr><th style="width:38%">Parameter</th><th style="width:62%">Value</th></tr></thead>
+            <tbody>
+                {% for k, v in data.items() %}
+                <tr><td><b>{{ k }}</b></td><td>{{ cell(v) }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endmacro %}
+
+        {# list-of-rows table (section.type == "table-rows" or grouped tables) #}
+        {% macro render_rows(data) %}
+        {% set ncols = data[0].keys()|list|length %}
+        <table class="tbl {{ size_class(ncols) }}">
+            <thead><tr>{% for col in data[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+            <tbody>
+                {% for row in data %}
+                <tr>{% for v in row.values() %}<td>{{ cell(v) }}</td>{% endfor %}</tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endmacro %}
+
+        {# ---- one report section (recurses into sub-sections) ------------ #}
+        {% macro render_section(section) %}
+        {% if section.type == "table-row-group" or section.data_list is defined
+              or section.html or section.html_list or section.data or section.subsections %}
+        <div class="card">
+            <div class="card-header"><span class="title">{{ section.title }}</span></div>
+            <div class="card-body">
+                {% if section.description %}<div class="descr">{{ section.description }}</div>{% endif %}
+
+                {% if section.type == "table" %}
+                    {{ render_kv(section.data) }}
+
+                {% elif section.type == "table-rows" %}
+                    {% if section.data %}{{ render_rows(section.data) }}{% endif %}
+
+                {% elif section.type == "plot" %}
+                    {% if section.html %}<div class="plot-img">{{ section.html|safe }}</div>{% endif %}
+
+                {% elif section.type == "plot-group" %}
+                    {% for plot in section.html_list %}
+                    <div class="plot-img">{{ plot.plot_html|safe }}</div>
+                    {% endfor %}
+
+                {% elif section.type == "table-row-group" %}
+                    {% for table in section.data_list %}
+                    {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
+                    {% if table.data %}{{ render_rows(table.data) }}{% endif %}
+                    {% endfor %}
+
+                {% elif section.type == "plot+table" %}
+                    {% if section.html %}
+                        <div class="plot-img">{{ section.html|safe }}</div>
+                    {% elif section.html_list %}
+                        {% for plot in section.html_list %}
+                        <div class="plot-img">{{ plot.plot_html|safe }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if section.data_list %}
+                        {% for table in section.data_list %}
+                        {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
+                        {% if table.data %}{{ render_rows(table.data) }}{% endif %}
+                        {% endfor %}
+                    {% elif section.data %}
+                        {% if section.table_title %}<div class="table-title">{{ section.table_title }}</div>{% endif %}
+                        {{ render_rows(section.data) }}
+                    {% endif %}
+                {% endif %}
+
+                {% if section.subsections %}
+                <div class="subsections">
+                    {% for sub in section.subsections %}{{ render_section(sub) }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endmacro %}
+
+        {% for section in report_sections %}{{ render_section(section) }}{% endfor %}
+    </div>
+
+    <footer>
+        {% set footer_section = report_sections | get_section("footer") %}
+        {% if footer_section.footer_logo %}
+        <img src="data:image/png;base64,{{ footer_section.footer_logo | safe }}" alt="Lab Logo">
+        {% endif %}
+        <p>Generated by <a href="https://github.com/ClinicalEpigeneticsLaboratory/MethylArray-QC">MethylArray-QC</a>.
+            Powered by The Independent Clinical Epigenetics Laboratory. For research use only.</p>
+    </footer>
+</body>
+
+</html>
