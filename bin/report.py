@@ -20,6 +20,25 @@ import htmlmin
 import base64
 import pprint
 
+# Report output format selected via params.output_format and passed as the last
+# CLI argument. One of:
+#   "html" -> interactive qc_report.html (Plotly via CDN, accordion) - default
+#   "pdf"  -> real, self-contained binary qc_report.pdf (each Plotly figure is
+#             reconstructed in matplotlib; see bin/pdf_export_utils.py)
+#   "json" -> single structured qc_report.json (raw Plotly specs + table data)
+# Set once at the start of main(); read by the figure/section helpers below.
+OUTPUT_FORMAT = "html"
+
+# Placeholder files emitted by the workflow when an optional analysis is skipped.
+# These must never be treated as real plot/table sources.
+INVALID_SOURCE_PATHS = {
+    "no_ao_plot.txt",
+    "no_ctrl_fluorescence_plots.txt",
+    "no_epi_age.txt",
+    "no_pca_kruskal.txt",
+    "no_sex_inference.txt",
+}
+
 # helper function for debugging
 def summarise_section(sec, indent=0):
     pad = "  " * indent
@@ -86,24 +105,253 @@ def render_and_minify(
         output_file.write(minified_html)
 
 
+# For html/json the run-time and workflow-status fields are finalised by
+# workflow.onComplete via post-hoc string replacement of these placeholders. A
+# binary PDF cannot be patched that way, so for the pdf format we instead compute
+# the values directly at report-generation time (see compute_static_run_metadata):
+# this is the last process in the pipeline and only runs when every upstream step
+# has already succeeded, so the values are accurate (the run time excludes only
+# the final publish step, ~1s; params.json keeps the byte-exact onComplete values).
+ONCOMPLETE_SENTINELS = {
+    "__PIPELINE_RUN_TIMES__",
+    "__WORKFLOW_SUCCESS__",
+    "__WORKFLOW_ERR_MSG__",
+    "__WORKFLOW_ERR_DETAILS__",
+    "__WORKFLOW_EXIT_STATUS__",
+}
+
+
+def compute_static_run_metadata(config: dict) -> dict:
+    """Compute run-time/status fields for static (pdf) output at generation time.
+
+    The workflow start is already in params.json (written before REPORT runs); the
+    end is approximated by 'now', which - because REPORT is the final step - is
+    within ~1s of the true workflow completion. The duration is computed from the
+    UTC epoch start (Workflow_start_epoch) versus time.time(), so it is correct
+    regardless of any host/container timezone difference. A report is only produced
+    when every upstream step succeeded, so success/exitStatus are known too.
+    """
+    start_str = config.get("Workflow_start")
+    start_epoch = config.get("Workflow_start_epoch")
+    now_str = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
+
+    run_times = None
+    if start_epoch is not None:
+        try:
+            total = max(int(time.time() - float(start_epoch)), 0)
+            h, rem = divmod(total, 3600)
+            m, s = divmod(rem, 60)
+            run_times = (f"{start_str or 'start'} - report generated "
+                         f"(duration: {h:02d}:{m:02d}:{s:02d})")
+        except Exception:
+            run_times = None
+    if run_times is None:
+        run_times = (f"report generated {now_str}"
+                     + (f"; started {start_str}" if start_str else ""))
+
+    return {
+        "Run_times": run_times,
+        "Workflow_success": "true",
+        "Workflow_exitStatus": "0",
+        "Workflow_errMsg": "NA",
+        "Workflow_errDetails": "NA",
+    }
+
+
+def finalize_static_workflow(workflow: dict, config: dict) -> dict:
+    """Swap the onComplete placeholders for values computed at generation time."""
+    meta = compute_static_run_metadata(config)
+    return {k: (meta[k] if k in meta else v) for k, v in workflow.items()}
+
+
+def render_pdf(
+    report_sec_data: list,
+    in_template_path: str | Path,
+    out_report_path: str | Path,
+):
+    """Render a binary PDF that mirrors the interactive HTML report (pdf mode).
+
+    The same assembled section list used for the HTML report is rendered through a
+    print-only Jinja template (templates/report_pdf.html) and converted to PDF with
+    WeasyPrint. Each Plotly figure has already been turned into a static <img> by
+    json_fig_to_html (via Kaleido) when OUTPUT_FORMAT == "pdf", so the layout, fonts,
+    tables and colours match report.html while the report stays fully inside the
+    pipeline container. Requires weasyprint + kaleido in the python image (see
+    pyproject.toml and images/Python/Dockerfile).
+    """
+    # Imported lazily so html/json runs do not pull in WeasyPrint.
+    from weasyprint import HTML
+
+    if not isinstance(in_template_path, Path):
+        in_template_path = Path(in_template_path)
+
+    env = Environment(loader=FileSystemLoader(in_template_path.parent))
+    env.filters["get_section"] = get_section_by_name
+    j2_template = env.get_template(in_template_path.name)
+
+    try:
+        rendered_html = j2_template.render({"report_sections": report_sec_data})
+    except Exception as e:
+        print("❌ PDF template rendering failed:", e)
+        sys.exit(2)
+
+    try:
+        HTML(string=rendered_html, base_url=str(in_template_path.parent)).write_pdf(
+            str(out_report_path)
+        )
+    except Exception as e:
+        print("❌ WeasyPrint PDF generation failed:", e)
+        sys.exit(2)
+
+
+def section_to_json(sec: dict) -> dict:
+    """Convert one assembled report section into a JSON-friendly dict (json mode).
+
+    Rendered-HTML keys are dropped; Plotly figures are re-embedded as raw specs
+    loaded from their source paths (figure -> single plot, figures -> list).
+    Table content (data / data_list) is kept as-is. Recurses into subsections.
+    """
+    stype = sec.get("type")
+    out: dict = {"id": sec.get("id"), "title": sec.get("title"), "type": stype}
+
+    if sec.get("description"):
+        out["description"] = sec["description"]
+    if sec.get("filename"):
+        out["filename"] = sec["filename"]
+    if sec.get("table_title"):
+        out["table_title"] = sec["table_title"]
+
+    # ----- table data -----
+    if sec.get("data") not in (None, "", [], {}):
+        out["data"] = sec["data"]
+    if sec.get("data_list"):
+        out["data_list"] = sec["data_list"]
+
+    # ----- single figure (plot / plot+table with one plot) -----
+    if sec.get("plot_path"):
+        fig = json_fig_to_dict(sec["plot_path"])
+        if fig is not None:
+            out["figure"] = fig
+
+    # ----- multiple figures (plot-group / plot+table with several plots) -----
+    if sec.get("html_list"):
+        figs = []
+        for entry in sec["html_list"]:
+            path = entry.get("plot_path")
+            if path:
+                fig = json_fig_to_dict(path)
+                if fig is not None:
+                    figs.append(fig)
+        if figs:
+            out["figures"] = figs
+
+    # ----- subsections -----
+    if sec.get("subsections"):
+        out["subsections"] = [section_to_json(s) for s in sec["subsections"]]
+
+    return out
+
+
+def render_json(
+    report_sec_data: list, workflow: dict, out_report_path: str | Path
+):
+    """Render the structured JSON report (json mode).
+
+    Produces a single qc_report.json with a top-level ``workflow`` dict (parameters
+    and run metadata) and a ``sections`` list mirroring the report structure, with
+    every plot embedded as a raw Plotly spec and every table as row data. The
+    footer (logo) and the duplicate workflow-parameters section are omitted - the
+    parameters live under the top-level ``workflow`` key instead.
+    """
+    exclude_ids = {"footer", "workflowParams"}
+    json_sections = [
+        section_to_json(sec)
+        for sec in report_sec_data
+        if sec.get("id") not in exclude_ids
+    ]
+
+    payload = {"workflow": workflow, "sections": json_sections}
+
+    with open(out_report_path, "w", encoding="utf-8") as output_file:
+        json.dump(payload, output_file, indent=2, ensure_ascii=False)
+
+
 def json_fig_to_html(json_path: str) -> str:
-    """A function generating HTML div for a figure exported as JSON
+    """Turn a figure JSON into the markup embedded for the current output format.
+
+    - html: an interactive Plotly div (Plotly.js loaded once from the CDN).
+    - pdf : a static <img> rasterised with Kaleido (WeasyPrint cannot run Plotly.js),
+            so the same section structure carries an image instead of a live plot.
+    - json: an empty string (the json export re-embeds the raw Plotly spec instead,
+            via section_to_json / json_fig_to_dict).
 
     Args:
         json_path (str): path to a figure JSON file
 
     Returns:
-        str: HTML code generated for a figure saved in JSON format
+        str: figure markup for html/pdf, or "" for the json format
     """
+    if OUTPUT_FORMAT == "pdf":
+        return json_fig_to_img(json_path)
+
+    if OUTPUT_FORMAT != "html":
+        return ""
+
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid=True)
-        # return fig.to_html(full_html=False, include_plotlyjs=False, config={"responsive": True})
         return fig.to_html(
-            full_html=False, include_plotlyjs="cdn", config={"responsive": True}
+            full_html=False,
+            include_plotlyjs="cdn",
+            config={"responsive": True},
         )
     except Exception as e:
         print(f"❌ Failed to parse JSON Plotly figure from {json_path}: {e}")
         sys.exit(1)
+
+
+def json_fig_to_img(json_path: str) -> str:
+    """Rasterise a Plotly figure JSON to a base64 <img> for the pdf format (Kaleido).
+
+    WeasyPrint cannot execute Plotly.js, so for pdf output each figure is rendered to
+    a static PNG with Kaleido and inlined as a data URI. The figure's own width/height
+    (set by the export decorator) are honoured; scale=2 keeps it crisp in print. A
+    single bad figure degrades to a short note rather than aborting the whole report.
+
+    Args:
+        json_path (str): path to a figure JSON file
+
+    Returns:
+        str: an <img> tag with the figure as a base64-encoded PNG data URI
+    """
+    try:
+        fig = pio.read_json(f"{json_path}", skip_invalid=True)
+        png = pio.to_image(fig, format="png", scale=2)
+        b64 = base64.b64encode(png).decode()
+        return f'<img src="data:image/png;base64,{b64}" alt="figure" />'
+    except Exception as e:
+        print(f"⚠️  Failed to render figure to image from {json_path}: {e}")
+        return '<span class="descr">[figure could not be rendered]</span>'
+
+
+def json_fig_to_dict(json_path: str) -> Optional[dict]:
+    """Load a Plotly figure exported as JSON into a raw spec dict (for json mode).
+
+    Figure files are written with ``fig.to_json()`` (see bin/decorators.py), so the
+    file content is already a JSON-serialisable Plotly spec ({"data": [...],
+    "layout": {...}}) and can be loaded directly.
+
+    Args:
+        json_path (str): path to a figure JSON file
+
+    Returns:
+        Optional[dict]: the Plotly figure spec, or None if it could not be loaded
+    """
+    try:
+        with open(json_path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Failed to load JSON Plotly figure from {json_path}: {e}")
+        return None
 
 
 def load_table_data_json(json_path: str) -> dict:
@@ -295,14 +543,20 @@ def make_section(
     section_type: str,
     html: str = None,
     data: dict | list | None = None,
-    filename: str | None = None,       
-    table_title: str | None = None,    
+    filename: str | None = None,
+    table_title: str | None = None,
     html_list: list[str] | None = None,
     data_list: list[dict] | None = None,
     subsections: dict | list | None = None,
     description: str | None = None,
+    plot_path: str | None = None,
 ) -> dict:
-    """Return a dictionary that describes a single report section."""
+    """Return a dictionary that describes a single report section.
+
+    plot_path (when given) records the source figure JSON file for a single-plot
+    section so that json mode can embed the raw Plotly spec. For multi-plot
+    sections the source path is carried per entry inside html_list.
+    """
     sect = {"id": id, "title": title, "type": section_type}
 
     if description:
@@ -315,6 +569,8 @@ def make_section(
         sect["data"] = data or []
     elif section_type == "plot":
         sect.update(html=html or "", plot_name=id)
+        if plot_path:
+            sect["plot_path"] = plot_path
     elif section_type == "plot-group":
         sect["html_list"] = html_list or []
     elif section_type == "plot+table":
@@ -328,6 +584,8 @@ def make_section(
             sect["html_list"] = html_list
         else:
             sect["html"] = html or ""
+            if plot_path:
+                sect["plot_path"] = plot_path
     elif section_type == "table-row-group":
         sect["data_list"] = data_list or []
     # --------------------------
@@ -537,11 +795,11 @@ def add_section_with_subs(
             if has_tab and has_plot:
                 # ----- plots -----
                 html_or_list = (
-                    {"html": plot_htmls[0][1]}
+                    {"html": plot_htmls[0][1], "plot_path": plot_htmls[0][0]}
                     if len(plot_htmls) == 1
                     else {"html_list": [
-                        {"plot_html": h, "plot_name": f"{sid}_{i}"}
-                        for i, (_, h) in enumerate(plot_htmls)
+                        {"plot_html": h, "plot_name": f"{sid}_{i}", "plot_path": p}
+                        for i, (p, h) in enumerate(plot_htmls)
                     ]}
                 )
                 # ----- tables -----
@@ -612,6 +870,7 @@ def add_section_with_subs(
                         make_section(
                             id=sid, title=stitle, section_type="plot",
                             html=plot_htmls[0][1],
+                            plot_path=plot_htmls[0][0],
                             description=sub_descr
                         )
                     )
@@ -620,8 +879,8 @@ def add_section_with_subs(
                         make_section(
                             id=sid, title=stitle, section_type="plot-group",
                             html_list=[
-                                {"plot_html": h, "plot_name": f"{sid}_{i}"}
-                                for i, (_, h) in enumerate(plot_htmls)
+                                {"plot_html": h, "plot_name": f"{sid}_{i}", "plot_path": p}
+                                for i, (p, h) in enumerate(plot_htmls)
                             ],
                             description=sub_descr
                         )
@@ -649,6 +908,7 @@ def add_section_with_subs(
             make_section(
                 id=id, title=title, section_type="plot",
                 html=valid[0][1],
+                plot_path=valid[0][0],
                 description=description
             )
         )
@@ -657,8 +917,8 @@ def add_section_with_subs(
             make_section(
                 id=id, title=title, section_type="plot-group",
                 html_list=[
-                    {"plot_html": h, "plot_name": f"{id}_{i}"}
-                    for i, (_, h) in enumerate(valid)
+                    {"plot_html": h, "plot_name": f"{id}_{i}", "plot_path": p}
+                    for i, (p, h) in enumerate(valid)
                 ],
                 description=description
             )
@@ -667,7 +927,9 @@ def add_section_with_subs(
     return report_sections
 
 def main():
-    if len(sys.argv) != 17:
+    global OUTPUT_FORMAT
+
+    if len(sys.argv) != 19:
 
         # sys.argv[0] is the script name itself
         print("Script name:", sys.argv[0])
@@ -692,7 +954,9 @@ def main():
                 <pca_kruskal_path: str|Path> \
                 <pca_plot_paths: str|Path> \
                 <epi_age_paths: str|Path> \
-                <unique_ctrl_probe_types: str>"
+                <unique_ctrl_probe_types: str> \
+                <output_format: html|pdf|json> \
+                <pdf_template: str|Path>"
         )
         sys.exit(1)
 
@@ -704,7 +968,7 @@ def main():
     ao_plot_path = sys.argv[6]
     beta_distr_plot_path = sys.argv[7]
     heatmap_path = sys.argv[8]
-    
+
     nan_distr_per_sample_paths = sys.argv[9]
     nan_distr_per_sample_paths = nan_distr_per_sample_paths.split(",")
 
@@ -715,12 +979,28 @@ def main():
     pca_plot_paths = sys.argv[14]
     epi_age_paths = sys.argv[15]
     unique_ctrl_probe_types = sys.argv[16]
+    output_format = sys.argv[17].strip().lower()
+    pdf_template_path = sys.argv[18]
+
+    if output_format not in ("html", "pdf", "json"):
+        print(
+            f"❌ Invalid output_format '{output_format}'. Must be one of: html, pdf, json."
+        )
+        sys.exit(1)
+    OUTPUT_FORMAT = output_format
 
     print("Arguments:")
     for i, arg in enumerate(sys.argv[1:], start=1):
         print(f"Argument {i}: {arg}")
 
-    output_report_path = "qc_report.html"
+    # Output filename depends on the selected format:
+    #   html -> qc_report.html, pdf -> qc_report.pdf, json -> qc_report.json
+    OUTPUT_FILENAMES = {
+        "html": "qc_report.html",
+        "pdf": "qc_report.pdf",
+        "json": "qc_report.json",
+    }
+    output_report_path = OUTPUT_FILENAMES[OUTPUT_FORMAT]
 
     batch_effect_plot_paths = batch_effect_plot_paths.split(",")
 
@@ -757,6 +1037,13 @@ def main():
         "Workflow_cmdLine": flat_config.get("Workflow_cmdLine", "NA"),
         **flat_config_filtered,
     }
+
+    # The html/json reports keep the onComplete sentinels (run time, success, exit
+    # status, error) and are patched in place after the workflow ends. A binary PDF
+    # cannot be patched that way, so for pdf we resolve those fields now - this is the
+    # final step, so the values are accurate to within the closing publish (~1s).
+    if OUTPUT_FORMAT == "pdf":
+        flat_config_ordered = finalize_static_workflow(flat_config_ordered, config)
 
     # curr_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     curr_datetime = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -980,7 +1267,9 @@ def main():
         description="This section contains a plot showing the kernel density (KDE) distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k). Samples with a distribution significantly deviating from the others may be potential outliers.",
     )
 
-    missing_data_plot_paths = nan_distr_per_sample_paths.append(heatmap_path)
+    # list.append returns None, so build the combined list explicitly - otherwise
+    # the missing-data section would receive no plot paths at all.
+    missing_data_plot_paths = nan_distr_per_sample_paths + [heatmap_path]
 
     missing_data_subsections = generate_subsection_list(
         main_id="missingData",
@@ -1137,28 +1426,48 @@ def main():
                 trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>",
         )
 
-        report_sections.append(
-            {
-                "id": "workflowParams",
-                "title": "Workflow parameters",
-                "type": "table",
-                "data": flat_config_ordered,
-                "filename": f"methylarrayqc_workflow_params_{curr_datetime}",
-            }
+    # NOTE: the workflow-parameters table, footer and the final render must run for
+    # every report regardless of whether epigenetic age was inferred - they are
+    # therefore kept OUTSIDE the `if "no_epi_age.txt" ...` block above.
+    report_sections.append(
+        {
+            "id": "workflowParams",
+            "title": "Workflow parameters",
+            "type": "table",
+            "data": flat_config_ordered,
+            "filename": f"methylarrayqc_workflow_params_{curr_datetime}",
+        }
+    )
+
+    # Get the directory where the script resides
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Build absolute path to the logo file
+    logo_path = os.path.join(script_dir, "..", "assets", "PUM__logo.png")
+
+    logo_base64 = ""
+    with open(logo_path, "rb") as f:
+        logo_base64 = base64.b64encode(f.read()).decode()
+
+    report_sections.append({"id": "footer", "footer_logo": logo_base64})
+
+    # ----- Dispatch on the selected output format -----
+    if OUTPUT_FORMAT == "json":
+        render_json(
+            report_sec_data=report_sections,
+            workflow=flat_config_ordered,
+            out_report_path=output_report_path,
         )
-
-        # Get the directory where the script resides
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # Build absolute path to the logo file
-        logo_path = os.path.join(script_dir, "..", "assets", "PUM__logo.png")
-
-        logo_base64 = ""
-        with open(logo_path, "rb") as f:
-            logo_base64 = base64.b64encode(f.read()).decode()
-
-        report_sections.append({"id": "footer", "footer_logo": logo_base64})
-
+    elif OUTPUT_FORMAT == "pdf":
+        # report_sections already carry the figures as static <img> (json_fig_to_html
+        # in pdf mode) and the finalised workflow-params table; render them through the
+        # print template with WeasyPrint.
+        render_pdf(
+            report_sec_data=report_sections,
+            in_template_path=pdf_template_path,
+            out_report_path=output_report_path,
+        )
+    else:  # html (default)
         render_and_minify(
             report_sec_data=report_sections,
             in_template_path=input_template_path,

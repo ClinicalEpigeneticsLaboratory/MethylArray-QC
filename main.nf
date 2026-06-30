@@ -188,6 +188,7 @@ workflow {
     }
 
     report_template_path = file("${projectDir}/templates/report.html", checkIfExists: true)
+    report_pdf_template_path = file("${projectDir}/templates/report_pdf.html", checkIfExists: true)
 
     def workflowMeta = workflow
 
@@ -219,7 +220,8 @@ workflow {
         pca_kruskal_paths,
         pca_plot_paths,
         epi_age_paths,
-        unique_probe_types_str
+        unique_probe_types_str,
+        report_pdf_template_path
     )
 
     workflow.onComplete = {
@@ -240,14 +242,25 @@ workflow {
         def errMsgStr       = workflow.errorMessage  ? htmlEscape.call(workflow.errorMessage)  : "NA"
         def errDetailsStr   = workflow.errorReport   ? htmlEscape.call(workflow.errorReport)   : "NA"
 
-        def reportFile = new File("${params.output}/qc_report.html")
-        if (reportFile.exists()) {
-            reportFile.text = reportFile.text
-                .replace("__PIPELINE_RUN_TIMES__",   runTimes)
-                .replace("__WORKFLOW_SUCCESS__",      successStr)
-                .replace("__WORKFLOW_EXIT_STATUS__",  exitStatusStr)
-                .replace("__WORKFLOW_ERR_MSG__",      errMsgStr)
-                .replace("__WORKFLOW_ERR_DETAILS__",  errDetailsStr)
+        // Only the text formats (html, json) carry the onComplete sentinels and
+        // can be patched in place; the run-time/status sentinels are plain unique
+        // strings, so the same replacement works for both (escaped values contain
+        // no raw quotes, so json stays valid). The pdf is a binary file - reading
+        // and rewriting it as text would corrupt it, so it is skipped here; the pdf
+        // instead computes these fields itself at report-generation time (accurate
+        // to within this final publish step). params.json still gets the byte-exact
+        // values below regardless of format.
+        if (params.output_format != 'pdf') {
+            def reportFileName = params.output_format == 'json' ? 'qc_report.json' : 'qc_report.html'
+            def reportFile = new File("${params.output}/${reportFileName}")
+            if (reportFile.exists()) {
+                reportFile.text = reportFile.text
+                    .replace("__PIPELINE_RUN_TIMES__",   runTimes)
+                    .replace("__WORKFLOW_SUCCESS__",      successStr)
+                    .replace("__WORKFLOW_EXIT_STATUS__",  exitStatusStr)
+                    .replace("__WORKFLOW_ERR_MSG__",      errMsgStr)
+                    .replace("__WORKFLOW_ERR_DETAILS__",  errDetailsStr)
+            }
         }
 
         def paramsFile = new File("${params.output}/params.json")
