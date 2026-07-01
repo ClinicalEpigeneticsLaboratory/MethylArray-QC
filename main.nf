@@ -221,6 +221,7 @@ workflow {
         pca_plot_paths,
         epi_age_paths,
         unique_probe_types_str,
+        params.output_format,
         report_pdf_template_path
     )
 

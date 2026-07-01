@@ -27,14 +27,15 @@ process REPORT {
     val  pca_plot_paths
     val  epi_age_paths
     val  unique_probe_types_str
-    val output_format
+    val  output_format
+    path pdf_template_path,                stageAs: 'report_pdf.html'
 
     output:
     path "qc_report.*"
 
     script:
     """
-    report.py ${html_template} ${qc_summary_path} ${ctrl_fluorescence_plot_paths} ${preprocess_summary_path} ${imputation_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path} ${pca_kruskal_paths} ${pca_plot_paths} ${epi_age_paths} ${unique_probe_types_str} ${output_format}
+    report.py ${html_template} ${qc_summary_path} ${ctrl_fluorescence_plot_paths} ${preprocess_summary_path} ${imputation_summary_path} ${ao_plot_path} ${beta_distribution_plot} ${nan_distribution_per_probe_plot} ${nan_distribution_per_sample_plot} ${batch_effect_plot_paths} ${sex_inference_path} ${params_path} ${pca_kruskal_paths} ${pca_plot_paths} ${epi_age_paths} ${unique_probe_types_str} ${output_format} ${pdf_template_path}
     """
 
     stub:
