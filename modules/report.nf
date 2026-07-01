@@ -1,6 +1,6 @@
 // TODO: MEMORY PROBLEM!!! 
 process REPORT {
-    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: '*.html'
+    publishDir "${params.output}", mode: 'copy', overwrite: true, pattern: 'qc_report.*'
     // added a beforeScript directive due to WSL-Windows integration issues
     beforeScript "mkdir -p $params.output"
     label 'python'
@@ -40,6 +40,6 @@ process REPORT {
 
     stub:
     """
-    touch qc_report.html
+    touch qc_report.${output_format}
     """
 }
