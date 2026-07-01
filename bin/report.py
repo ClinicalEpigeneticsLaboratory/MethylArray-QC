@@ -305,8 +305,8 @@ def json_fig_to_html(json_path: str) -> str:
             config={"responsive": True},
         )
     except Exception as e:
-        print(f"❌ Failed to parse JSON Plotly figure from {json_path}: {e}")
-        sys.exit(1)
+        print(f"⚠️  Failed to parse JSON Plotly figure from {json_path}: {e}")
+        return '<span class="descr">[figure could not be rendered]</span>'
 
 
 def json_fig_to_img(json_path: str) -> str:
