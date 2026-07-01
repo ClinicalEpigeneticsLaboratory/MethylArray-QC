@@ -40,21 +40,23 @@ nextflow_process {
             process {
                 """
                 input[0]  = file("${projectDir}/templates/report.html")
-                input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-                input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-                input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-                input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-                input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-                input[13] = "${projectDir}/assets/no_pca_plot.txt"
-                input[14] = "${projectDir}/assets/no_epi_age.txt"
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -79,21 +81,23 @@ nextflow_process {
             process {
                 """
                 input[0]  = file("${projectDir}/templates/report.html")
-                input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-                input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-                input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-                input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-                input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-                input[13] = "${projectDir}/assets/no_pca_plot.txt"
-                input[14] = "${projectDir}/assets/no_epi_age.txt"
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -121,21 +125,23 @@ nextflow_process {
             process {
                 """
                 input[0]  = file("${projectDir}/templates/report.html")
-                input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
                 input[2]  = "/some/path/BISULFITE_CONVERSION_I_by_Sentrix_ID.json,/some/path/BISULFITE_CONVERSION_I_by_Sentrix_Position.json"
-                input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
                 input[9]  = "/some/path/Sentrix_ID_plot.json,/some/path/Sentrix_Position_plot.json"
-                input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-                input[11] = file("${projectDir}/assets/no_ao_plot.txt")
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
                 input[12] = "/some/path/PCA_PC_KW_test_Sentrix_ID.json"
                 input[13] = "/some/path/PCA_scatter_matrix_Sentrix_ID.json,/some/path/PCA_area_plot.json"
                 input[14] = "/some/path/Regr_Age_vs_Epi_Age_HannumG2013.json,/some/path/epi_clocks_res.json"
                 input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -159,21 +165,23 @@ nextflow_process {
             process {
                 """
                 input[0]  = file("${projectDir}/templates/report.html")
-                input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-                input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-                input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-                input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-                input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-                input[13] = "${projectDir}/assets/no_pca_plot.txt"
-                input[14] = "${projectDir}/assets/no_epi_age.txt"
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -198,21 +206,23 @@ nextflow_process {
             process {
                 """
                 input[0]  = file("${projectDir}/templates/report.html")
-                input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-                input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-                input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-                input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-                input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-                input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-                input[13] = "${projectDir}/assets/no_pca_plot.txt"
-                input[14] = "${projectDir}/assets/no_epi_age.txt"
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -249,6 +259,8 @@ nextflow_process {
 //       pca_plot_paths             // val  – comma-separated JSON paths or placeholder
 //       epi_age_paths              // val  – comma-separated JSON paths or placeholder
 //       unique_probe_types_str     // val  – probe types string or "no_probe_types"
+//       output_format              // val  – "html", "pdf", or "json"
+//       pdf_template_path          // path  – templates/report_pdf.html
 //
 //   emit:
 //       report  // path – qc_report.html
@@ -270,21 +282,23 @@ nextflow_process {
 //             workflow {
 //                 """
 //                 input[0]  = file("${projectDir}/templates/report.html")
-//                 input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-//                 input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-//                 input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-//                 input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-//                 input[13] = "${projectDir}/assets/no_pca_plot.txt"
-//                 input[14] = "${projectDir}/assets/no_epi_age.txt"
+//                 input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[2]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[9]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[10] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[11] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[12] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[13] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[14] = "${projectDir}/assets/missing_process_output.txt"
 //                 input[15] = "no_probe_types"
+//                 input[16] = "html"
+//                 input[17] = file("${projectDir}/templates/report_pdf.html")
 //                 """
 //             }
 //         }
@@ -306,21 +320,23 @@ nextflow_process {
 //             workflow {
 //                 """
 //                 input[0]  = file("${projectDir}/templates/report.html")
-//                 input[1]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
-//                 input[3]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[4]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[5]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[6]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[7]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[8]  = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[9]  = "${projectDir}/assets/no_ao_plot.txt"
-//                 input[10] = file("${projectDir}/assets/no_sex_inference.txt")
-//                 input[11] = file("${projectDir}/assets/no_ao_plot.txt")
-//                 input[12] = "${projectDir}/assets/no_pca_kruskal.txt"
-//                 input[13] = "${projectDir}/assets/no_pca_plot.txt"
-//                 input[14] = "${projectDir}/assets/no_epi_age.txt"
+//                 input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[2]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[9]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[10] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[11] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[12] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[13] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[14] = "${projectDir}/assets/missing_process_output.txt"
 //                 input[15] = "no_probe_types"
+//                 input[16] = "html"
+//                 input[17] = file("${projectDir}/templates/report_pdf.html")
 //                 """
 //             }
 //         }

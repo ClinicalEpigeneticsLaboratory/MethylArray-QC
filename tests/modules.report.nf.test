@@ -7,10 +7,10 @@
 //   path  – html_template, qc_summary_path, preprocess_summary_path,
 //            imputation_summary_path, ao_plot_path, beta_distribution_plot,
 //            nan_distribution_per_probe_plot, nan_distribution_per_sample_plot,
-//            sex_inference_path, params_path
+//            sex_inference_path, params_path, pdf_template_path
 //   val   – ctrl_fluorescence_plot_paths, batch_effect_plot_paths,
 //            pca_kruskal_paths, pca_plot_paths, epi_age_paths,
-//            unique_probe_types_str
+//            unique_probe_types_str, output_format
 //
 // `val` inputs carry comma-separated file path strings that are assembled
 // by the subworkflow (or main.nf) from upstream process outputs.
@@ -53,6 +53,8 @@ nextflow_process {
                 input[13] = "${projectDir}/assets/missing_process_output.txt"
                 input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -93,6 +95,8 @@ nextflow_process {
                 input[13] = "${projectDir}/assets/missing_process_output.txt"
                 input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II,NON_POLYMORPHIC"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -127,6 +131,8 @@ nextflow_process {
                 input[13] = "/path/to/PCA_scatter_Sentrix_ID.json,/path/to/PCA_area_plot.json"
                 input[14] = "/path/to/Regr_Age_HannumG2013.json,/path/to/epi_clocks_res.json"
                 input[15] = "BISULFITE_CONVERSION_I,SPECIFICITY_I"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -161,6 +167,8 @@ nextflow_process {
                 input[13] = "${projectDir}/assets/missing_process_output.txt"
                 input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -195,6 +203,8 @@ nextflow_process {
                 input[13] = "${projectDir}/assets/missing_process_output.txt"
                 input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
@@ -233,6 +243,8 @@ nextflow_process {
                 input[13] = "${projectDir}/assets/missing_process_output.txt"
                 input[14] = "${projectDir}/assets/missing_process_output.txt"
                 input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
                 """
             }
         }
