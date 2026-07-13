@@ -18,6 +18,21 @@
         @page {
             size: A4 portrait;
             margin: 1.4cm 1.1cm 1.6cm 1.1cm;
+
+            @bottom-center {
+                content: "MethylArray-QC report — page " counter(page) " / " counter(pages);
+                font-size: 8px;
+                color: #6c757d;
+            }
+        }
+
+        /* Wide, many-column tables (e.g. the 66-column QC summary) are rotated
+           onto their own landscape sheet(s) - see .landscape-card below. The
+           named page carries the same footer as the portrait page. */
+        @page landscape-table {
+            size: A4 landscape;
+            margin: 1.1cm 1.1cm 1.3cm 1.1cm;
+
             @bottom-center {
                 content: "MethylArray-QC report — page " counter(page) " / " counter(pages);
                 font-size: 8px;
@@ -27,7 +42,9 @@
 
         /* Root background is propagated to the whole page canvas (whitesmoke,
            matching report.html's body background). */
-        html { background: whitesmoke; }
+        html {
+            background: whitesmoke;
+        }
 
         body {
             margin: 0;
@@ -38,8 +55,17 @@
             line-height: 1.45;
         }
 
-        .report-title { font-size: 1.9rem; font-weight: 700; margin: 0 0 .15rem; }
-        .report-intro { color: #6c757d; margin: 0 0 1rem; font-size: .95rem; }
+        .report-title {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin: 0 0 .15rem;
+        }
+
+        .report-intro {
+            color: #6c757d;
+            margin: 0 0 1rem;
+            font-size: .95rem;
+        }
 
         .card {
             border: 1px solid rgba(0, 0, 0, .175);
@@ -49,27 +75,114 @@
             break-inside: avoid;
         }
 
+        /* Cards whose content is inherently taller than a page - long tables,
+           multi-figure plot groups, and parent sections that hold sub-cards -
+           must be allowed to break across pages. Otherwise WeasyPrint either
+           strands the section title alone on an otherwise blank page, or pushes
+           the whole block to a fresh page and leaves a gap. The atomic units
+           inside them (each figure via .plot-img, each table row, each nested
+           .card) keep their own break-inside: avoid, so nothing individually
+           splits. Short, self-contained cards keep the default break-inside:
+           avoid and move as one unit - so a small table is never split into a
+           lone heading plus one or two stranded rows. The flow class is applied
+           by render_section below. */
+        .card.card-flow {
+            break-inside: auto;
+        }
+
+        /* A wide, many-column table is placed alone on its own landscape
+           sheet(s): `page` rotates it, and the forced breaks before/after keep
+           it off any shared page so the landscape sheet contains only that
+           table. break-inside: auto lets its column groups and rows flow across
+           as many landscape pages as the data needs. Applied by render_section
+           when a table has more columns than LANDSCAPE_COLS. */
+        .card.landscape-card {
+            page: landscape-table;
+            break-before: page;
+            break-after: page;
+            break-inside: auto;
+        }
+
         .card-header {
             background-color: #f0f0f0;
             border-bottom: 1px solid rgba(0, 0, 0, .175);
             border-radius: .375rem .375rem 0 0;
             padding: .55rem .9rem;
+            /* A section title must never be the last thing on a page: keep it
+               with the content that follows it. */
+            break-after: avoid;
         }
 
-        .card-header .title { font-weight: 700; font-size: 1.05rem; color: #212529; }
+        .card-header .title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #212529;
+        }
 
-        .card-body { padding: .85rem .9rem; text-align: justify; }
+        .card-body {
+            padding: .85rem .9rem;
+            text-align: justify;
+        }
 
         /* Nested (sub-section) cards sit on the whitesmoke body to echo the
            nested-accordion look of the HTML report. */
-        .subsections { margin-top: .65rem; }
-        .subsections .card { background: #fcfcfc; }
-        .subsections .card-header { background-color: #f6f6f6; }
-        .subsections .card-header .title { font-size: .98rem; }
+        .subsections {
+            margin-top: .65rem;
+        }
 
-        .descr { color: #6c757d; margin: .15rem 0 .75rem; }
-        .descr ul { margin: .25rem 0 .25rem 1.1rem; padding: 0; }
-        .descr a { color: #B22222; text-decoration: none; word-break: break-word; }
+        .subsections .card {
+            background: #fcfcfc;
+        }
+
+        .subsections .card-header {
+            background-color: #f6f6f6;
+        }
+
+        .subsections .card-header .title {
+            font-size: .98rem;
+        }
+
+        /* Keep a parent section's description glued to its first subsection so the
+           heading is never left above an empty gap with the first plot pushed to
+           the next page (WeasyPrint would otherwise break right after a short
+           description). break-inside: avoid moves description + first subsection as
+           one unit, and the card-header's break-after: avoid carries the heading
+           along. If the intro is itself taller than a page (e.g. the control-probe
+           references list above a two-plot group), the constraint is dropped and
+           the content flows normally, so nothing is orphaned. The remaining
+           subsections flow freely after it. */
+        .intro-keep {
+            break-inside: avoid;
+        }
+
+        .subsections-rest {
+            margin-top: 0;
+        }
+
+        /* A description flows normally and MUST NOT force a break with the content
+           it introduces. An earlier `break-after: avoid` here caused the opposite
+           problem for long descriptions: the control-probe section's description
+           ends in a multi-item reference list, and gluing its end to the following
+           (tall, break-inside: avoid) plot subsection dragged the last reference
+           onto an otherwise blank next page. The gap this rule once guarded
+           against no longer occurs because plot subsections are break-inside:
+           avoid (see render_section), so a heading + description + plots already
+           stay together as one atomic unit. */
+        .descr {
+            color: #6c757d;
+            margin: .15rem 0 .75rem;
+        }
+
+        .descr ul {
+            margin: .25rem 0 .25rem 1.1rem;
+            padding: 0;
+        }
+
+        .descr a {
+            color: #B22222;
+            text-decoration: none;
+            word-break: break-word;
+        }
 
         table.tbl {
             width: 100%;
@@ -78,9 +191,21 @@
             margin: .25rem 0 .8rem;
             font-size: .78rem;
         }
-        table.tbl.sm { font-size: .66rem; }
-        table.tbl.xs { font-size: .56rem; }
-        table.tbl th, table.tbl td {
+
+        table.tbl.sm {
+            font-size: .66rem;
+        }
+
+        table.tbl.xs {
+            font-size: .56rem;
+        }
+
+        table.tbl th,
+        table.tbl td {
+            /* border-box so explicit percentage column widths (e.g. the 38/62
+               parameter table) include padding and the table never overflows
+               the page margin. */
+            box-sizing: border-box;
             border-bottom: 1px solid #dee2e6;
             padding: .32rem .42rem;
             text-align: left;
@@ -88,12 +213,28 @@
             word-break: break-word;
             overflow-wrap: anywhere;
         }
+
         table.tbl thead th {
             border-bottom: 2px solid #adb5bd;
             font-weight: 700;
             background: #fafafa;
         }
-        table.tbl tbody tr:nth-child(even) { background: #fbfbfb; }
+
+        table.tbl tbody tr:nth-child(even) {
+            background: #fbfbfb;
+        }
+
+        /* Repeat the header on every page a long table spans and never split a
+           single row across a page break. */
+        table.tbl thead {
+            display: table-header-group;
+            break-after: avoid;
+        }
+
+        table.tbl tr {
+            break-inside: avoid;
+        }
+
         table.tbl pre {
             white-space: pre-wrap;
             word-break: break-word;
@@ -101,10 +242,33 @@
             font-size: .72rem;
         }
 
-        .table-title { font-weight: 600; font-size: 1rem; margin: .5rem 0 .15rem; }
+        .table-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin: .5rem 0 .15rem;
+        }
 
-        .plot-img { text-align: center; margin: .5rem 0 1rem; break-inside: avoid; }
-        .plot-img img { max-width: 100%; height: auto; }
+        .plot-img {
+            text-align: center;
+            margin: .5rem 0 1rem;
+            break-inside: avoid;
+        }
+
+        /* Cap the height so a very tall figure (e.g. the per-sample anomaly bar
+           chart, an intrinsically ~3:1 portrait image) scales down to fit on a
+           single page instead of overflowing the bottom margin and printing under
+           the page footer. Tuned to nearly fill the usable portrait height
+           (A4 26.7cm minus the card header, description and paddings) so such a
+           figure is rendered as large as the page allows; width stays auto so the
+           aspect ratio is preserved. Wide/square figures bind on max-width instead
+           and are unaffected by this value. */
+        .plot-img img {
+            max-width: 100%;
+            max-height: 22.5cm;
+            width: auto;
+            height: auto;
+        }
+
 
         footer {
             text-align: center;
@@ -114,8 +278,17 @@
             color: #000;
             font-size: .85rem;
         }
-        footer img { height: 40px; vertical-align: middle; margin-right: 10px; }
-        footer a { color: #B22222; text-decoration: none; }
+
+        footer img {
+            height: 40px;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        footer a {
+            color: #B22222;
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -126,87 +299,204 @@
             interactive HTML report are shown expanded here. For research use only.</p>
 
         {# ---- table helpers ---------------------------------------------- #}
-        {% macro cell(v) %}{% if v is mapping or (v is iterable and v is not string) %}<pre>{{ v|tojson(indent=2) }}</pre>{% else %}{{ v }}{% endif %}{% endmacro %}
+        {% macro cell(v) %}{% if v is mapping or (v is iterable and v is not string) %}
+        <pre>{{ v|tojson(indent=2) }}</pre>{% else %}{{ v }}{% endif %}{% endmacro %}
 
-        {% macro size_class(ncols) %}{% if ncols > 12 %}xs{% elif ncols > 7 %}sm{% endif %}{% endmacro %}
+        {% macro size_class(ncols) %}{% if ncols > 12 %}xs{% elif ncols > 6 %}sm{% endif %}{% endmacro %}
 
         {# key/value table (section.type == "table") #}
         {% macro render_kv(data) %}
         <table class="tbl">
-            <thead><tr><th style="width:38%">Parameter</th><th style="width:62%">Value</th></tr></thead>
+            <thead>
+                <tr>
+                    <th style="width:38%">Parameter</th>
+                    <th style="width:62%">Value</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for k, v in data.items() %}
-                <tr><td><b>{{ k }}</b></td><td>{{ cell(v) }}</td></tr>
+                <tr>
+                    <td><b>{{ k }}</b></td>
+                    <td>{{ cell(v) }}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% endmacro %}
 
-        {# list-of-rows table (section.type == "table-rows" or grouped tables) #}
-        {% macro render_rows(data) %}
-        {% set ncols = data[0].keys()|list|length %}
-        <table class="tbl {{ size_class(ncols) }}">
-            <thead><tr>{% for col in data[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+        {# list-of-rows table (section.type == "table-rows" or grouped tables).
+        A table too wide to stay legible on a portrait page (e.g. the 66-column
+        QC summary) is split into groups of columns, each rendered as its own
+        table with the leading identifier column repeated so every row stays
+        traceable across the groups. #}
+        {% macro render_table(cols, data) %}
+        <table class="tbl {{ size_class(cols|length) }}">
+            <thead>
+                <tr>{% for col in cols %}<th>{{ col }}</th>{% endfor %}</tr>
+            </thead>
             <tbody>
                 {% for row in data %}
-                <tr>{% for v in row.values() %}<td>{{ cell(v) }}</td>{% endfor %}</tr>
+                <tr>{% for col in cols %}<td>{{ cell(row[col]) }}</td>{% endfor %}</tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% endmacro %}
+
+        {% macro render_rows(data) %}
+        {# Columns beyond WIDE_COLS are split into groups of GROUP_SIZE, the id
+        column repeated in each group. Any table wide enough to be split is
+        also rotated onto a landscape page (LANDSCAPE_COLS in render_section is
+        lower than WIDE_COLS), so GROUP_SIZE is tuned to the ~27.5cm landscape
+        sheet: 16 metrics + the id column = 17 columns is the most that fits
+        while numeric cell values still stay on a single line (18+ makes values
+        like "3655.9768" wrap). This turns the 66-column QC summary into 5
+        column groups instead of 6. #}
+        {% set WIDE_COLS = 14 %}
+        {% set GROUP_SIZE = 16 %}
+        {% set cols = data[0].keys()|list %}
+        {% if cols|length > WIDE_COLS %}
+        {% set id_col = cols[0] %}
+        {% set rest = cols[1:] %}
+        {% for start in range(0, rest|length, GROUP_SIZE) %}
+        {% set end = [start + GROUP_SIZE, rest|length]|min %}
+        <div class="descr" style="margin:.4rem 0 .1rem;">{{ id_col }} + metrics {{ start + 1 }}&ndash;{{ end }} of {{
+            rest|length }}</div>
+        {{ render_table([id_col] + rest[start:end], data) }}
+        {% endfor %}
+        {% else %}
+        {{ render_table(cols, data) }}
+        {% endif %}
         {% endmacro %}
 
         {# ---- one report section (recurses into sub-sections) ------------ #}
         {% macro render_section(section) %}
         {% if section.type == "table-row-group" or section.data_list is defined
-              or section.html or section.html_list or section.data or section.subsections %}
-        <div class="card">
+        or section.html or section.html_list or section.data or section.subsections %}
+        {# A card may flow across pages only when its content is a parent section
+        with sub-cards or a long table. Plot groups (and plot+table) stay
+        break-inside: avoid: a multi-figure card that is taller than a page
+        still breaks (the constraint is dropped when it cannot fit), but each
+        figure stays whole and, crucially, the card starts on a fresh page so
+        its heading + description sit directly above the first figure - never
+        stranded at a page bottom with the figure pushed to the next page. #}
+        {% set _long_table = (section.type in ['table', 'table-rows'] and section.data and (section.data|length) > 14)
+        or section.type == 'table-row-group' %}
+        {# A paginated plot section (the anomaly figure sliced into page images) may be
+        taller than a page, so it must flow: break-inside: avoid would jump the whole
+        card to a fresh page and strand a blank one before it. #}
+        {% set _flow = section.subsections or _long_table or section.type == 'plot-paginated' %}
+        {# A table with more columns than LANDSCAPE_COLS is unreadable squeezed on
+        a portrait page, so it is rotated onto its own landscape sheet(s). The
+        column count is the width of the first data row (for table-row-group,
+        the widest of its tables). Only pure table sections rotate - a plot or
+        plot+table keeps its portrait layout. #}
+        {% set LANDSCAPE_COLS = 10 %}
+        {% set _cw = namespace(n=0) %}
+        {% if section.type == 'table-rows' and section.data %}
+        {% set _cw.n = section.data[0].keys()|length %}
+        {% elif section.type == 'table-row-group' and section.data_list %}
+        {% for _t in section.data_list %}
+        {% if _t.data and (_t.data[0].keys()|length) > _cw.n %}{% set _cw.n = _t.data[0].keys()|length %}{% endif %}
+        {% endfor %}
+        {% endif %}
+        {% set _wide = _cw.n > LANDSCAPE_COLS %}
+        <div class="card{{ ' card-flow' if _flow else '' }}{{ ' landscape-card' if _wide else '' }}">
             <div class="card-header"><span class="title">{{ section.title }}</span></div>
             <div class="card-body">
-                {% if section.description %}<div class="descr">{{ section.description }}</div>{% endif %}
+                {# Parent sections (those with subsections) render their description
+                inside .intro-keep below, glued to the first subsection. Every
+                other section renders it here at the top of the body. #}
+                {% if section.description and not section.subsections and section.type != 'plot-paginated' %}<div
+                    class="descr">{{ section.description }}</div>{% endif %}
 
                 {% if section.type == "table" %}
-                    {{ render_kv(section.data) }}
+                {{ render_kv(section.data) }}
 
                 {% elif section.type == "table-rows" %}
-                    {% if section.data %}{{ render_rows(section.data) }}{% endif %}
+                {% if section.data %}{{ render_rows(section.data) }}{% endif %}
 
                 {% elif section.type == "plot" %}
-                    {% if section.html %}<div class="plot-img">{{ section.html|safe }}</div>{% endif %}
+                {% if section.html %}<div class="plot-img">{{ section.html|safe }}</div>{% endif %}
 
                 {% elif section.type == "plot-group" %}
-                    {% for plot in section.html_list %}
-                    <div class="plot-img">{{ plot.plot_html|safe }}</div>
-                    {% endfor %}
+                {% for plot in section.html_list %}
+                <div class="plot-img">{{ plot.plot_html|safe }}</div>
+                {% endfor %}
+
+                {% elif section.type == "plot-paginated" %}
+                {# Page images of one tall figure (e.g. the anomaly plot). The card
+                flows (see _flow), so keep the description + first page together
+                via .intro-keep - each page image fits a sheet, so the heading is
+                never stranded - then let the remaining pages break naturally. #}
+                {% if section.html_list %}
+                <div class="intro-keep">
+                    {% if section.description %}<div class="descr">{{ section.description }}</div>{% endif %}
+                    <div class="plot-img">{{ section.html_list[0].plot_html|safe }}</div>
+                </div>
+                {% for plot in section.html_list[1:] %}
+                <div class="plot-img">{{ plot.plot_html|safe }}</div>
+                {% endfor %}
+                {% endif %}
 
                 {% elif section.type == "table-row-group" %}
-                    {% for table in section.data_list %}
-                    {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
-                    {% if table.data %}{{ render_rows(table.data) }}{% endif %}
-                    {% endfor %}
+                {% for table in section.data_list %}
+                {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
+                {% if table.data %}{{ render_rows(table.data) }}{% endif %}
+                {% endfor %}
 
                 {% elif section.type == "plot+table" %}
-                    {% if section.html %}
-                        <div class="plot-img">{{ section.html|safe }}</div>
-                    {% elif section.html_list %}
-                        {% for plot in section.html_list %}
-                        <div class="plot-img">{{ plot.plot_html|safe }}</div>
-                        {% endfor %}
-                    {% endif %}
-                    {% if section.data_list %}
-                        {% for table in section.data_list %}
-                        {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
-                        {% if table.data %}{{ render_rows(table.data) }}{% endif %}
-                        {% endfor %}
-                    {% elif section.data %}
-                        {% if section.table_title %}<div class="table-title">{{ section.table_title }}</div>{% endif %}
-                        {{ render_rows(section.data) }}
-                    {% endif %}
+                {% if section.html %}
+                <div class="plot-img">{{ section.html|safe }}</div>
+                {% elif section.html_list %}
+                {% for plot in section.html_list %}
+                <div class="plot-img">{{ plot.plot_html|safe }}</div>
+                {% endfor %}
+                {% endif %}
+                {% if section.data_list %}
+                {% for table in section.data_list %}
+                {% if table.table_title %}<div class="table-title">{{ table.table_title }}</div>{% endif %}
+                {% if table.data %}{{ render_rows(table.data) }}{% endif %}
+                {% endfor %}
+                {% elif section.data %}
+                {% if section.table_title %}<div class="table-title">{{ section.table_title }}</div>{% endif %}
+                {{ render_rows(section.data) }}
+                {% endif %}
                 {% endif %}
 
                 {% if section.subsections %}
+                {# Whether the first subsection is small enough that description +
+                first subsection are guaranteed to fit on a page. Only then is it
+                safe to wrap them in .intro-keep (break-inside: avoid): a wrapper
+                taller than a page makes WeasyPrint jump the whole box to a fresh
+                page, stranding the heading on an otherwise empty page (this is
+                what happened to the control-probe and missing-data sections,
+                whose first subsection is a multi-figure plot group). A single
+                plot or a table always fits; a plot-group (or a multi-plot
+                plot+table) may not. #}
+                {% set _first = section.subsections[0] %}
+                {% set _first_small = _first.type in ['plot', 'table', 'table-rows', 'table-row-group']
+                or (_first.type == 'plot+table' and not _first.html_list) %}
+                {% if _first_small %}
+                <div class="intro-keep">
+                    {% if section.description %}<div class="descr">{{ section.description }}</div>{% endif %}
+                    <div class="subsections">{{ render_section(_first) }}</div>
+                </div>
+                {% if section.subsections|length > 1 %}
+                <div class="subsections subsections-rest">
+                    {% for sub in section.subsections[1:] %}{{ render_section(sub) }}{% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                {# First subsection is a multi-figure group (potentially taller than
+                a page): render the description and subsections in normal flow.
+                The card-header's break-after: avoid keeps the heading with its
+                description, and the first figure follows on the same page when it
+                fits - no break-inside: avoid wrapper, so no fresh-page jump. #}
+                {% if section.description %}<div class="descr">{{ section.description }}</div>{% endif %}
                 <div class="subsections">
                     {% for sub in section.subsections %}{{ render_section(sub) }}{% endfor %}
                 </div>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
