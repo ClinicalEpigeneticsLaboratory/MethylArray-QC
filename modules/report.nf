@@ -19,7 +19,12 @@ process REPORT {
     path ao_plot_path,                     stageAs: 'ao_plot.txt'
     path beta_distribution_plot,           stageAs: 'beta_distribution.txt'
     path nan_distribution_per_probe_plot,  stageAs: 'nan_per_probe.txt'
-    path nan_distribution_per_sample_plot, stageAs: 'nan_per_sample.txt'
+    // NAN_DISTRIBUTION_PER_SAMPLE emits several figures (arity 1..*), joined into
+    // a comma-separated string upstream. It must be a `val` (like every other
+    // multi-figure input below) so report.py receives all paths and can split
+    // them; a `path` input collapses them into one bogus staged file, which is
+    // why the per-sample figure rendered as "[figure could not be rendered]".
+    val  nan_distribution_per_sample_plot
     val  batch_effect_plot_paths
     path sex_inference_path,               stageAs: 'sex_inference.json'
     path params_path,                      stageAs: 'params.json'

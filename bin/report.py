@@ -11,8 +11,11 @@ import time
 import datetime
 from dateutil import parser
 import json
+import math
 from jinja2 import Template, FileSystemLoader, Environment
 import plotly.io as pio
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from pathlib import Path
 from typing import List, Dict, Union, Optional
 import re
@@ -23,11 +26,47 @@ import pprint
 # Report output format selected via params.output_format and passed as the last
 # CLI argument. One of:
 #   "html" -> interactive qc_report.html (Plotly via CDN, accordion) - default
-#   "pdf"  -> real, self-contained binary qc_report.pdf (each Plotly figure is
-#             reconstructed in matplotlib; see bin/pdf_export_utils.py)
+#   "pdf"  -> real, self-contained binary qc_report.pdf: each Plotly figure is
+#             rasterised to a static PNG with Kaleido and the print template is
+#             then rendered to PDF with WeasyPrint (see render_pdf / json_fig_to_img)
 #   "json" -> single structured qc_report.json (raw Plotly specs + table data)
 # Set once at the start of main(); read by the figure/section helpers below.
 OUTPUT_FORMAT = "html"
+
+# Figures that belong to a multi-figure group (control-probe types, per-sample NaN
+# plots, epigenetic-clock plots) are reshaped for the PDF before rasterising:
+# rendered on a wide, short canvas with the legend moved to a horizontal strip on
+# top, then placed full width (one per row) so ~2 stack per page. Square figures
+# placed full width are legible but tall (one per page); shrinking them two-per-row
+# instead crowds the plot and made big legends (e.g. NORM's 12 entries) unreadable.
+# The wide-with-top-legend shape keeps the plot area full width, the text legible,
+# and the page count down. Only the PDF PNG is affected - the shared figure JSON
+# (and the interactive HTML report that reuses it) is untouched.
+GROUP_FIG_WIDTH = 900
+GROUP_FIG_HEIGHT = 560
+GROUP_FIG_FONT = 18
+
+# The anomaly figure has one horizontal bar per sample, so its height grows without
+# bound with the cohort. A single image scaled to fit one PDF page would shrink the
+# per-sample labels as samples are added. Instead the PDF splits the samples into
+# fixed-size pages (paginate_anomaly_figure), each rendered at the SAME font and row
+# height, so the label size is identical for 3 or 3000 samples - a larger cohort just
+# produces more pages. Two side-by-side columns pack ANOM_ROWS_PER_COL*ANOM_COLS
+# samples per page; the last page (and small cohorts) fall back to a single column.
+# ANOM_FONT_PX / ANOM_WIDTH_PX are chosen so a page placed at full width shows ~12 pt
+# labels. ANOM_ROW_PX is the plot-area height per sample row: it is set larger than
+# the font so every sample keeps its own tick label (a tighter pitch makes Plotly thin
+# the labels, hiding half the samples). The top/bottom margins are fixed so the plot
+# area is exactly rows*ANOM_ROW_PX regardless of cohort; ANOM_ROWS_PER_COL keeps a full
+# page under the image's print max-height so it is never scaled down (which would in
+# turn shrink the font).
+ANOM_WIDTH_PX = 1200
+ANOM_FONT_PX = 30
+ANOM_ROW_PX = 46
+ANOM_ROWS_PER_COL = 26
+ANOM_COLS = 2
+ANOM_MARGIN_TOP_PX = 80
+ANOM_MARGIN_BOTTOM_PX = 110
 
 # Placeholder files emitted by the workflow when an optional analysis is skipped.
 # These must never be treated as real plot/table sources.
@@ -276,7 +315,30 @@ def render_json(
         json.dump(payload, output_file, indent=2, ensure_ascii=False)
 
 
-def json_fig_to_html(json_path: str) -> str:
+def _reshape_group_figure(fig) -> None:
+    """Reshape a group figure in place for PDF: wide, short canvas with a horizontal
+    legend on top (see GROUP_FIG_* constants). Placed full width this reads clearly
+    and ~2 stack per page. A top legend avoids colliding with the x-axis title, and a
+    horizontal legend keeps a many-entry legend (e.g. NORM's 12) from squeezing the
+    plot. update_layout font_size sets the base font (ticks/axis titles inherit it);
+    the legend font is set explicitly.
+    """
+    fig.update_layout(
+        width=GROUP_FIG_WIDTH,
+        height=GROUP_FIG_HEIGHT,
+        font_size=GROUP_FIG_FONT,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            font_size=GROUP_FIG_FONT,
+        ),
+    )
+
+
+def json_fig_to_html(json_path: str, group: bool = False) -> str:
     """Turn a figure JSON into the markup embedded for the current output format.
 
     - html: an interactive Plotly div (Plotly.js loaded once from the CDN).
@@ -287,12 +349,15 @@ def json_fig_to_html(json_path: str) -> str:
 
     Args:
         json_path (str): path to a figure JSON file
+        group (bool): PDF-only; when the figure is one of a multi-figure group it is
+            reshaped wide with a top legend (see _reshape_group_figure). Ignored for
+            html/json output, which reuse the figure JSON unchanged.
 
     Returns:
         str: figure markup for html/pdf, or "" for the json format
     """
     if OUTPUT_FORMAT == "pdf":
-        return json_fig_to_img(json_path)
+        return json_fig_to_img(json_path, group=group)
 
     if OUTPUT_FORMAT != "html":
         return ""
@@ -309,7 +374,7 @@ def json_fig_to_html(json_path: str) -> str:
         return '<span class="descr">[figure could not be rendered]</span>'
 
 
-def json_fig_to_img(json_path: str) -> str:
+def json_fig_to_img(json_path: str, group: bool = False) -> str:
     """Rasterise a Plotly figure JSON to a base64 <img> for the pdf format (Kaleido).
 
     WeasyPrint cannot execute Plotly.js, so for pdf output each figure is rendered to
@@ -319,18 +384,159 @@ def json_fig_to_img(json_path: str) -> str:
 
     Args:
         json_path (str): path to a figure JSON file
+        group (bool): reshape a multi-figure-group figure wide with a top legend
+            before rasterising (see _reshape_group_figure). False renders the figure
+            as authored.
 
     Returns:
         str: an <img> tag with the figure as a base64-encoded PNG data URI
     """
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid=True)
+        if group:
+            _reshape_group_figure(fig)
         png = pio.to_image(fig, format="png", scale=2)
         b64 = base64.b64encode(png).decode()
         return f'<img src="data:image/png;base64,{b64}" alt="figure" />'
     except Exception as e:
         print(f"⚠️  Failed to render figure to image from {json_path}: {e}")
         return '<span class="descr">[figure could not be rendered]</span>'
+
+
+def _render_anomaly_page(
+    samples: list, scores: list, bar_colors: list, offset, xmax: float
+) -> str:
+    """Rasterise one page of the anomaly figure to a base64 <img> (pdf only).
+
+    A page holds up to ANOM_ROWS_PER_COL * ANOM_COLS samples, split across one or two
+    side-by-side columns of horizontal bars. Every page uses the same font, row height
+    and x-range, so a sample label is the same size on page 1 and page 20 and bar
+    lengths stay comparable across pages.
+
+    Args:
+        samples (list): sample labels for this page (page order)
+        scores (list): |scores| aligned with samples
+        bar_colors (list): per-bar colour aligned with samples
+        offset: score threshold (red dashed line); may be None
+        xmax (float): shared upper x-limit so every page uses one scale
+
+    Returns:
+        str: an <img> tag with the page as a base64-encoded PNG data URI
+    """
+    n = len(samples)
+    ncols = ANOM_COLS if n > ANOM_ROWS_PER_COL else 1
+    per_col = math.ceil(n / ncols)
+    # Fixed margins keep the plot area exactly per_col*ANOM_ROW_PX tall, so the row
+    # pitch (and thus label legibility) is the same on every page for any cohort.
+    height = ANOM_MARGIN_TOP_PX + ANOM_MARGIN_BOTTOM_PX + per_col * ANOM_ROW_PX
+
+    fig = make_subplots(
+        rows=1, cols=ncols, horizontal_spacing=0.35 if ncols > 1 else 0.0
+    )
+    for c in range(ncols):
+        start, end = c * per_col, (c + 1) * per_col
+        chunk_s, chunk_x = samples[start:end], scores[start:end]
+        chunk_c = bar_colors[start:end]
+        if chunk_s:
+            fig.add_trace(
+                go.Bar(
+                    y=chunk_s, x=chunk_x, orientation="h",
+                    marker_color=chunk_c, showlegend=False,
+                ),
+                row=1, col=c + 1,
+            )
+        if offset is not None:
+            fig.add_vline(
+                x=offset, line_width=1, line_dash="dash", line_color="red",
+                row=1, col=c + 1,
+            )
+        fig.update_xaxes(title_text="|scores|", range=[0, xmax], row=1, col=c + 1)
+
+    # Legend proxies (the real bars carry a per-bar colour array and draw no legend).
+    for cls, color in {"Anomaly": "red", "non-Anomaly": "blue"}.items():
+        fig.add_trace(
+            go.Bar(y=[None], x=[None], orientation="h", marker_color=color,
+                   name=cls, legendgroup=cls, showlegend=True),
+            row=1, col=1,
+        )
+
+    # tickmode/dtick force one tick per sample (Plotly otherwise thins them, hiding
+    # samples); automargin grows the left margin to fit the sample labels.
+    fig.update_yaxes(tickmode="linear", dtick=1, automargin=True)
+    fig.update_yaxes(title_text="sample", row=1, col=1)
+    fig.update_layout(
+        width=ANOM_WIDTH_PX, height=height, template="ggplot2",
+        font={"size": ANOM_FONT_PX}, showlegend=True,
+        margin={"t": ANOM_MARGIN_TOP_PX, "b": ANOM_MARGIN_BOTTOM_PX,
+                "l": 10, "r": 20},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02,
+                "xanchor": "left", "x": 0},
+    )
+    png = pio.to_image(fig, format="png", scale=2)
+    b64 = base64.b64encode(png).decode()
+    return f'<img src="data:image/png;base64,{b64}" alt="figure" />'
+
+
+def paginate_anomaly_figure(json_path: str) -> list:
+    """Split the anomaly figure into fixed-size page images for the pdf (constant font).
+
+    The shared ao_plot.json holds every sample as one ordered bar trace. Rather than
+    scale that single tall figure down to one page (which shrinks the labels as the
+    cohort grows), the samples are sliced into pages of ANOM_ROWS_PER_COL * ANOM_COLS
+    and each page is rendered at the same font (see _render_anomaly_page). The images
+    stack full width in the report, flowing across as many pages as the cohort needs.
+
+    Args:
+        json_path (str): path to the anomaly figure JSON (ao_plot.json)
+
+    Returns:
+        list: one <img> tag per page (falls back to a single image on any error)
+    """
+    try:
+        fig = pio.read_json(f"{json_path}", skip_invalid=True)
+
+        def _real_len(trace) -> int:
+            ys = getattr(trace, "y", None) or []
+            return sum(1 for v in ys if v is not None)
+
+        data_trace = max(fig.data, key=_real_len)
+        samples = list(data_trace.y)
+        scores = list(data_trace.x)
+
+        marker_color = data_trace.marker.color
+        if isinstance(marker_color, (list, tuple)):
+            bar_colors = list(marker_color)
+        else:
+            bar_colors = [marker_color] * len(samples)
+
+        offset = None
+        for shape in (fig.layout.shapes or []):
+            line = getattr(shape, "line", None)
+            if line is not None and getattr(line, "dash", None) == "dash":
+                offset = shape.x0
+                break
+
+        if not samples:
+            return [json_fig_to_img(json_path)]
+
+        numeric_x = [v for v in scores if isinstance(v, (int, float))]
+        upper = max(numeric_x + ([offset] if offset is not None else [0.0]))
+        xmax = upper * 1.08 if upper > 0 else 1.0
+
+        per_page = ANOM_ROWS_PER_COL * ANOM_COLS
+        images = []
+        for start in range(0, len(samples), per_page):
+            end = start + per_page
+            images.append(
+                _render_anomaly_page(
+                    samples[start:end], scores[start:end],
+                    bar_colors[start:end], offset, xmax,
+                )
+            )
+        return images
+    except Exception as e:  # pragma: no cover - degrade to a single image
+        print(f"⚠️  Failed to paginate anomaly figure {json_path}: {e}")
+        return [json_fig_to_img(json_path)]
 
 
 def json_fig_to_dict(json_path: str) -> Optional[dict]:
@@ -536,6 +742,66 @@ def add_plot_section(
     report_sections.append(report_section_dict)
 
     return report_sections
+
+
+def add_anomaly_section(
+    report_sections: list,
+    id: str,
+    title: str,
+    path: str | Path,
+    description: str = None,
+) -> list:
+    """Add the anomaly-detection section, paginated across pages for the pdf.
+
+    For html/json the section carries the single interactive figure unchanged. For
+    the pdf the one tall figure is split into fixed-size page images at a constant
+    font (see paginate_anomaly_figure), rendered full width as a plot-group so the
+    per-sample labels stay the same size for any cohort size.
+
+    Args:
+        report_sections (list): report sections accumulated so far
+        id (str): section id
+        title (str): section title
+        path (str | Path): path to the anomaly figure JSON (ao_plot.json)
+        description (str, optional): section description
+
+    Returns:
+        list: report_sections with the anomaly section appended
+    """
+    path = str(path)
+
+    if OUTPUT_FORMAT == "pdf":
+        # A "plot-paginated" section flows across pages (report_pdf.html): the many
+        # page images stack and break across sheets, with the heading kept beside the
+        # first one. html/json keep the ordinary single-figure "plot-group" (the html
+        # template and json exporter do not know the paginated type).
+        html_list = [
+            {"plot_html": img, "plot_path": path, "plot_name": f"plot_{id}_{idx}"}
+            for idx, img in enumerate(paginate_anomaly_figure(path))
+        ]
+        section_type = "plot-paginated"
+    else:
+        html_list = [
+            {
+                "plot_html": json_fig_to_html(path),
+                "plot_path": path,
+                "plot_name": f"plot_{id}_0",
+            }
+        ]
+        section_type = "plot-group"
+
+    report_section_dict = {
+        "id": id,
+        "title": title,
+        "type": section_type,
+        "html_list": html_list,
+    }
+    if description is not None:
+        report_section_dict["description"] = description
+
+    report_sections.append(report_section_dict)
+    return report_sections
+
 
 def make_section(
     id: str,
@@ -784,8 +1050,15 @@ def add_section_with_subs(
             plt_paths = sub.get("plot_paths", [])
             if isinstance(plt_paths, str):
                 plt_paths = [plt_paths]
+            valid_plt_paths = [p for p in plt_paths if is_ok(p)]
+            # A subsection with >1 figure is a group: reshape each figure wide with a
+            # top legend for the PDF so it reads well full width (see
+            # _reshape_group_figure). A single-figure subsection keeps its authored
+            # shape.
+            is_group = len(valid_plt_paths) > 1
             plot_htmls = [
-                (p, json_fig_to_html(p)) for p in plt_paths if is_ok(p)
+                (p, json_fig_to_html(p, group=is_group))
+                for p in valid_plt_paths
             ]
 
             has_tab = bool(tables)
@@ -1219,7 +1492,7 @@ def main():
     )
 
     if "no_ao_plot.txt" not in ao_plot_path:
-        report_sections = add_plot_section(
+        report_sections = add_anomaly_section(
             report_sections,
             "anomalyDetection",
             "Anomaly detection plot",
