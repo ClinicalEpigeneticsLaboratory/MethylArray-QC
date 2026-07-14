@@ -215,9 +215,10 @@
                         "json"
                     ],
                     "default": "html",
-                    "description": "Output format for the pipeline report: 'html' for an interactive HTML report, 'pdf' for a static PDF report, or 'json' for a machine-readable JSON file containing all figures (as Plotly JSON dicts) and metadata.",
-                    "help_text": "Choose the output format for the final report: 'html' (default) produces an interactive Bootstrap/Plotly report; 'pdf' produces a static PDF with figures rendered as PNG images via kaleido + fpdf2; 'json' produces a structured JSON file with all Plotly figure dicts, QC tables, and pipeline metadata.",
-                    "errorMessage": "output_format must be one of: html, pdf, json"
+                    "description": "Report output format: html (interactive HTML report, default), pdf (a static, self-contained binary PDF) or json (single structured JSON aggregating all plots and data outputs).",
+                    "help_text": "Choose the report output format: html (interactive qc_report.html), pdf (a static binary qc_report.pdf - figures are reconstructed with matplotlib, which is already in the image, so no extra dependency/Docker rebuild is needed) or json (a single qc_report.json aggregating every section's plots and tables as raw data).",
+                    "errorMessage": "output_format must be one of: html, pdf or json",
+                    "fa_icon": "fas fa-file-export"
                 },
                 "infer_epi_age": {
                     "type": "boolean",
