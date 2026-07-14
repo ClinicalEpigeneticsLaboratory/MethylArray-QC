@@ -299,6 +299,4 @@ authors. All commits reflect human authorship and editorial decisions.
 - anomaly detection: implement more models
 - fluorescence on control probes: 
    - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
-- add non-interactive mode for app
-- add static mode for app
 - add multilingual support (PL/ENG) to the pipeline
