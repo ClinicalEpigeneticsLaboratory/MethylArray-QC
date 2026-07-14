@@ -393,7 +393,10 @@ def json_fig_to_img(json_path: str, group: bool = False) -> str:
     """
     try:
         fig = pio.read_json(f"{json_path}", skip_invalid=True)
-        if group:
+        # Scatter matrices (SPLOM) are square and keep their own multi-line title, so
+        # the group reshape's wide canvas + top legend would overprint that title. Skip
+        # the reshape for them: they still stack as a plot-group at their authored size.
+        if group and not any(getattr(t, "type", None) == "splom" for t in fig.data):
             _reshape_group_figure(fig)
         png = pio.to_image(fig, format="png", scale=2)
         b64 = base64.b64encode(png).decode()

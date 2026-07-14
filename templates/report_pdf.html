@@ -242,10 +242,17 @@
             font-size: .72rem;
         }
 
+        /* Keep a table title glued to the table it introduces: when an oversized
+           plot+table card (e.g. an epigenetic clock's plots + "Post-hoc test
+           results (epigenetic age acceleration)" table) is force-split across
+           pages, without this WeasyPrint breaks right after the title and strands
+           it at the bottom of the plots page, one page above its table. break-after:
+           avoid pushes the title onto the next page together with the table. */
         .table-title {
             font-weight: 600;
             font-size: 1rem;
             margin: .5rem 0 .15rem;
+            break-after: avoid;
         }
 
         .plot-img {
@@ -470,11 +477,27 @@
                 taller than a page makes WeasyPrint jump the whole box to a fresh
                 page, stranding the heading on an otherwise empty page (this is
                 what happened to the control-probe and missing-data sections,
-                whose first subsection is a multi-figure plot group). A single
-                plot or a table always fits; a plot-group (or a multi-plot
-                plot+table) may not. #}
+                whose first subsection is a multi-figure plot group). A short
+                table or a single-figure plot+table always fits. A lone plot may
+                be a tall portrait figure (the PCA cumulative-variance area plot)
+                and a long table may span several pages (the epigenetic-age
+                per-sample summary, ~56 rows), so neither is glued - both fall
+                through to normal flow, where card-header's break-after: avoid
+                keeps the heading with its description and the content flows. #}
                 {% set _first = section.subsections[0] %}
-                {% set _first_small = _first.type in ['plot', 'table', 'table-rows', 'table-row-group']
+                {# Longest row count in the first subsection, to tell a short table
+                from one that spills across pages (reuses the > 14 threshold from
+                _long_table above). table[-rows] use their own data; a
+                table-row-group uses the widest of its grouped tables. #}
+                {% set _first_rows = namespace(n=0) %}
+                {% if _first.type in ['table', 'table-rows'] and _first.data %}
+                {% set _first_rows.n = _first.data|length %}
+                {% elif _first.type == 'table-row-group' and _first.data_list %}
+                {% for _t in _first.data_list %}
+                {% if _t.data and (_t.data|length) > _first_rows.n %}{% set _first_rows.n = _t.data|length %}{% endif %}
+                {% endfor %}
+                {% endif %}
+                {% set _first_small = (_first.type in ['table', 'table-rows', 'table-row-group'] and _first_rows.n <= 14)
                 or (_first.type == 'plot+table' and not _first.html_list) %}
                 {% if _first_small %}
                 <div class="intro-keep">
