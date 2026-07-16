@@ -11,19 +11,21 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from decorators import update_and_export_plot
+from i18n import t
 
 
 @update_and_export_plot(json_path="nan_distribution_per_probe.json")
 def get_nan_distr_per_probe_fig(
-    plot_data: pd.DataFrame, nan_per_probe_n_cpgs: int
+    plot_data: pd.DataFrame, nan_per_probe_n_cpgs: int, language: str = "en"
 ) -> go.Figure:
-    """A function generating a heatmap presenting the distribution of 
+    """A function generating a heatmap presenting the distribution of
 missing values across probes and samples
 
     Args:
         plot_data (pd.DataFrame): data used to generate a plot
         nan_per_probe_n_cpgs (int): number of randomly selected CpG sites\
             to be plotted (parameter provided by the user)
+        language (str): report language ("en"/"pl") for the plot title
 
     Returns:
         go.Figure: a heatmap showing the distribution of missing values across probes and samples
@@ -63,7 +65,9 @@ missing values across probes and samples
     )
 
     fig.update_layout(
-        title=f"NaN distribution across<br>{nan_per_probe_n_cpgs} randomly selected CpGs",
+        title=t("plot.nan_probe.title", language, n=nan_per_probe_n_cpgs),
+        # xaxis/yaxis titles are the source column names (Sample_Name, CpG), kept
+        # as-is - they are data identifiers, not UI chrome (see plan D2/D6).
         xaxis_title="Sample_Name",
         yaxis_title="CpG",
     )
@@ -75,15 +79,17 @@ missing values across probes and samples
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print(
             "Usage: python nan_distribution_per_probe.py \
-                <path_to_raw_mynorm: str> <top_nan_per_probe_cpgs: int>"
+                <path_to_raw_mynorm: str> <top_nan_per_probe_cpgs: int> \
+                <report_language: en|pl>"
         )
         sys.exit(1)
 
     path_to_raw_mynorm = sys.argv[1]
     nan_per_probe_n_cpgs = int(sys.argv[2])
+    language = sys.argv[3]
 
     raw_mynorm = pd.read_parquet(path_to_raw_mynorm)
     raw_mynorm.set_index("CpG", inplace=True)
@@ -106,7 +112,7 @@ def main():
     plot_data = raw_mynorm_n_nan.isna().astype(int)
 
     get_nan_distr_per_probe_fig(
-        plot_data=plot_data, nan_per_probe_n_cpgs=nan_per_probe_n_cpgs
+        plot_data=plot_data, nan_per_probe_n_cpgs=nan_per_probe_n_cpgs, language=language
     )
 
 

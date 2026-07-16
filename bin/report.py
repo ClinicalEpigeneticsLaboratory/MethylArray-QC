@@ -22,6 +22,7 @@ import re
 import htmlmin
 import base64
 import pprint
+from i18n import t, month_name, LANGUAGES, DEFAULT_LANGUAGE
 
 # Report output format selected via params.output_format and passed as the last
 # CLI argument. One of:
@@ -115,8 +116,73 @@ def minify_html(rendered_html: str):
     return minified_html
 
 
+def build_ui_context(language: str) -> dict:
+    """Localised strings for the report chrome (title, headings, table headers, footer).
+
+    The Jinja templates (report.html / report_pdf.html) reference these as
+    ``{{ ui.<name> }}`` with underscore names, while the i18n catalog keys are
+    dotted (e.g. ``ui.col.parameter``); this maps one onto the other so a single
+    catalog serves both the templates and the plot scripts.
+
+    Args:
+        language (str): target language code ("en"/"pl"); unknown codes fall back.
+
+    Returns:
+        dict: ``ui`` context consumed by the report templates.
+    """
+    return {
+        "report_title": t("ui.report_title", language),
+        "report_heading": t("ui.report_heading", language),
+        "report_intro": t("ui.report_intro", language),
+        "report_intro_pdf": t("ui.report_intro_pdf", language),
+        "col_parameter": t("ui.col.parameter", language),
+        "col_value": t("ui.col.value", language),
+        "loading": t("ui.loading", language),
+        "download_csv": t("ui.download_csv", language),
+        "footer_generated_by": t("ui.footer.generated_by", language),
+        "footer_powered_by": t("ui.footer.powered_by", language),
+        "footer_research_use": t("ui.footer.research_use", language),
+    }
+
+
+# The curated run-metadata rows that lead the workflow-parameters table; only these
+# get a translated label (the trailing rows are raw parameter identifiers, kept as-is).
+PARAMS_TABLE_LEADING_KEYS = (
+    "Nextflow_version",
+    "Run_times",
+    "Workflow_success",
+    "Workflow_errMsg",
+    "Workflow_errDetails",
+    "Workflow_exitStatus",
+    "Workflow_cmdLine",
+)
+
+
+def localize_params_table(flat_config_ordered: dict, language: str) -> dict:
+    """Return a display copy of the workflow-parameters table with localised labels.
+
+    Only the curated leading run-metadata keys are translated (via ``run.label.*``);
+    every value - including the onComplete sentinels patched later for html/json - is
+    preserved unchanged, so this is display-only. The original English-keyed dict is
+    kept for the JSON ``workflow`` object and the pdf finalise step, which match on
+    the English keys.
+    """
+    out = {}
+    for key, value in flat_config_ordered.items():
+        label = (
+            t(f"run.label.{key}", language)
+            if key in PARAMS_TABLE_LEADING_KEYS
+            else key
+        )
+        out[label] = value
+    return out
+
+
 def render_and_minify(
-    report_sec_data: dict, in_template_path: str | Path, out_report_path: str | Path
+    report_sec_data: dict,
+    in_template_path: str | Path,
+    out_report_path: str | Path,
+    language: str = DEFAULT_LANGUAGE,
 ):
 
     if not isinstance(in_template_path, Path):
@@ -131,7 +197,11 @@ def render_and_minify(
     j2_template = env.get_template(in_template_path.name)
 
     # Final template data
-    report_jinja_data = {"report_sections": report_sec_data}
+    report_jinja_data = {
+        "report_sections": report_sec_data,
+        "lang": language,
+        "ui": build_ui_context(language),
+    }
 
     try:
         rendered_html = j2_template.render(report_jinja_data)
@@ -160,7 +230,7 @@ ONCOMPLETE_SENTINELS = {
 }
 
 
-def compute_static_run_metadata(config: dict) -> dict:
+def compute_static_run_metadata(config: dict, language: str = DEFAULT_LANGUAGE) -> dict:
     """Compute run-time/status fields for static (pdf) output at generation time.
 
     The workflow start is already in params.json (written before REPORT runs); the
@@ -169,10 +239,16 @@ def compute_static_run_metadata(config: dict) -> dict:
     UTC epoch start (Workflow_start_epoch) versus time.time(), so it is correct
     regardless of any host/container timezone difference. A report is only produced
     when every upstream step succeeded, so success/exitStatus are known too.
+
+    ``language`` localises the run-time wording ("duration"/"report generated"/
+    "started") and the month name, matching the onComplete-patched html/json path.
     """
     start_str = config.get("Workflow_start")
     start_epoch = config.get("Workflow_start_epoch")
-    now_str = datetime.datetime.now().strftime("%d %B %Y %H:%M:%S")
+    # strftime("%B") is always English (C locale); build the date from the
+    # localised month name so the pdf path matches main.nf's onComplete output.
+    now = datetime.datetime.now()
+    now_str = f"{now.day:02d} {month_name(now.month, language)} {now.year} {now.strftime('%H:%M:%S')}"
 
     run_times = None
     if start_epoch is not None:
@@ -180,13 +256,14 @@ def compute_static_run_metadata(config: dict) -> dict:
             total = max(int(time.time() - float(start_epoch)), 0)
             h, rem = divmod(total, 3600)
             m, s = divmod(rem, 60)
-            run_times = (f"{start_str or 'start'} - report generated "
-                         f"(duration: {h:02d}:{m:02d}:{s:02d})")
+            run_times = (f"{start_str or t('run.started', language)} - "
+                         f"{t('run.report_generated', language)} "
+                         f"({t('run.duration', language)}: {h:02d}:{m:02d}:{s:02d})")
         except Exception:
             run_times = None
     if run_times is None:
-        run_times = (f"report generated {now_str}"
-                     + (f"; started {start_str}" if start_str else ""))
+        run_times = (f"{t('run.report_generated', language)} {now_str}"
+                     + (f"; {t('run.started', language)} {start_str}" if start_str else ""))
 
     return {
         "Run_times": run_times,
@@ -197,9 +274,11 @@ def compute_static_run_metadata(config: dict) -> dict:
     }
 
 
-def finalize_static_workflow(workflow: dict, config: dict) -> dict:
+def finalize_static_workflow(
+    workflow: dict, config: dict, language: str = DEFAULT_LANGUAGE
+) -> dict:
     """Swap the onComplete placeholders for values computed at generation time."""
-    meta = compute_static_run_metadata(config)
+    meta = compute_static_run_metadata(config, language)
     return {k: (meta[k] if k in meta else v) for k, v in workflow.items()}
 
 
@@ -207,6 +286,7 @@ def render_pdf(
     report_sec_data: list,
     in_template_path: str | Path,
     out_report_path: str | Path,
+    language: str = DEFAULT_LANGUAGE,
 ):
     """Render a binary PDF that mirrors the interactive HTML report (pdf mode).
 
@@ -229,7 +309,13 @@ def render_pdf(
     j2_template = env.get_template(in_template_path.name)
 
     try:
-        rendered_html = j2_template.render({"report_sections": report_sec_data})
+        rendered_html = j2_template.render(
+            {
+                "report_sections": report_sec_data,
+                "lang": language,
+                "ui": build_ui_context(language),
+            }
+        )
     except Exception as e:
         print("❌ PDF template rendering failed:", e)
         sys.exit(2)
@@ -292,15 +378,19 @@ def section_to_json(sec: dict) -> dict:
 
 
 def render_json(
-    report_sec_data: list, workflow: dict, out_report_path: str | Path
+    report_sec_data: list,
+    workflow: dict,
+    out_report_path: str | Path,
+    language: str = DEFAULT_LANGUAGE,
 ):
     """Render the structured JSON report (json mode).
 
-    Produces a single qc_report.json with a top-level ``workflow`` dict (parameters
-    and run metadata) and a ``sections`` list mirroring the report structure, with
-    every plot embedded as a raw Plotly spec and every table as row data. The
-    footer (logo) and the duplicate workflow-parameters section are omitted - the
-    parameters live under the top-level ``workflow`` key instead.
+    Produces a single qc_report.json with a top-level ``language`` code, a
+    ``workflow`` dict (parameters and run metadata) and a ``sections`` list
+    mirroring the report structure, with every plot embedded as a raw Plotly spec
+    and every table as row data. The footer (logo) and the duplicate
+    workflow-parameters section are omitted - the parameters live under the
+    top-level ``workflow`` key instead.
     """
     exclude_ids = {"footer", "workflowParams"}
     json_sections = [
@@ -309,7 +399,7 @@ def render_json(
         if sec.get("id") not in exclude_ids
     ]
 
-    payload = {"workflow": workflow, "sections": json_sections}
+    payload = {"language": language, "workflow": workflow, "sections": json_sections}
 
     with open(out_report_path, "w", encoding="utf-8") as output_file:
         json.dump(payload, output_file, indent=2, ensure_ascii=False)
@@ -407,7 +497,8 @@ def json_fig_to_img(json_path: str, group: bool = False) -> str:
 
 
 def _render_anomaly_page(
-    samples: list, scores: list, bar_colors: list, offset, xmax: float
+    samples: list, scores: list, bar_colors: list, offset, xmax: float,
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Rasterise one page of the anomaly figure to a base64 <img> (pdf only).
 
@@ -453,10 +544,17 @@ def _render_anomaly_page(
                 x=offset, line_width=1, line_dash="dash", line_color="red",
                 row=1, col=c + 1,
             )
-        fig.update_xaxes(title_text="|scores|", range=[0, xmax], row=1, col=c + 1)
+        fig.update_xaxes(
+            title_text=t("plot.anomaly.xaxis", language), range=[0, xmax],
+            row=1, col=c + 1,
+        )
 
     # Legend proxies (the real bars carry a per-bar colour array and draw no legend).
-    for cls, color in {"Anomaly": "red", "non-Anomaly": "blue"}.items():
+    anomaly_legend = {
+        t("plot.anomaly.legend.anomaly", language): "red",
+        t("plot.anomaly.legend.non_anomaly", language): "blue",
+    }
+    for cls, color in anomaly_legend.items():
         fig.add_trace(
             go.Bar(y=[None], x=[None], orientation="h", marker_color=color,
                    name=cls, legendgroup=cls, showlegend=True),
@@ -466,7 +564,7 @@ def _render_anomaly_page(
     # tickmode/dtick force one tick per sample (Plotly otherwise thins them, hiding
     # samples); automargin grows the left margin to fit the sample labels.
     fig.update_yaxes(tickmode="linear", dtick=1, automargin=True)
-    fig.update_yaxes(title_text="sample", row=1, col=1)
+    fig.update_yaxes(title_text=t("plot.anomaly.yaxis", language), row=1, col=1)
     fig.update_layout(
         width=ANOM_WIDTH_PX, height=height, template="ggplot2",
         font={"size": ANOM_FONT_PX}, showlegend=True,
@@ -480,7 +578,7 @@ def _render_anomaly_page(
     return f'<img src="data:image/png;base64,{b64}" alt="figure" />'
 
 
-def paginate_anomaly_figure(json_path: str) -> list:
+def paginate_anomaly_figure(json_path: str, language: str = DEFAULT_LANGUAGE) -> list:
     """Split the anomaly figure into fixed-size page images for the pdf (constant font).
 
     The shared ao_plot.json holds every sample as one ordered bar trace. Rather than
@@ -522,6 +620,8 @@ def paginate_anomaly_figure(json_path: str) -> list:
         if not samples:
             return [json_fig_to_img(json_path)]
 
+        # (language flows into every page render below)
+
         numeric_x = [v for v in scores if isinstance(v, (int, float))]
         upper = max(numeric_x + ([offset] if offset is not None else [0.0]))
         xmax = upper * 1.08 if upper > 0 else 1.0
@@ -533,7 +633,7 @@ def paginate_anomaly_figure(json_path: str) -> list:
             images.append(
                 _render_anomaly_page(
                     samples[start:end], scores[start:end],
-                    bar_colors[start:end], offset, xmax,
+                    bar_colors[start:end], offset, xmax, language,
                 )
             )
         return images
@@ -753,6 +853,7 @@ def add_anomaly_section(
     title: str,
     path: str | Path,
     description: str = None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> list:
     """Add the anomaly-detection section, paginated across pages for the pdf.
 
@@ -780,7 +881,7 @@ def add_anomaly_section(
         # template and json exporter do not know the paginated type).
         html_list = [
             {"plot_html": img, "plot_path": path, "plot_name": f"plot_{id}_{idx}"}
-            for idx, img in enumerate(paginate_anomaly_figure(path))
+            for idx, img in enumerate(paginate_anomaly_figure(path, language))
         ]
         section_type = "plot-paginated"
     else:
@@ -878,6 +979,7 @@ def generate_subsection_list(
     table_paths: Optional[List[str]] = None,
     table_titles: Optional[List[str]] = None,
     sub_descr_dict: Optional[Dict[str, str]] = None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> List[Dict]:
     """A function generating a list of subsections for report section, with associated data.
     Data are dynamically mapped to a specific subsection, based on a current subsection_list element,
@@ -895,11 +997,15 @@ def generate_subsection_list(
         List[Dict]: A list of dictionaries with defined structure and data for subsections of specific report section
     """
 
+    # Fixed subsection titles, localised from the catalog. "sample" is included so
+    # the missing-data per-sample subsection is fully translated rather than built
+    # from a prefix (its english value is the same "... per sample" phrase).
     TITLE_MAP = {
-        "area_plot":      "PCA (general): Area plot",
-        "PC_KW":          "PCA: Kruskal‑Wallis test results for each column",
-        "scatter_matrix": "PCA: scatter matrix for each column",
-        "probe":          "Heatmap showing missing (NaN) values",
+        "area_plot":      t("title.area_plot", language),
+        "PC_KW":          t("title.PC_KW", language),
+        "scatter_matrix": t("title.scatter_matrix", language),
+        "probe":          t("title.probe", language),
+        "sample":         t("title.sample", language),
     }
 
     # --- legacy shim: convert table_paths + table_titles -> tables ----
@@ -1205,7 +1311,7 @@ def add_section_with_subs(
 def main():
     global OUTPUT_FORMAT
 
-    if len(sys.argv) != 19:
+    if len(sys.argv) != 20:
 
         # sys.argv[0] is the script name itself
         print("Script name:", sys.argv[0])
@@ -1232,7 +1338,8 @@ def main():
                 <epi_age_paths: str|Path> \
                 <unique_ctrl_probe_types: str> \
                 <output_format: html|pdf|json> \
-                <pdf_template: str|Path>"
+                <pdf_template: str|Path> \
+                <report_language: en|pl>"
         )
         sys.exit(1)
 
@@ -1257,6 +1364,7 @@ def main():
     unique_ctrl_probe_types = sys.argv[16]
     output_format = sys.argv[17].strip().lower()
     pdf_template_path = sys.argv[18]
+    report_language = sys.argv[19].strip().lower()
 
     if output_format not in ("html", "pdf", "json"):
         print(
@@ -1264,6 +1372,15 @@ def main():
         )
         sys.exit(1)
     OUTPUT_FORMAT = output_format
+
+    # Unknown codes fall back to the default rather than aborting: t() also falls
+    # back per-key, so a bad code degrades to English instead of crashing the report.
+    if report_language not in LANGUAGES:
+        print(
+            f"⚠️  Unknown report_language '{report_language}'. "
+            f"Falling back to '{DEFAULT_LANGUAGE}'."
+        )
+        report_language = DEFAULT_LANGUAGE
 
     print("Arguments:")
     for i, arg in enumerate(sys.argv[1:], start=1):
@@ -1319,7 +1436,9 @@ def main():
     # cannot be patched that way, so for pdf we resolve those fields now - this is the
     # final step, so the values are accurate to within the closing publish (~1s).
     if OUTPUT_FORMAT == "pdf":
-        flat_config_ordered = finalize_static_workflow(flat_config_ordered, config)
+        flat_config_ordered = finalize_static_workflow(
+            flat_config_ordered, config, report_language
+        )
 
     # curr_datetime = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     curr_datetime = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -1329,10 +1448,10 @@ def main():
     report_sections.append(
         {
             "id": "qcSummary",
-            "title": "Data QC - summary",
+            "title": t("section.qc.title", report_language),
             "type": "table-rows",
             "data": qc_summary,
-            "description": 'This section contains a table with QC statistics generated for provided IDAT files using SeSAME R package. For detailed explanations, refer to <a href="https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/QC.html">SeSAME documentation</a>.',
+            "description": t("section.qc.desc", report_language),
             "filename": "qc_summary",
         }
     )
@@ -1341,84 +1460,10 @@ def main():
         ctrl_fluorescence_plot_paths = ctrl_fluorescence_plot_paths.split(",")
         unique_ctrl_probe_types = sorted(unique_ctrl_probe_types.split(","))
 
+        # Per-probe-type blurbs, localised from the catalog (keyed by the exact
+        # probe-type names present in this run).
         CTRL_DESC = {
-            "STAINING": """
-                <p><b>STAINING controls (sample-independent)</b> verify the fluorescent staining of
-                probes after single‑base extension.<br><i>Expected</i>: a high signal in the
-                Cy3/Cy5 channel depending on colour balance.</p>
-            """,
-            "EXTENSION": """
-                <p><b>EXTENSION controls (sample-independent)</b> allow to check the performance of the single‑base extension
-                step.<br><i>Expected</i>: a clear, high signal indicating the polymerase and dNTPs worked
-                correctly.</p>
-            """,
-            "TARGET_REMOVAL": """
-                <p><b>TARGET REMOVAL controls (sample-independent)</b> measure residual signal after the
-                stripping step.<br><i>Expected</i>: very low intensity (near background).</p>
-            """,
-            "HYBRIDIZATION": """
-                <p><b>HYBRIDIZATION controls (sample-independent)</b> use synthetic targets instead of amplified DNA to confirm the
-                entire assay workflow.<br><i>Expected</i>: moderate to high signal.</p>
-            """,
-            "RESTORATION": """
-                <p><b>RESTORATION controls (sample-independent, FFPE‑specific)</b> assess the effectiveness of
-                the DNA restoration step in Infinium HD FFPE protocol.<br><i>Expected</i>: high signal suggesting successful repair of
-                FFPE‑derived DNA.</p>
-            """,
-            "NORM": """
-                <p><b>NORM controls (normalization control probe pairs, sample-independent)</b> 
-                target non-CpG regions within housekeeping genes and are 
-                used to measure dye performance and 
-                color channel balance. For the Green channel, 
-                CG controls values are used; for the Red 
-                channel, AT controls values are used. 
-                <br><i>Expected</i>: if there is no dye-bias, the intensity values 
-                from the two probes of each pair would be 
-                expected to be the same with a ratio close 
-                to 1</p>
-            """,
-            "BISULFITE_CONVERSION_I": """
-                <p><b>BISULFITE_CONVERSION_I controls (sample-dependent)</b> 
-                assess the efficiency of bisulfite conversion of the input DNA
-                using Infinium I probe design and allele-specific single 
-                base extension
-                <br><i>Expected</i>: High signal from converted 
-                (C→T) probes and low signal from unconverted (C) 
-                probes, indicating successful conversion. </p>
-            """,
-            "BISULFITE_CONVERSION_II": """
-            <p><b>BISULFITE_CONVERSION_II controls (sample-dependent)</b> 
-                assess the efficiency of bisulfite conversion of the input DNA
-                using Infinium II probe design and allele-specific single 
-                base extension
-                <br><i>Expected</i>: High signal for probes that 
-                target converted cytosines (C→T) and low signal 
-                for unconverted Cs. Good conversion efficiency 
-                results in high contrast.</p>
-            """,
-            "SPECIFICITY_I": """
-            <p><b>SPECIFICITY_I controls (sample-dependent)</b> 
-                are used to track the specificity of allele-specific extension for Infinium I probes
-                <br><i>Expected</i>: High signal for matched probes; low or no signal for mismatched probes. Large signal separation is desired.</p>
-
-            """,
-            "SPECIFICITY_II": """
-            <p><b>SPECIFICITY_II controls (sample-dependent)</b> 
-                are used to track the specificity of allele-specific extension for Infinium II probes
-                <br><i>Expected</i>: High signal for matched probes; low or no signal for mismatched probes. Large signal separation is desired.</p>
-            """,
-            "NON-POLYMORPHIC": """
-            <p><b>NON-POLYMORPHIC controls (sample-dependent)</b> 
-                are used to compare across samples the overall performance of the assay (from amplification to detection step)
-                <br><i>Expected</i>: Consistently high signal across samples, indicating robust assay performance.</p>
-            """,
-            "NEGATIVE": """
-            <p><b>NEGATIVE controls (sample-dependent)</b> 
-                are randomly permutated sequences that should not hybridize to the genomic DNA.
-                Their mean signal defines the background signal in the analysis.
-                <br><i>Expected</i>: Low signal near background. Elevated signal may indicate 
-                non-specific binding or contamination.</p>
-            """
+            p: t(f"ctrl.desc.{p}", report_language) for p in unique_ctrl_probe_types
         }
 
         ctrl_fluorescence_subsections = generate_subsection_list(
@@ -1427,58 +1472,26 @@ def main():
             plot_paths=ctrl_fluorescence_plot_paths,
             table_paths=None,
             title_prefix=None,
-            sub_descr_dict=CTRL_DESC
+            sub_descr_dict=CTRL_DESC,
+            language=report_language,
         )
 
         report_sections = add_section_with_subs(
             report_sections,
             id="ctrlFluorescence",
-            title="Control probe fluorescence plots",
+            title=t("section.ctrl.title", report_language),
             paths="",  # ignored since subs exist
             subsections=ctrl_fluorescence_subsections,
-            description="""
-            This section contains control probe 
-                fluorescence plots showing the intensity at 
-                    different types of control probes present 
-                    at Illumina microarrays: 
-                    <ul>
-                    <li><b>Sample-independent controls:</b>: the controls not dependent on sample quality which are used to evaluate steps of the laboratory protocol (in terms of specific reagents and BeadChip itself), such as hybridization and staining</li>
-                    <ul>
-                    <li>STAINING</li>
-                    <li>EXTENSION</li>
-                    <li>TARGET_REMOVAL</li>
-                    <li>HYBRIDIZATION</li>
-                    <li>RESTORATION</li>
-                    <li>NORM</li>
-                    </ul>
-                    <li><b>Sample-dependent controls:</b> probes used to assess sample DNA quality and the assay performance across samples</li>
-                    <ul>
-                    <li>BISULFITE_CONVERSION_I</li>
-                    <li>BISULFITE_CONVERSION_II</li>
-                    <li>SPECIFICITY_I</li>
-                    <li>SPECIFICITY_II</li>
-                    <li>NON-POLYMORPHIC</li>
-                    <li>NEGATIVE</li>
-                    </ul>
-                    </ul>
-                <br>If you need further details on how to interpret the results, please see: 
-                    <ul>
-                    <li><a href='https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/infinium_assays/infinium_hd_methylation/beadarray-controls-reporter-user-guide-1000000004009-00.pdf'>Illumina BeadArray Reporter Software Guide</a></li>
-                    <li><a href='https://support.illumina.com/content/dam/illumina-support/courses/eval-inf-controls/story_content/external_files/Infinium_Controls_Training_Guide.pdf'>Infinium Controls Training Guide</a></li>
-                    <li><a href='https://support-docs.illumina.com/ARR/Inf_HD_Methylation/Content/ARR/Methylation/SystemControlsIntro_fINF_mMeth.htm'>Infinium HD Methylation Assay System Controls official documentation</a></li>
-                    <li><a href='https://support-docs.illumina.com/ARR/Inf_HD_Methylation/Content/ARR/Methylation/ControlBeadTypeIDs_fINF_mMeth.htm'>Infinium official Controls Table</a> (with useful tips on signal interpretation)</li>
-                    <li>Xu, Z., Langie, S.A.S., De Boever, P. et al. RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip. BMC Genomics 18, 4 (2017). https://doi.org/10.1186/s12864-016-3426-3</li>
-                    </ul>
-                """,
+            description=t("section.ctrl.desc", report_language),
         )
 
     report_sections.append(
         {
             "id": "preprocessingSummary",
-            "title": "Data preprocessing - summary",
+            "title": t("section.preprocess.title", report_language),
             "type": "table",
             "data": preprocess_summary,
-            "description": "This section contains the summary of data preprocessing with SeSAME R package. For the details on the meaning of specific prep codes, please refer to <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/sesame.html'>SeSAME R package documentation</a>.",
+            "description": t("section.preprocess.desc", report_language),
             "filename": "preprocessing_summary",
         }
     )
@@ -1486,10 +1499,10 @@ def main():
     report_sections.append(
         {
             "id": "imputationSummary",
-            "title": "Data imputation - summary",
+            "title": t("section.impute.title", report_language),
             "type": "table",
             "data": imputation_summary,
-            "description": "This section contains imputation statistics after handling missing values based on user-specified thresholds and imputation methods",
+            "description": t("section.impute.desc", report_language),
             "filename": "imputation_summary",
         }
     )
@@ -1498,9 +1511,10 @@ def main():
         report_sections = add_anomaly_section(
             report_sections,
             "anomalyDetection",
-            "Anomaly detection plot",
+            t("section.anomaly.title", report_language),
             ao_plot_path,
-            description="This section contains a plot visualising the identifiication of anomalies using Isolation Forest algorithm (for details see: <a href='https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html'>scikit-learn documentation</a>). Each sample is represented by one bar and a user-specified threshold is represented by red dashed line. Samples with bars exceeding threshold line should be considered as anomalies. ",
+            description=t("section.anomaly.desc", report_language),
+            language=report_language,
         )
 
     if "no_sex_inference.txt" not in sex_inference_path:
@@ -1509,10 +1523,10 @@ def main():
         report_sections.append(
             {
                 "id": "sexInference",
-                "title": "Sex inference",
+                "title": t("section.sex.title", report_language),
                 "type": "table-rows",
                 "data": sex_inference_data,
-                "description": "This section contains the results of sex inference using SeSAME method based on curated X-linked probes and Y chromosome probes (excluding pseudo-autosomal regions and XCI escapes - see <a href='https://www.bioconductor.org/packages/devel/bioc/vignettes/sesame/inst/doc/inferences.html'>SeSAME documentation</a> for details) and the comparison of results with sex declared in sample sheet. ",
+                "description": t("section.sex.desc", report_language),
                 "filename": "sex_inference_results",
             }
         )
@@ -1522,51 +1536,51 @@ def main():
         subsection_list=["Sentrix_ID", "Sentrix_Position"],
         table_paths=None,
         plot_paths=batch_effect_plot_paths,
-        title_prefix="Mean beta per ",
-        sub_descr_dict=None
+        title_prefix=t("prefix.batch", report_language),
+        sub_descr_dict=None,
+        language=report_language,
     )
 
     report_sections = add_section_with_subs(
         report_sections,
         id="batchEffect",
-        title="Batch effect evaluation",
+        title=t("section.batch.title", report_language),
         paths="",  # ignored since subs exist
         subsections=batch_subsections,
-        description="This section contains batch effect evaluation plots showing mean methylation level per Sentrix_ID or Sentrix_Position across all CpG sites. Sentrix_IDs or Sentrix_Positions with mean methylation levels significantly deviating from the others are the potential source of batch effect and their exclusion from analysis should be considered.",
+        description=t("section.batch.desc", report_language),
     )
 
     report_sections = add_plot_section(
         report_sections,
         "betaDistribution",
-        "Beta distribution plot",
+        t("section.beta.title", report_language),
         beta_distr_plot_path,
-        description="This section contains a plot showing the kernel density (KDE) distribution of beta values for each sample across randomly selected n CpGs (CpG count selected by the user, default: 10k). Samples with a distribution significantly deviating from the others may be potential outliers.",
+        description=t("section.beta.desc", report_language),
     )
 
     # list.append returns None, so build the combined list explicitly - otherwise
     # the missing-data section would receive no plot paths at all.
     missing_data_plot_paths = nan_distr_per_sample_paths + [heatmap_path]
 
+    # "sample" and "probe" both resolve to fixed, localised titles via the
+    # subsection TITLE_MAP, so title_prefix is unused here (kept for API symmetry).
     missing_data_subsections = generate_subsection_list(
         main_id="missingData",
         subsection_list=["sample", "probe"],
         plot_paths=missing_data_plot_paths,
         table_paths=None,
-        title_prefix="Missing data (NaN) distribution per ",
-        sub_descr_dict=None
+        title_prefix=None,
+        sub_descr_dict=None,
+        language=report_language,
     )
 
     report_sections = add_section_with_subs(
         report_sections,
         id="missingData",
-        title="Missing data evaluation",
+        title=t("section.missing.title", report_language),
         paths="",  # ignored since subs exist
         subsections=missing_data_subsections,
-        description="This section contains plots allowing to identify samples and probes with high fraction of missing values:\
-            <ul>\
-                <li>a barplots representing the percentage of missing (NaN) probes per sample</li>\
-                <li>a heatmap representing the distribution of missing (NaN) values across samples (in columns) and randomly selected n probes (in rows; n specified by the user)</li>\
-            </ul>",
+        description=t("section.missing.desc", report_language),
     )
 
     pca_kruskal_paths = pca_kruskal_paths.split(",")
@@ -1585,8 +1599,9 @@ def main():
                 subsection_list=pca_subsection_list,
                 plot_paths=pca_plot_paths,
                 table_paths=None,
-                title_prefix="PCA: ",
-                sub_descr_dict=None
+                title_prefix=None,
+                sub_descr_dict=None,
+                language=report_language,
             )
 
             pca_descr = ""
@@ -1599,7 +1614,7 @@ def main():
                 colname = table_data[0]["Column"]
                 table_group_data.append(
                     {
-                        "table_title": f"Kruskal-Wallis for {colname}",
+                        "table_title": t("table.pca_kw", report_language, col=colname),
                         "data": table_data,
                         "filename": f"PCA_kruskal_{colname}",
                     }
@@ -1607,7 +1622,7 @@ def main():
 
         pca_kw_subsection = {
             "id": "pca_PC_KW",
-            "title": "PCA: Kruskal-Wallis test results for each column",
+            "title": t("section.pca.kw_group_title", report_language),
             "type": "table-row-group",
             "data_list": table_group_data,
         }
@@ -1615,21 +1630,14 @@ def main():
         pca_subsections.append(pca_kw_subsection)
 
         if table_group_data:
-            pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-                <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-                <li>results of Kruskal-Wallis test for each principal component (if there are at list 2 unique values in a selected column)</li>\
-                <li>scatter matrix plot for first n components (n specified by the user)</li>\
-                </ul>"
+            pca_descr = t("section.pca.desc_with_kw", report_language)
         else:
-            pca_descr = "This section contains the results of PCA analysis divided into the following subsections:<ul>\
-                <li>an area cumulative variance plot for all principal components included in PCA analysis (number of components specified by the user)</li>\
-                <li>scatter matrix plot for first n components (n specified by the user)</li>\
-                </ul>"
+            pca_descr = t("section.pca.desc_no_kw", report_language)
 
         report_sections = add_section_with_subs(
             report_sections,
             id="pca",
-            title="PCA",
+            title=t("section.pca.title", report_language),
             paths="",  # ignored since subs exist
             subsections=pca_subsections,
             description=pca_descr,
@@ -1648,7 +1656,7 @@ def main():
                 {
                     "path":  tpath,                               # file to load
                     "filename": Path(tpath).with_suffix(".csv").name,  # download name
-                    "table_title":  "Post‑hoc test results (epigenetic age acceleration)"
+                    "table_title":  t("table.epi_posthoc", report_language)
                 }
                 for tpath in epi_age_table_paths
             ]
@@ -1667,13 +1675,13 @@ def main():
             if summary_data:
                 epi_age_subsections.append({
                     "id": "epiAge_summary",
-                    "title": "Summary: epigenetic age estimates and acceleration per sample",
+                    "title": t("section.epi.summary_title", report_language),
                     "plot_paths": [],
                     "tables": [
                         {
                             "data": summary_data,
                             "filename": "epi_clocks_res",
-                            "table_title": "Epigenetic age estimates and epigenetic age acceleration (all clocks)"
+                            "table_title": t("table.epi_summary", report_language)
                         }
                     ],
                     "show_description_in_subsections": False,
@@ -1684,22 +1692,18 @@ def main():
             subsection_list=flat_config_ordered["epi_clocks"].split(","),
             plot_paths=epi_age_plot_paths,
             tables=epi_age_table_entries,
-            title_prefix="Epigenetic clock: ",
-            sub_descr_dict=None
+            title_prefix=t("prefix.epi", report_language),
+            sub_descr_dict=None,
+            language=report_language,
         )
 
         report_sections = add_section_with_subs(
             report_sections,
             id="epiAge",
-            title="Epigenetic age results",
+            title=t("section.epi.title", report_language),
             paths="",  # ignored since subs exist
             subsections=epi_age_subsections,
-            description="This section contains the results of epigenetic age inference using \
-                one or more of epigenetic clocks supported by <a href='https://github.com/yiluyucheng/dnaMethyAge'>dnaMethyAge R package</a> \
-                (see the package website for full list of clocks and publications). Each subsection contains results for one clock. \
-                For each clock, 2 types of plots are generated: <ul><li>a regression trendline of chronological and epigenetic age \
-                <ul><li>general</li><li>if Sample_Group column present in sample sheet - trendlines for specific groups and general \
-                trendline</li></ul><li>boxplots showing epigenetic age acceleration in each group (generated only if Sample_Group column present in sample sheet)</li></ul>",
+            description=t("section.epi.desc", report_language),
         )
 
     # NOTE: the workflow-parameters table, footer and the final render must run for
@@ -1708,9 +1712,9 @@ def main():
     report_sections.append(
         {
             "id": "workflowParams",
-            "title": "Workflow parameters",
+            "title": t("section.params.title", report_language),
             "type": "table",
-            "data": flat_config_ordered,
+            "data": localize_params_table(flat_config_ordered, report_language),
             "filename": f"methylarrayqc_workflow_params_{curr_datetime}",
         }
     )
@@ -1733,6 +1737,7 @@ def main():
             report_sec_data=report_sections,
             workflow=flat_config_ordered,
             out_report_path=output_report_path,
+            language=report_language,
         )
     elif OUTPUT_FORMAT == "pdf":
         # report_sections already carry the figures as static <img> (json_fig_to_html
@@ -1742,12 +1747,14 @@ def main():
             report_sec_data=report_sections,
             in_template_path=pdf_template_path,
             out_report_path=output_report_path,
+            language=report_language,
         )
     else:  # html (default)
         render_and_minify(
             report_sec_data=report_sections,
             in_template_path=input_template_path,
             out_report_path=output_report_path,
+            language=report_language,
         )
 
 

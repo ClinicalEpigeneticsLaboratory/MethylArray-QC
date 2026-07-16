@@ -14,13 +14,14 @@ process BATCH_EFFECT {
     path sample_sheet_path
     each column
     path n_rand_cpgs_path
+    val language
 
     output:
     path "${column}_*.json", arity: "1..*"
 
     script:
     """
-    batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column} ${n_rand_cpgs_path}
+    batch_effect.py ${imputed_mynorm_path} ${sample_sheet_path} ${column} ${n_rand_cpgs_path} ${language}
     """
 
     stub:

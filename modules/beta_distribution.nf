@@ -7,6 +7,7 @@ process BETA_DISTRIBUTION {
     input:
     path imputed_mynorm_path
     val n_rand_cpgs
+    val language
 
     output:
     path "beta_distribution.json", emit: beta_distr_plot
@@ -14,7 +15,7 @@ process BETA_DISTRIBUTION {
 
     script:
     """
-    beta_distribution.py ${imputed_mynorm_path} ${n_rand_cpgs}
+    beta_distribution.py ${imputed_mynorm_path} ${n_rand_cpgs} ${language}
     """
 
     stub:

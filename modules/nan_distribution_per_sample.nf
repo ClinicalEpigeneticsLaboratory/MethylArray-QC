@@ -7,13 +7,14 @@ process NAN_DISTRIBUTION_PER_SAMPLE {
     input:
     path qc_path
     path sample_sheet_path
+    val language
 
     output:
     path "nan_distribution_per_sample_*.json", arity: "1..*"
 
     script:
     """
-    nan_distribution_per_sample.py ${qc_path} ${sample_sheet_path}
+    nan_distribution_per_sample.py ${qc_path} ${sample_sheet_path} ${language}
     """
 
     stub:

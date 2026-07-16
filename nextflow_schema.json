@@ -220,6 +220,18 @@
                     "errorMessage": "output_format must be one of: html, pdf or json",
                     "fa_icon": "fas fa-file-export"
                 },
+                "report_language": {
+                    "type": "string",
+                    "enum": [
+                        "en",
+                        "pl"
+                    ],
+                    "default": "en",
+                    "description": "Report language: en (English, default) or pl (Polish). Localises all reader-facing report text - section titles, descriptions, table headings and the labels baked into every plot - in all three output formats. Fixed at launch (plot labels are baked in as each module runs).",
+                    "help_text": "Choose the language of the generated report (interactive HTML, static PDF and structured JSON): en (English) or pl (Polish). The language is applied once for the whole run; re-rendering an existing run in another language requires re-running the pipeline.",
+                    "errorMessage": "report_language must be one of: en or pl",
+                    "fa_icon": "fas fa-language"
+                },
                 "infer_epi_age": {
                     "type": "boolean",
                     "default": true,

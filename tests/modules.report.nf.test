@@ -55,6 +55,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -97,6 +98,7 @@ nextflow_process {
                 input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II,NON_POLYMORPHIC"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -133,6 +135,7 @@ nextflow_process {
                 input[15] = "BISULFITE_CONVERSION_I,SPECIFICITY_I"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -169,6 +172,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -205,12 +209,141 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
 
         then {
             assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // report_language (input[18])
+    //
+    // Stub mode does not run bin/report.py, so these cases cover the wiring
+    // only: that any language value reaches the process and still yields the
+    // expected output. The translations themselves (key parity, placeholders,
+    // markup) are verified statically by `make i18n_check`, and report.py's
+    // unknown-locale fallback lives in the script block that the stub replaces.
+    // ----------------------------------------------------------------
+
+    test("report_language: 'pl' is accepted and emits the usual qc_report.html") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "pl"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+            assert process.out[0][0].toString().endsWith("qc_report.html")
+        }
+    }
+
+    test("report_language: output filename is language-independent ('pl' + pdf)") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "pdf"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "pl"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0][0].toString().endsWith("qc_report.pdf")
+        }
+    }
+
+    // The schema enum rejects unknown locales at launch, and report.py falls back
+    // to English at run time; the process itself must stay language-agnostic and
+    // never gate on the value it forwards.
+    test("report_language: an unknown locale does not break the process wiring") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/no_ctrl_fluorescence.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "de"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0][0].toString().endsWith("qc_report.html")
         }
     }
 
@@ -245,6 +378,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }

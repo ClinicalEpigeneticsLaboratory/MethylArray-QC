@@ -7,6 +7,7 @@ process ANOMALY_DETECTION {
     input:
     path mynorm
     val contamination
+    val language
 
     output:
     path "ao_results.parquet", emit: ao_results
@@ -14,7 +15,7 @@ process ANOMALY_DETECTION {
 
     script:
     """
-    anomaly_detection.py ${mynorm} ${contamination}
+    anomaly_detection.py ${mynorm} ${contamination} ${language}
     """
 
     stub:

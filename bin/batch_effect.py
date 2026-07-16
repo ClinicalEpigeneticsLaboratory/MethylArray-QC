@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plot_export_utils import export_decorated_fig_with_custom_name
+from i18n import t
 from typing import Optional
 
 def get_single_fig(
@@ -18,6 +19,7 @@ def get_single_fig(
     filtered_mynorm: pd.DataFrame,
     row_num: int,
     column: str,
+    language: str = "en",
 ) -> Optional[go.Figure]:
     """A function generating a single batch effect evaluation figure
 
@@ -26,10 +28,11 @@ def get_single_fig(
         filtered_mynorm (pd.DataFrame): imputed mynorm containing only randomly selected n CpGs
         row_num (int): currently processed number of plot row (set of column items)
         column (str): currently processed column
+        language (str): report language ("en"/"pl") for the mean-beta axis label
 
     Returns:
         go.Figure | None: a single figure for specific column and set of column items,
-            or None if there is no data to plot or all values are NaN (which happens 
+            or None if there is no data to plot or all values are NaN (which happens
             when no valid Sentrix_IDs were found for the given row_num and column)
     """
     ids_to_plot = list(sample_sheet.loc[sample_sheet["Plot_num"] == row_num, column])
@@ -53,19 +56,23 @@ def get_single_fig(
 
         grouped_row_reset = grouped_row.reset_index(names="CpG")
 
+        # The mean-beta column name doubles as the y-axis title, so it is localised
+        # once and reused everywhere it is referenced below.
+        mean_beta_label = t("plot.batch.value_name", language)
+
         # Melt the grouped row into long format for plotly
         grouped_row_melted = (
             grouped_row_reset
-            .melt(id_vars="CpG", var_name=column, value_name="Mean beta value")
-            .assign(**{"Mean beta value": lambda df: df["Mean beta value"].round(4)})
+            .melt(id_vars="CpG", var_name=column, value_name=mean_beta_label)
+            .assign(**{mean_beta_label: lambda df: df[mean_beta_label].round(4)})
         )
-        grouped_row_melted["Mean beta value"] = grouped_row_melted["Mean beta value"].astype(np.float32)
+        grouped_row_melted[mean_beta_label] = grouped_row_melted[mean_beta_label].astype(np.float32)
 
-        if not grouped_row_melted["Mean beta value"].notna().any():
+        if not grouped_row_melted[mean_beta_label].notna().any():
             print(f"All mean beta values are NaN for {column} row {row_num}. Skipping plot.")
             return None
 
-        fig = px.box(grouped_row_melted, x=column, y="Mean beta value")
+        fig = px.box(grouped_row_melted, x=column, y=mean_beta_label)
         fig.update_layout(boxgap=0.05)
         fig.update_xaxes(tickangle=90)
     else:
@@ -78,7 +85,8 @@ def get_all_figs(
     path_to_imputed_mynorm: str,
     path_to_sample_sheet: str,
     column: str,
-    path_to_n_rand_cpgs: str
+    path_to_n_rand_cpgs: str,
+    language: str = "en",
 ) -> None:
     """A function generating all batch effect figures, in a loop
 
@@ -87,6 +95,7 @@ def get_all_figs(
         path_to_sample_sheet (str): path to sample sheet
         column (str): currently processed column
         path_to_n_rand_cpgs (str): path to a file with a list of randomly saelected n CpGs used in this analysis and for beta distribution plot
+        language (str): report language ("en"/"pl") for the mean-beta axis label
     """
     # Load data
     with open(path_to_n_rand_cpgs, "r", encoding="utf-8") as f:
@@ -116,6 +125,7 @@ def get_all_figs(
             filtered_mynorm = filtered_imp_mynorm,
             row_num=row_num,
             sample_sheet=sample_sheet,
+            language=language,
         )
 
         if fig is not None:
@@ -129,10 +139,11 @@ def get_all_figs(
 
 
 def main():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print(
             "Usage: python batch_effect.py <path_to_imputed_mynorm: str> \
-                <path_to_sample_sheet: str> <column: str> <n_rand_cpgs_path: str>"
+                <path_to_sample_sheet: str> <column: str> <n_rand_cpgs_path: str> \
+                <report_language: en|pl>"
         )
         sys.exit(1)
 
@@ -140,12 +151,14 @@ def main():
     sample_sheet_path = sys.argv[2]
     col = str(sys.argv[3])
     n_rand_cpgs_path = sys.argv[4]
+    language = sys.argv[5]
 
     get_all_figs(
         path_to_imputed_mynorm=imputed_mynorm_path,
         path_to_sample_sheet=sample_sheet_path,
         column=col,
-        path_to_n_rand_cpgs=n_rand_cpgs_path
+        path_to_n_rand_cpgs=n_rand_cpgs_path,
+        language=language,
     )
 
 

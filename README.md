@@ -107,6 +107,9 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 - **Control intensity plots**:
    - `params.ctrl_intens_metric`: an intensity value to be logarithmed and shown on plots - either max (maximum intensity) or total (total intensity, default)
    - `params.ctrl_intens_cols`: grouping columns for control intensity plots (Sample_Name, Sample_Group, Sentrix_ID and/or Sentrix_Position)
+- **Report**:
+   - `params.output_format`: report output format - `html` (interactive `qc_report.html`, default), `pdf` (static `qc_report.pdf`) or `json` (structured `qc_report.json`)
+   - `params.report_language`: report language - `en` (English, default) or `pl` (Polish). Localises all reader-facing report text (section titles, descriptions, table headings) and the labels baked into every plot, in all three output formats. The language is fixed at launch: because each plot's labels are written when its module runs, re-rendering an existing run in another language requires re-running the pipeline.
 
 In case you need additional information on parameters, run the following command:
 
@@ -151,7 +154,9 @@ nextflow run main.nf -params-file params.json
   "infer_epi_age": true,
   "epi_clocks": "HannumG2013,HorvathS2013",
   "ctrl_intens_metric": "total",
-  "ctrl_intens_cols": "Sentrix_ID,Sentrix_Position"
+  "ctrl_intens_cols": "Sentrix_ID,Sentrix_Position",
+  "output_format": "html",
+  "report_language": "en"
 }
 ```
 

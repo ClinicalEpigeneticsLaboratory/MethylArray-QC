@@ -74,7 +74,7 @@ workflow {
                 it.join(',')
             }
 
-        ctrl_fluorescence_plots_ch_out = CTRL_FLUORESCENCE_PLOTS(ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path, sample_sheet_abs_path, unique_grouping_cols, unique_probe_types)
+        ctrl_fluorescence_plots_ch_out = CTRL_FLUORESCENCE_PLOTS(ctrl_fluorescence_data_ch_out.ctrl_fluorescence_data_path, sample_sheet_abs_path, unique_grouping_cols, unique_probe_types, params.report_language)
         ctrl_fluorescence_plot_paths = ctrl_fluorescence_plots_ch_out
             .collect()
             .map {
@@ -100,7 +100,7 @@ workflow {
     }
 
     if(processed_samples_count > 10) {
-        ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination)
+        ao_results = ANOMALY_DETECTION(impute_ch_out.imputed_mynorm, params.contamination, params.report_language)
         ao_plot_path = ao_results.ao_plot
     } else {
         ao_plot_path = Channel.value("$projectDir/assets/no_ao_plot.txt")
@@ -113,9 +113,9 @@ workflow {
         sex_inference_path = Channel.value("$projectDir/assets/no_sex_inference.txt")
     }
 
-    beta_distr_ch_out = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_rand_cpgs)
+    beta_distr_ch_out = BETA_DISTRIBUTION(impute_ch_out.imputed_mynorm, params.n_rand_cpgs, params.report_language)
 
-    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"], beta_distr_ch_out.n_rand_cpgs_path)
+    batch_effect_ch_out = BATCH_EFFECT(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, ["Sentrix_ID", "Sentrix_Position"], beta_distr_ch_out.n_rand_cpgs_path, params.report_language)
 
     // batch_effect_ch_out.sentrix_id: paths to batch effect evaluation boxplots for Sentrix IDs
     // batch_effect_ch_out.sentrix_position: path to batch effect evaluation boxplots for Sentrix Position
@@ -135,7 +135,7 @@ workflow {
             it.join(',')
         }
 
-    nan_per_sample_ch_out = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path)
+    nan_per_sample_ch_out = NAN_DISTRIBUTION_PER_SAMPLE(qc_ch_out.qc_parquet, sample_sheet_abs_path, params.report_language)
     
     nan_per_sample_plot_paths = nan_per_sample_ch_out
             .collect()
@@ -143,13 +143,13 @@ workflow {
                 it.join(',')
             }
 
-    nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs)
+    nan_per_probe_plot = NAN_DISTRIBUTION_PER_PROBE(preprocess_ch_out.raw_mynorm_path, params.nan_per_probe_n_cpgs, params.report_language)
 
     if(processed_samples_count > 10) {
         // pca_ch_out.area: area plot path
         // pca_ch_out.scatter: scatter matrix plot paths
         // pca_ch_out.kruskal: Kruskal-Wallis test results
-        pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count)
+        pca_ch_out = PCA(impute_ch_out.imputed_mynorm, sample_sheet_abs_path, params.perc_pca_cpgs, params.pca_number_of_components, params.pca_columns, params.pca_matrix_PC_count, params.report_language)
         pca_plot_paths = pca_ch_out.scatter
             .merge(pca_ch_out.area)
             .collect()
@@ -173,7 +173,7 @@ workflow {
         // epi_age_res_ch_out.epi_clocks_res_parquet - epigenetic age inference results (PARQUET)
         // epi_age_res_ch_out.epi_clocks_res_json - epigenetic age inference results (JSON)
         epi_age_res_ch_out = EPIGENETIC_AGE_INFERENCE(sample_sheet_abs_path, impute_ch_out.imputed_mynorm, params.epi_clocks)
-        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List)
+        epi_age_plots_ch_out = EPIGENETIC_AGE_PLOTS(epi_age_res_ch_out.epi_clocks_res_parquet, sample_sheet_abs_path, params.epi_clocks?.split(',') as List, params.report_language)
 
         epi_age_paths = epi_age_plots_ch_out.regr
             .mix(epi_age_plots_ch_out.eaa)
@@ -222,12 +222,20 @@ workflow {
         epi_age_paths,
         unique_probe_types_str,
         params.output_format,
-        report_pdf_template_path
+        report_pdf_template_path,
+        params.report_language
     )
 
     workflow.onComplete = {
+        // Localise the run-time label and the month names in the formatted
+        // timestamps to match params.report_language (report-facing text). The
+        // pdf format computes these fields itself at generation time (see
+        // bin/report.py compute_static_run_metadata); this handler patches the
+        // html/json reports, so both paths stay consistent.
+        def reportLocale = params.report_language == 'pl' ? new java.util.Locale('pl') : java.util.Locale.ENGLISH
+        def durationLabel = params.report_language == 'pl' ? 'czas trwania' : 'duration'
         def formatter = java.time.format.DateTimeFormatter
-            .ofPattern("dd MMMM yyyy HH:mm:ss", java.util.Locale.ENGLISH)
+            .ofPattern("dd MMMM yyyy HH:mm:ss", reportLocale)
             .withZone(java.time.ZoneId.systemDefault())
         def startStr    = formatter.format(workflow.start)
         def completeStr = formatter.format(workflow.complete)
@@ -236,7 +244,7 @@ workflow {
         def m = (totalSecs % 3600).intdiv(60)
         def s = totalSecs % 60
         def durationStr     = "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}"
-        def runTimes        = "${startStr} - ${completeStr} (duration: ${durationStr})"
+        def runTimes        = "${startStr} - ${completeStr} (${durationLabel}: ${durationStr})"
         def successStr      = workflow.success ? "true" : "false"
         def exitStatusStr   = workflow.exitStatus != null ? workflow.exitStatus.toString() : "NA"
         def htmlEscape      = { String raw -> raw.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;") }

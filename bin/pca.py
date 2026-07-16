@@ -14,6 +14,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from decorators import update_and_export_plot
 from plot_export_utils import export_decorated_fig_with_custom_name
+from i18n import t
 import pingouin as pg
 #from scipy import stats
 from sklearn.decomposition import PCA
@@ -108,6 +109,7 @@ def get_area_plot(
     number_of_cpgs: int,
     perc_of_cpgs: int,
     explained_var_ratio: np.ndarray,
+    language: str = "en",
 ) -> go.Figure:
     """A function generating area plot showing explained variance for principal components
 
@@ -119,6 +121,7 @@ def get_area_plot(
             provided by user
         explained_var_ratio (np.ndarray): Ratio of explained variance \
             for each component
+        language (str): report language ("en"/"pl") for the axis/title labels
 
     Returns:
         go.Figure: area plot
@@ -147,9 +150,9 @@ def get_area_plot(
     #     hoverinfo="x+y",
     # ))
 
-    fig_area.update_xaxes(title="Principal component")
+    fig_area.update_xaxes(title=t("plot.pca.principal_component", language))
     fig_area.update_layout(
-        title_text=f"Area plot<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs})<br>with highest variance",
+        title_text=t("plot.pca.area_title", language, p=perc_of_cpgs, n=number_of_cpgs),
         margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
     return fig_area
@@ -161,6 +164,7 @@ def get_scatter_matrix_json(
     number_of_cpgs: int,
     perc_of_cpgs: int,
     column: str,
+    language: str = "en",
 ) -> None:
     """A function generating scatter matrix plot
 
@@ -194,7 +198,7 @@ def get_scatter_matrix_json(
     )
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
-        title_text=f"PCA scatter matrix - {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
+        title_text=t("plot.pca.scatter_title", language, col=column, p=perc_of_cpgs, n=number_of_cpgs),
         #margin={"l": 20, "r": 20, "t": 175, "b": 20},
         margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
@@ -210,12 +214,12 @@ def get_scatter_matrix_json(
 
 
 def main():
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 8:
         print(
             "Usage: python pca.py <path_to_imputed_mynorm: str> \
                 <path_to_sample_sheet: str> <perc_pca_cpgs: int> \
                     <pca_number_of_components: int> <pca_columns: str> \
-                        <pca_matrix_pc_count: int>"
+                        <pca_matrix_pc_count: int> <report_language: en|pl>"
         )
         sys.exit(1)
 
@@ -225,6 +229,7 @@ def main():
     pca_number_of_components = int(sys.argv[4])
     pca_columns = str(sys.argv[5]).split(sep=",")
     pca_matrix_pc_count = int(sys.argv[6])
+    language = sys.argv[7]
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -277,6 +282,7 @@ def main():
             component_names=component_col_names[0:pca_matrix_pc_count:1],
             number_of_cpgs=n_cpgs,
             perc_of_cpgs=perc_pca_cpgs,
+            language=language,
         )
 
         if sample_sheet[column].nunique() >= 2:
@@ -292,6 +298,7 @@ def main():
                 number_of_cpgs=n_cpgs,
                 number_of_pcs=pca_number_of_components,
                 perc_of_cpgs=perc_pca_cpgs,
+                language=language,
             )
 
 

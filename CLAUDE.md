@@ -14,6 +14,7 @@ make black        # Format Python code with black
 make isort        # Sort Python imports
 make pylint       # Lint Python code
 make dos2unix     # Normalize line endings in bin/
+make i18n_check   # Validate the bin/i18n.py message catalog (key/placeholder/markup parity)
 make dlint_python    # Lint Python Dockerfile with hadolint
 make dlint_r_sesame  # Lint R SeSAME Dockerfile with hadolint
 make dlint_r_clock   # Lint R clock Dockerfile with hadolint

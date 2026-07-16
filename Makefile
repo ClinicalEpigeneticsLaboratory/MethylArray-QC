@@ -1,4 +1,4 @@
-all: dos2unix black isort pylint dlint_python dlint_r
+all: dos2unix black isort pylint i18n_check dlint_python dlint_r
 
 black:
 	@echo "Code formatting"
@@ -15,6 +15,10 @@ pylint:
 dos2unix:
 	@echo "Reformatting"
 	dos2unix bin/*.py
+
+i18n_check:
+	@echo "i18n catalog QC"
+	poetry run python utils/check_i18n_catalog.py
 
 dlint_python:
 	@echo "Lint Python Dockerfile"

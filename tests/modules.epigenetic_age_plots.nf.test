@@ -34,6 +34,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 input[2] = "HannumG2013"
+                input[3] = "en"
                 """
             }
         }
@@ -58,6 +59,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 input[2] = "HorvathS2013"
+                input[3] = "en"
                 """
             }
         }
@@ -85,6 +87,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 input[2] = "HannumG2013"
+                input[3] = "en"
                 """
             }
         }
@@ -107,6 +110,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 input[2] = "HorvathS2013"
+                input[3] = "en"
                 """
             }
         }
@@ -131,6 +135,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_small.csv")
                 input[2] = "HannumG2013"
+                input[3] = "en"
                 """
             }
         }
@@ -156,6 +161,7 @@ nextflow_process {
                 input[0] = file("${projectDir}/tests/test_data/stub.parquet")
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_with_age_and_sex.csv")
                 input[2] = "HannumG2013"
+                input[3] = "en"
                 """
             }
         }

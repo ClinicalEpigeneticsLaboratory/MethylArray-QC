@@ -7,13 +7,14 @@ process NAN_DISTRIBUTION_PER_PROBE {
     input:
     path raw_mynorm_path
     val nan_per_probe_n_cpgs
+    val language
 
     output:
     path "nan_distribution_per_probe.json"
 
     script:
     """
-    nan_distribution_per_probe.py $raw_mynorm_path $nan_per_probe_n_cpgs
+    nan_distribution_per_probe.py $raw_mynorm_path $nan_per_probe_n_cpgs $language
     """
 
     stub:

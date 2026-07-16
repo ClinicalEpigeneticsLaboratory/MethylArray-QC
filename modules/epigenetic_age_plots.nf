@@ -9,6 +9,7 @@ process EPIGENETIC_AGE_PLOTS {
     path epi_age_res_path
     path sample_sheet_path
     each epi_clock
+    val language
 
     output:
     path "Regr_Age_vs_Epi_Age_${epi_clock}.json", emit: regr
@@ -17,7 +18,7 @@ process EPIGENETIC_AGE_PLOTS {
 
     script:
     """
-    epigenetic_age_plots.py ${epi_age_res_path} ${sample_sheet_path} ${epi_clock}
+    epigenetic_age_plots.py ${epi_age_res_path} ${sample_sheet_path} ${epi_clock} ${language}
     sync
     """
 

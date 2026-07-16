@@ -42,6 +42,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_ID"
                 input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
                 """
             }
         }
@@ -68,6 +69,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_Position"
                 input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
                 """
             }
         }
@@ -90,6 +92,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sample_Group"
                 input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
                 """
             }
         }
@@ -116,6 +119,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_ID"
                 input[3] = "BISULFITE_CONVERSION_II"
+                input[4] = "en"
                 """
             }
         }
@@ -138,6 +142,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_ID"
                 input[3] = "SPECIFICITY_I"
+                input[4] = "en"
                 """
             }
         }
@@ -160,6 +165,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_ID"
                 input[3] = "NON_POLYMORPHIC"
+                input[4] = "en"
                 """
             }
         }
@@ -186,6 +192,7 @@ nextflow_process {
                 input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
                 input[2] = "Sentrix_ID"
                 input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
                 """
             }
         }

@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plot_export_utils import export_decorated_fig_with_custom_name
+from i18n import t
 import pingouin as pg
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import median_absolute_error
@@ -82,22 +83,23 @@ def get_pairwise_comp_res(data: pd.DataFrame, epi_clock: str) -> pd.DataFrame:
         },
     )
 
-def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFrame = None) -> go.Figure:
+def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFrame = None, language: str = "en") -> go.Figure:
     """A function generating epigenetic age acceleration boxplot
 
     Args:
         data (pd.DataFrame): plot data used to generate boxplots
         epi_clock (str): the name of currently processed epigenetic clock
         posthoc_res (pd.DataFrame): data frame with results of post-hoc pairwise test, used to plot the results (default: None)
-        
+        language (str): report language ("en"/"pl") for the acceleration axis suffix
+
     Returns:
         go.Figure: Epigenetic age acceleration boxplot figure
     """
 
     kw_res = pg.kruskal(
         data=data,
-        dv=f"Age_Acceleration_{epi_clock}",  
-        between="Sample_Group"               
+        dv=f"Age_Acceleration_{epi_clock}",
+        between="Sample_Group"
     )
     fig = px.box(
         data,
@@ -108,8 +110,9 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFram
         hover_data=data.columns.to_list(),
     )
 
+    # The clock name stays as-is; only the "_Accel" suffix around it is localised.
     fig.update_layout(
-        yaxis={"title": f"{epi_clock}_Accel"},
+        yaxis={"title": f"{epi_clock}{t('plot.epi.accel_suffix', language)}"},
         title={
             "text": f"Kruskal-Wallis p = {kw_res["p-unc"].iloc[0]: .2f}",
             "x": 0.15,
@@ -122,14 +125,15 @@ def get_eaa_boxplot(data: pd.DataFrame, epi_clock: str, posthoc_res: pd.DataFram
         )
 
 def get_eaa_res(
-    data: pd.DataFrame, epi_clock: str
+    data: pd.DataFrame, epi_clock: str, language: str = "en"
 ) -> None:
     """A function generating epigenetic age acceleration results
 
     Args:
         data (pd.DataFrame): plot data used to generate boxplots
         epi_clock (str): the name of currently processed epigenetic clock
-        
+        language (str): report language ("en"/"pl") for the acceleration axis suffix
+
     Returns: None
     """
 
@@ -137,7 +141,7 @@ def get_eaa_res(
     if data["Sample_Group"].nunique() >= 3:
         pairwise_res = get_pairwise_comp_res(data=data, epi_clock=epi_clock)
         pairwise_res.to_json(f"Epi_Age_Accel_{epi_clock}_post_hoc_res.json", orient="records", indent=2)
-    get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None)
+    get_eaa_boxplot(data=data, epi_clock=epi_clock, posthoc_res=None, language=language)
 
 def get_epi_vs_chron_age_regr_plot(
     data: pd.DataFrame, epi_clock: str, hover_cols: list
@@ -268,16 +272,17 @@ def get_epi_vs_chron_age_regr_plot(
 
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         print(
             "Usage: python epigenetic_age_plots.py <path_to_epi_age_res: str> \
-                <path_to_sample_sheet: str> <epi_clock: str>"
+                <path_to_sample_sheet: str> <epi_clock: str> <report_language: en|pl>"
         )
         sys.exit(1)
 
     path_to_epi_age_res = sys.argv[1]
     path_to_sample_sheet = sys.argv[2]
     epi_clock = sys.argv[3]
+    language = sys.argv[4]
 
     # Load data
     epi_age_res = pd.read_parquet(path_to_epi_age_res)
@@ -294,7 +299,7 @@ def main():
     )
 
     if "Sample_Group" in sample_sheet:
-        get_eaa_res(data=data, epi_clock=epi_clock)
+        get_eaa_res(data=data, epi_clock=epi_clock, language=language)
         #get_eaa_boxplot(data=data, epi_clock=epi_clock)
 
 

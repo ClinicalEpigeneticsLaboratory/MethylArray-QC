@@ -57,6 +57,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -98,6 +99,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -142,6 +144,7 @@ nextflow_process {
                 input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -182,6 +185,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -223,6 +227,7 @@ nextflow_process {
                 input[15] = "no_probe_types"
                 input[16] = "html"
                 input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
                 """
             }
         }
@@ -299,6 +304,7 @@ nextflow_process {
 //                 input[15] = "no_probe_types"
 //                 input[16] = "html"
 //                 input[17] = file("${projectDir}/templates/report_pdf.html")
+//                 input[18] = "en"
 //                 """
 //             }
 //         }
@@ -337,6 +343,7 @@ nextflow_process {
 //                 input[15] = "no_probe_types"
 //                 input[16] = "html"
 //                 input[17] = file("${projectDir}/templates/report_pdf.html")
+//                 input[18] = "en"
 //                 """
 //             }
 //         }

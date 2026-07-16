@@ -11,16 +11,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plot_export_utils import export_decorated_fig_with_custom_name
+from i18n import t
 
 def get_all_figs(
     qc_path: str,
     sample_sheet_path: str,
+    language: str = "en",
 ) -> None:
     """A function generating all %NaN per sample figures, in a loop
 
     Args:
         qc_path (str): path to QC stats generated with SeSAME (process: QC)
         sample_sheet_path (str): path to sample sheet
+        language (str): report language ("en"/"pl") for the axis/title labels
     """
     
     # Load data
@@ -45,6 +48,7 @@ def get_all_figs(
             row_num=row_num,
             sample_sheet=sample_sheet,
             plot_data=data,
+            language=language,
         )
 
         if fig is not None:
@@ -55,8 +59,9 @@ def get_all_figs(
 
 def get_single_fig(
     sample_sheet: pd.DataFrame,
-    plot_data: pd.DataFrame, 
+    plot_data: pd.DataFrame,
     row_num: int,
+    language: str = "en",
 ) -> go.Figure:
     """A function generating a barplot presenting the percentage of
     missing values per sample
@@ -66,6 +71,7 @@ def get_single_fig(
             plot_data (pd.DataFrame): data used to generate the plot
             hover_data (list): list of columns displayed in hover data
             row_num (int): currently processed number of plot row (set of samples)
+            language (str): report language ("en"/"pl") for the axis/title labels
 
         Returns:
             go.Figure: a barplot
@@ -76,7 +82,8 @@ def get_single_fig(
 
     # Check if we have valid sample names to plot
     if ids_to_plot:
-        # Figure generation
+        # Figure generation ("% NaN" is the source column name; the y-axis title is
+        # localised while the column reference stays stable).
         fig = px.bar(
             row_plot_data,
             x="Sample_Name",
@@ -84,26 +91,28 @@ def get_single_fig(
             hover_data=sample_sheet.columns.to_list(),
         )
 
-        fig.update_yaxes(title="% NaN", range=[0, 100])
-        fig.update_layout(title_text="% NaN per sample", margin={"t": 75})
+        fig.update_yaxes(title=t("plot.nan_sample.yaxis", language), range=[0, 100])
+        fig.update_layout(title_text=t("plot.nan_sample.title", language), margin={"t": 75})
 
         return fig
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print(
             "Usage: python nan_distribution_per_sample.py <path_to_qc_stats: str> \
-                <path_to_sample_sheet: str>"
+                <path_to_sample_sheet: str> <report_language: en|pl>"
         )
         sys.exit(1)
 
     path_to_qc_stats = sys.argv[1]
     path_to_sample_sheet = sys.argv[2]
+    language = sys.argv[3]
 
     get_all_figs(
         qc_path=path_to_qc_stats,
-        sample_sheet_path = path_to_sample_sheet
+        sample_sheet_path = path_to_sample_sheet,
+        language=language,
     )
 
     # get_nan_distr_per_sample_plot(

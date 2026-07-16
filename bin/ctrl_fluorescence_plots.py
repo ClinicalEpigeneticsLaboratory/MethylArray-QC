@@ -9,12 +9,14 @@ import sys
 import pandas as pd
 import plotly.express as px
 from plot_export_utils import export_decorated_fig_with_custom_name
+from i18n import t
 
 def get_ctrl_fluorescence_plot(
-    plot_data: pd.DataFrame, 
-    ctrl_probe_type: str, 
-    column: str, 
-    hover_cols: list
+    plot_data: pd.DataFrame,
+    ctrl_probe_type: str,
+    column: str,
+    hover_cols: list,
+    language: str = "en",
 ) -> None:
     """A function generating control probe fluorescence plot, with coloring by Sample_Group if this column is provided
 
@@ -23,7 +25,8 @@ def get_ctrl_fluorescence_plot(
         ctrl_probe_type (str): a category of control probes (available categories depend on microarray type)
         column (str): a column, by which samples will be grouped at the plot
         hover_cols (list): a list of variables shown in a hover over sample point
-    """    
+        language (str): report language ("en"/"pl") for the intensity axis label
+    """
     
     probe_data = plot_data[plot_data['Type'] == ctrl_probe_type]
     
@@ -42,9 +45,9 @@ def get_ctrl_fluorescence_plot(
 
     unique_metric_types = probe_data['metric_type'].unique()
     if len(unique_metric_types) == 1 and unique_metric_types[0] == "total":
-        metric_name = "Total Intensity"
+        metric_name = t("plot.ctrl.total_intensity", language)
     else:
-        metric_name = "Max Intensity"
+        metric_name = t("plot.ctrl.max_intensity", language)
 
     # When a trace's subtype equals the probe type, the subtype name is redundant in the
     # legend. Plotly names such traces "{group}, {subtype}" — strip the subtype suffix.
@@ -64,10 +67,11 @@ def get_ctrl_fluorescence_plot(
     )
 
 def main():
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print(
             "Usage: python ctrl_fluorescence_plots.py <path_to_ctrl_fluorescence_data: str> \
-                <path_to_sample_sheet: str> <column: str> <ctrl_probe_type: str>"
+                <path_to_sample_sheet: str> <column: str> <ctrl_probe_type: str> \
+                <report_language: en|pl>"
         )
         sys.exit(1)
 
@@ -75,6 +79,7 @@ def main():
     path_to_sample_sheet = sys.argv[2]
     column = sys.argv[3]
     ctrl_probe_type = sys.argv[4]
+    language = sys.argv[5]
 
     ctrl_fluorescence_data_raw = pd.read_parquet(path_to_ctrl_fluorescence_data)
     
@@ -90,6 +95,7 @@ def main():
         ctrl_probe_type=ctrl_probe_type,
         column=column,
         hover_cols=sample_sheet.columns.to_list(),
+        language=language,
     )
 
 if __name__ == "__main__":

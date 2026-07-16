@@ -9,6 +9,7 @@ import sys
 import pandas as pd
 import plotly.graph_objects as go
 from decorators import update_and_export_plot
+from i18n import t
 from sklearn.ensemble import IsolationForest
 # from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
@@ -80,7 +81,7 @@ def ao(
     font_size=14,
     height_per_item=20,
 )
-def ao_plot(anomaly_results: pd.DataFrame, offset: float) -> go.Figure:
+def ao_plot(anomaly_results: pd.DataFrame, offset: float, language: str = "en") -> go.Figure:
     """A function generating the anomaly detection plot.
 
     Every sample is drawn as one horizontal bar in a single ordered trace, coloured
@@ -94,11 +95,19 @@ def ao_plot(anomaly_results: pd.DataFrame, offset: float) -> go.Figure:
             detection
         offset (float): the anomaly detection score\
             threshold differentiating anomaly from non-anomaly
+        language (str): report language ("en"/"pl") for the axis/legend labels
 
     Returns:
         go.Figure: anomaly detection plot
     """
+    # The class strings stay English (they are data values, also written to
+    # ao_results.parquet); only the legend labels are localised, sharing catalog
+    # keys with bin/report.py so the interactive and pdf anomaly legends never drift.
     colors = {"Anomaly": "red", "non-Anomaly": "blue"}
+    legend_names = {
+        "Anomaly": t("plot.anomaly.legend.anomaly", language),
+        "non-Anomaly": t("plot.anomaly.legend.non_anomaly", language),
+    }
     bar_colors = [colors.get(cls, "blue") for cls in anomaly_results["classes"]]
 
     fig = go.Figure()
@@ -123,7 +132,7 @@ def ao_plot(anomaly_results: pd.DataFrame, offset: float) -> go.Figure:
                 x=[None],
                 orientation="h",
                 marker_color=color,
-                name=cls,
+                name=legend_names[cls],
                 legendgroup=cls,
                 showlegend=True,
             )
@@ -134,20 +143,20 @@ def ao_plot(anomaly_results: pd.DataFrame, offset: float) -> go.Figure:
         legend={"orientation": "h", "yanchor": "bottom", "y": 1.02,
                 "xanchor": "left", "x": 0}
     )
-    fig.update_xaxes(title_text="|scores|")
-    fig.update_yaxes(title_text="sample")
+    fig.update_xaxes(title_text=t("plot.anomaly.xaxis", language))
+    fig.update_yaxes(title_text=t("plot.anomaly.yaxis", language))
     return fig
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print(
             """Usage: python anomaly_detection.py <path_to_imputed_mynorm: str>\
-                <contamination: str | float>"""
+                <contamination: str | float> <report_language: en|pl>"""
         )
         sys.exit(1)
 
-    path_to_imputed_mynorm, contamination = sys.argv[1:]
+    path_to_imputed_mynorm, contamination, language = sys.argv[1:]
 
     try:
         contamination = float(contamination)
@@ -155,7 +164,7 @@ def main():
         pass
 
     results, offset = ao(path_to_imputed_mynorm, contamination)
-    ao_plot(results, offset)
+    ao_plot(results, offset, language)
 
 
 if __name__ == "__main__":
