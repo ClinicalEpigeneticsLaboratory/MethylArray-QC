@@ -1,0 +1,39 @@
+{
+    "Snapshot: PCA output channels structure": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "PCA_scatter_matrix_stub.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "PCA_area_plot.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    [
+                        "PCA_PC_KW_test_stub.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "area": [
+                    "PCA_area_plot.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "kruskal": [
+                    [
+                        "PCA_PC_KW_test_stub.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "scatter": [
+                    [
+                        "PCA_scatter_matrix_stub.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:13:25.338228"
+    }
+}

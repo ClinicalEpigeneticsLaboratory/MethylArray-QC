@@ -15,6 +15,8 @@ library(arrow)
 library(dplyr)
 library(tidyr)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
 sample_sheet <- data.frame()
 sample_sheet <- read.table(file = sample_sheet_path, sep = ",", dec = ".", header = TRUE)
 
@@ -69,4 +71,28 @@ res_df <- res_df %>%
         names_from = c("clock")
     )
 
-arrow::write_parquet(res_df, "epi_clocks_res.parquet")
+write_parquet_portable(res_df, "epi_clocks_res.parquet")
+
+# Write results as NDJSON (one JSON object per line) using base R.
+# arrow::write_json_arrow is not available in the Docker image's arrow version.
+# load_table_data_ndjson in report.py parses this format line-by-line.
+col_is_numeric <- vapply(res_df, is.numeric, logical(1))
+
+json_value <- function(x, is_num) {
+    if (is.na(x) || (is_num && is.infinite(x))) return("null")
+    if (is_num) return(as.character(x))
+    s <- gsub("\\\\", "\\\\\\\\", as.character(x))  # escape \ -> \\
+    s <- gsub('"', '\\"', s)                          # escape " -> \"
+    paste0('"', s, '"')
+}
+
+rows_ndjson <- vapply(seq_len(nrow(res_df)), function(i) {
+    pairs <- mapply(
+        function(col, is_num) sprintf('"%s":%s', col, json_value(res_df[[col]][i], is_num)),
+        names(res_df), col_is_numeric,
+        SIMPLIFY = TRUE
+    )
+    paste0("{", paste(pairs, collapse = ","), "}")
+}, character(1))
+
+writeLines(rows_ndjson, "epi_clocks_res.json")

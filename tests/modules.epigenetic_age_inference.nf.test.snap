@@ -1,0 +1,25 @@
+{
+    "Snapshot: EPIGENETIC_AGE_INFERENCE output channels structure": {
+        "content": [
+            {
+                "0": [
+                    "epi_clocks_res.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "epi_clocks_res.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "epi_clocks_res_json": [
+                    "epi_clocks_res.json:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "epi_clocks_res_parquet": [
+                    "epi_clocks_res.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-13T15:08:58.962146"
+    }
+}

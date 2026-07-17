@@ -65,9 +65,15 @@ def main():
     # Save the imputed data
     mynorm_imputed = mynorm_imputed.reset_index()
     mynorm_imputed.to_parquet("imputed_mynorm.parquet")
-    with open("mynorm_imputed_n_cpgs.json", "w", encoding="utf-8") as f:
+    with open("imputation_summary.json", "w", encoding="utf-8") as f:
         json.dump(
-            obj={"mynorm_imputed_n_cpgs": mynorm_imputed.index.size}, fp=f, indent=4
+            obj={
+                "imputer_type": imputer_type,
+                "mynorm_imputed_n_cpgs": mynorm_imputed.index.size,
+                "mynorm_imputed_n_samples": mynorm_imputed.columns.size-1
+            }, 
+            fp=f, 
+            indent=4
         )
 
 

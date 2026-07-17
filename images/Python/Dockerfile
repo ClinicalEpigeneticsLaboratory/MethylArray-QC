@@ -4,8 +4,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# procps: required by Nextflow (ps). The remaining packages are WeasyPrint's
+# runtime dependencies (Pango text layout + libffi for cffi) plus fonts, needed to
+# render the PDF report (params.output_format = "pdf"). Kaleido (pinned to 0.2.1 in
+# pyproject.toml) bundles its own headless renderer, so no browser is installed here.
 RUN apt update && apt upgrade -y &&  \
-    apt install -y procps && \
+    apt install -y --no-install-recommends \
+        procps \
+        libpango-1.0-0 \
+        libpangoft2-1.0-0 \
+        libffi8 \
+        fontconfig \
+        fonts-liberation \
+        fonts-dejavu-core \
+        shared-mime-info && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies

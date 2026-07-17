@@ -1,74 +1,427 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MethylArrayQC report</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{ ui.report_title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
     <style>
         body {
-            margin: 0 100;
+            margin: 0 20px;
             background: whitesmoke;
+        }
+
+        table td,
+        table th {
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        .plot-container .js-plotly-plot {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .plot-container {
+            overflow-x: auto;
+        }
+
+        table td {
+            min-width: 150px;
+        }
+
+        .brick-red-bar {
+            background-color: #B22222 !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: whitesmoke;
+            color: black;
         }
     </style>
 </head>
 
 <body>
     <div class="container mt-3">
-        <h2>Methylation Array QC report</h2>
-        <div id="accordion">
-            <div class="card">
+        <h2>{{ ui.report_heading }}</h2>
+        <p>{{ ui.report_intro }}</p>
+        <div class="accordion" id="accordion">
+
+            {% macro render_section(section, parent_id="accordion") %}
+            {% if section.type == "table-row-group"
+            or section.data_list is defined
+            or section.html
+            or section.html_list
+            or section.data
+            or section.subsections %}
+            <div class="card mb-3">
                 <div class="card-header">
-                    <a class="btn" data-bs-toggle="collapse" href="#workflowParams">
-                        <b>Workflow parameters</b>
+                    <a class="btn w-100 text-start" data-bs-toggle="collapse" href="#{{ section.id }}">
+                        <b>{{ section.title }}</b>
                     </a>
                 </div>
-                <div id="workflowParams" class="collapse" data-bs-parent="#accordion">
-                    <div class="card-body">
-                        A place for the table with workflow parameters
+                <div id="{{ section.id }}" class="collapse" data-bs-parent="#{{ parent_id }}">
+                    <div class="card-body" style="text-align: justify;">
+                        {% if section.description and (parent_id.startswith("accordion") or section.show_description_in_subsections) %}
+                        <p class="text-muted mt-2">{{ section.description }}</p>
+                        {% endif %}
+
+                        {% if section.type == "table" %}
+                        {% set table_id = "table-" ~ section.id %}
+                        <div class="mb-2">
+                            <h5 class="mb-0 d-inline">
+                                {% if section.filename %}
+                                <a href="#"
+                                    onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ section.filename }}.csv')"
+                                    title="{{ ui.download_csv }}" class="btn btn-lg d-inline-flex align-items-center"
+                                    style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
+                                    <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i>
+                                    {{ ui.download_csv }}
+                                </a>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table w-100" id="{{ table_id }}">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40%">{{ ui.col_parameter }}</th>
+                                        <th style="width:60%">{{ ui.col_value }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for k,v in section.data.items() %}
+                                    <tr>
+                                        <td><b>{{k}}</b></td>
+                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% elif section.type == "table-rows" %}
+                        {% set table_id = "table-" ~ section.id %}
+                        <div class="mb-2">
+                            <h5 class="mb-0 d-inline">
+                                {% if section.filename %}
+                                <a href="#"
+                                    onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ section.filename }}.csv')"
+                                    title="{{ ui.download_csv }}" class="btn btn-lg d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
+                                    <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i>
+                                    {{ ui.download_csv }}
+                                </a>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table w-100" id="{{table_id}}">
+                                <thead>
+                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in section.data %}
+                                    <tr>{% for v in row.values() %}<td>{% if v is string or number or boolean %}{{v}}{%
+                                            else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>{% endfor %}</tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% elif section.type == "plot" %}
+                        <div class="plot-container">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">{{ ui.loading }}</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ section.html|tojson|safe }}' data-plot-name="{{ section.plot_name }}">
+                            </div>
+                        </div>
+
+                        {% elif section.type == "plot-group" %}
+                        {% for plot in section.html_list %}
+                        <div class="plot-container mb-4">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">{{ ui.loading }}</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ plot.plot_html|tojson|safe }}' data-plot-name="{{ plot.plot_name }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% elif section.type == "table-row-group" %}
+                        {% for table in section.data_list %}
+                        {% set table_id = "table-" ~ section.id ~ "-" ~ loop.index|string %}
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0">{{ table.table_title }}</h5>
+                            {% if table.filename %}
+                            <a href="#"
+                                onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ table.filename }}.csv')"
+                                title="{{ ui.download_csv }}" class="btn btn-lg ms-2 d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
+                                <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i> {{ ui.download_csv }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="{{ table_id }}">
+                                <thead>
+                                    <tr>
+                                        {% for col in table.data[0].keys() %}
+                                        <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table.data %}
+                                    <tr>
+                                        {% for val in row.values() %}
+                                        <td>
+                                            {% if val is string or number or boolean %}{{ val }}
+                                            {% else %}
+                                            <pre>{{ val | tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+
+                        {% elif section.type == "plot+table" %}
+                        
+                        {% if section.html %}
+                        <div class="plot-container">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">{{ ui.loading }}</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ section.html|tojson|safe }}' data-plot-name="{{ section.plot_name }}">
+                            </div>
+                        </div>
+
+                        {% elif section.html_list %}
+                        {% for plot in section.html_list %}
+                        <div class="plot-container mb-4">
+                            <div class="plot-loading">
+                                <div class="progress my-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated brick-red-bar text-white"
+                                        style="width:100%">{{ ui.loading }}</div>
+                                </div>
+                            </div>
+                            <div class="lazy-plot d-flex justify-content-center"
+                                data-html='{{ plot.plot_html|tojson|safe }}' data-plot-name="{{ plot.plot_name }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% if section.data_list %}
+                        {% for table in section.data_list %}
+                        {% set table_id = "table-" ~ section.id ~ "-" ~ loop.index|string %}
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0">{{ table.table_title }}</h5>
+                            {% if table.filename %}
+                            <a href="#"
+                                onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ table.filename }}.csv')"
+                                title="{{ ui.download_csv }}" class="btn btn-lg ms-2 d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
+                                <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i> {{ ui.download_csv }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table" id="{{ table_id }}">
+                                <thead>
+                                    <tr>
+                                        {% for col in table.data[0].keys() %}
+                                        <th>{{ col }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table.data %}
+                                    <tr>
+                                        {% for val in row.values() %}
+                                        <td>
+                                            {% if val is string or number or boolean %}{{ val }}
+                                            {% else %}
+                                            <pre>{{ val | tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        {% set table_id = "table-" ~ section.id %}
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0">{{ section.table_title }}</h5>
+                            {% if section.filename %}
+                            <a href="#"
+                                onclick="event.preventDefault(); exportTableToCSV('{{ table_id }}', '{{ section.filename }}.csv')"
+                                title="{{ ui.download_csv }}" class="btn btn-lg ms-2 d-inline-flex align-items-center"
+                                style="background-color: #B22222; color: white; border: none; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem;">
+                                <i class="bi bi-filetype-csv me-2" style="font-size: 1.3rem;"></i> {{ ui.download_csv }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table w-100" id="{{table_id}}">
+                                <thead>
+                                    <tr>{% for col in section.data[0].keys() %}<th>{{col}}</th>{% endfor %}</tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in section.data %}
+                                    <tr>{% for v in row.values() %}
+                                        <td>{% if v is string or number or boolean %}{{v}}{% else %}
+                                            <pre>{{ v|tojson(indent=2) }}</pre>{% endif %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                        {% if section.subsections %}
+                        <div class="accordion mt-3" id="accordion-{{ section.id }}">
+                            {% for sub in section.subsections %}
+                            {{ render_section(sub, "accordion-" ~ section.id) }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">
-                    <a class="collapsed btn" data-bs-toggle="collapse" href="#betaDistribution">
-                        <b>Beta distribution plot</b>
-                    </a>
-                </div>
-                <div id="betaDistribution" class="collapse" data-bs-parent="#accordion">
-                    <div class="card-body">
-                        A place for the beta distribution plot
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <a class="collapsed btn" data-bs-toggle="collapse" href="#nanPerSample">
-                        <b>%NaN per sample plot</b>
-                    </a>
-                </div>
-                <div id="nanPerSample" class="collapse" data-bs-parent="#accordion">
-                    <div class="card-body">
-                        Here goes the %NaN per sample plot
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <a class="collapsed btn" data-bs-toggle="collapse" href="#nanPerProbe">
-                        <b>NaN per probe plot</b>
-                    </a>
-                </div>
-                <div id="nanPerProbe" class="collapse" data-bs-parent="#accordion">
-                    <div class="card-body">
-                        Here goes the NaN per probe plot
-                    </div>
-                </div>
-            </div>
+            {% endif %}
+            {% endmacro %}
+
+            {% for section in report_sections %}
+            {{ render_section(section) }}
+            {% endfor %}
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('.lazy-plot').forEach(container => {
+                const observer = new IntersectionObserver(entries => {
+                    for (let entry of entries) {
+                        if (entry.isIntersecting) {
+                            try {
+                                const raw = JSON.parse(container.dataset.html);
+                                container.innerHTML = raw;
+
+                                // Re-execute any embedded scripts
+                                container.querySelectorAll('script').forEach(s => {
+                                    const n = document.createElement('script');
+                                    if (s.src) {
+                                        n.src = s.src;
+                                    } else {
+                                        n.textContent = s.textContent;
+                                    }
+                                    s.replaceWith(n);
+                                });
+
+                                const loader = container.closest('.plot-container').querySelector('.plot-loading');
+                                if (loader) loader.remove();
+
+                                // Find the plotly div that was inserted
+                                const plotDiv = container.querySelector('.js-plotly-plot');
+                                if (plotDiv && plotDiv.data && plotDiv.layout) {
+                                    const filename = container.dataset.plotName || 'plot';
+
+                                    Plotly.newPlot(plotDiv, plotDiv.data, plotDiv.layout, {
+                                        responsive: true,
+                                        modeBarButtons: [[
+                                            {
+                                                name: 'Download plot as svg',
+                                                icon: Plotly.Icons.camera,
+                                                click: function (gd) {
+                                                    Plotly.downloadImage(gd, {
+                                                        format: 'svg',
+                                                        filename: filename
+                                                    });
+                                                }
+                                            },
+                                            'zoom2d', 'pan2d', 'select2d', 'lasso2d',
+                                            'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d',
+                                            'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'
+                                        ]],
+                                    });
+                                }
+
+                                observer.unobserve(container);
+                            } catch (err) {
+                                console.error('Failed lazy load:', err);
+                            }
+                        }
+                    }
+                }, { threshold: 0.1 });
+
+                observer.observe(container);
+            });
+        });
+
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            let csv = [];
+            for (let row of table.rows) {
+                let cols = Array.from(row.cells).map(cell =>
+                    '"' + cell.textContent.trim().replace(/"/g, '""') + '"'
+                );
+                csv.push(cols.join(','));
+            }
+            const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
 </body>
+<footer>
+    {% set footer_section = report_sections | get_section("footer") %}
+    {% if footer_section.footer_logo %}
+        <img src="data:image/png;base64,{{ footer_section.footer_logo | safe }}" alt="Lab Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
+    {% endif %}
+    <p>{{ ui.footer_generated_by }} <a href="https://github.com/ClinicalEpigeneticsLaboratory/MethylArray-QC">MethylArray-QC</a>.
+        {{ ui.footer_powered_by }} <a
+            href="https://www.pum.edu.pl/uniwersytet/dydaktyka_i_leczenie/kliniki_katedry_zaklady_i_pracownie/wm/samodzielna_pracownia_epigenetyki_klinicznej/">The
+            Independent Clinical Epigenetics Laboratory</a>. {{ ui.footer_research_use }}</p>
+</footer>
 
 </html>

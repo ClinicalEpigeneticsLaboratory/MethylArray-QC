@@ -1,0 +1,49 @@
+{
+    "Snapshot: process set \u2013 minimal run (small dataset, no optional features)": {
+        "content": [
+            [
+                "methylarrayqc_analysis:ADDITIONAL_VALIDATORS_AFTER_IMPUTE",
+                "methylarrayqc_analysis:ADDITIONAL_VALIDATORS_INIT",
+                "methylarrayqc_analysis:BATCH_EFFECT",
+                "methylarrayqc_analysis:BETA_DISTRIBUTION",
+                "methylarrayqc_analysis:IMPUTE",
+                "methylarrayqc_analysis:NAN_DISTRIBUTION_PER_PROBE",
+                "methylarrayqc_analysis:NAN_DISTRIBUTION_PER_SAMPLE",
+                "methylarrayqc_analysis:PREPROCESS",
+                "methylarrayqc_analysis:QC"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-15T14:55:36.342957"
+    },
+    "Snapshot: process set \u2013 full run (large dataset, all features enabled)": {
+        "content": [
+            [
+                "methylarrayqc_analysis:ADDITIONAL_VALIDATORS_AFTER_IMPUTE",
+                "methylarrayqc_analysis:ADDITIONAL_VALIDATORS_INIT",
+                "methylarrayqc_analysis:ANOMALY_DETECTION",
+                "methylarrayqc_analysis:BATCH_EFFECT",
+                "methylarrayqc_analysis:BETA_DISTRIBUTION",
+                "methylarrayqc_analysis:CTRL_FLUORESCENCE_DATA",
+                "methylarrayqc_analysis:CTRL_FLUORESCENCE_PLOTS",
+                "methylarrayqc_analysis:EPIGENETIC_AGE_INFERENCE",
+                "methylarrayqc_analysis:EPIGENETIC_AGE_PLOTS",
+                "methylarrayqc_analysis:IMPUTE",
+                "methylarrayqc_analysis:NAN_DISTRIBUTION_PER_PROBE",
+                "methylarrayqc_analysis:NAN_DISTRIBUTION_PER_SAMPLE",
+                "methylarrayqc_analysis:PCA",
+                "methylarrayqc_analysis:PREPROCESS",
+                "methylarrayqc_analysis:QC",
+                "methylarrayqc_analysis:SEX_INFERENCE"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.5"
+        },
+        "timestamp": "2026-04-15T15:32:35.844726"
+    }
+}

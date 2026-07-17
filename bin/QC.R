@@ -14,6 +14,10 @@ library(sesame)
 library(arrow)
 library(glue)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
+options(scipen = 999)
+
 message("Parsing ...")
 
 sample_sheet <- data.frame()
@@ -33,4 +37,14 @@ quality_metrics <- do.call(rbind, lapply(qcs, as.data.frame))
 
 message("Dumping ...")
 quality_metrics$Sample_Name <- rownames(quality_metrics)
-write_parquet(quality_metrics, glue("qc", ".parquet"))
+rownames(quality_metrics) <- NULL
+quality_metrics <- quality_metrics[, c("Sample_Name", setdiff(names(quality_metrics), c("Sample_Name", "_row")))]
+write_parquet_portable(quality_metrics, glue("qc", ".parquet"))
+
+write(
+    jsonlite::toJSON(
+        data.frame(quality_metrics),
+        pretty = TRUE
+    ),
+    glue("qc", ".json")
+)

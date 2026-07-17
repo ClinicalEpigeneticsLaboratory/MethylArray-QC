@@ -14,12 +14,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from decorators import update_and_export_plot
 from plot_export_utils import export_decorated_fig_with_custom_name
-from scipy import stats
+from i18n import t
+import pingouin as pg
+#from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-
-# Computes Kruskal-Wallis results for a specific column and saves to JSON
+# Computes Kruskal-Wallis results for a specific column and saves to JSON 
 def test_kw_to_json(
     components_data: pd.DataFrame, component_names: list, column: str
 ) -> None:
@@ -43,31 +44,72 @@ def test_kw_to_json(
     """
     kruskal_pvals = []
     test_method = []
+    column_vals = []
+    infos = []
 
     for component in component_names:
-        df = components_data[[component, column]]
-        kruskal_res = stats.kruskal(
-            *[group[column].values for name, group in df.groupby(column)]
-        )
-        kruskal_pvals.append(kruskal_res.pvalue)
-        test_method.append("Kruskal-Wallis test")
+        
+        df = components_data[[component, column]].dropna()
 
+        grouped_data = [group[component].values for _, group in df.groupby(column)]
+        group_sizes = [len(g) for g in grouped_data]
+        
+        if len(grouped_data) < 2:
+            kruskal_pvals.append(float("nan"))
+            test_method.append("Kruskal-Wallis test")
+            column_vals.append(column)
+            infos.append("Too few groups to compare — test skipped")
+            continue
+        
+        all_groups_one_sample = all(size == 1 for size in group_sizes)
+        some_too_small = any(size < 2 for size in group_sizes)
+        no_within_group_variation = all(np.all(g == g[0]) for g in grouped_data)
+        identical_across_groups = np.allclose(
+            [np.mean(g) for g in grouped_data], np.mean([v for g in grouped_data for v in g])
+        )
+
+        kruskal_res = pg.kruskal(data=df, dv=component, between=column)
+        pval = kruskal_res['p-unc'].values[0]  # Extract p-value
+        kruskal_pvals.append(pval)
+        test_method.append("Kruskal-Wallis test")
+        column_vals.append(column)
+
+        info = ""
+
+        if len(grouped_data) < 2:
+            info = "Too few groups to compare"
+        elif all_groups_one_sample:
+            info = "Each group contains only one sample — insufficient data for test"
+        elif some_too_small:
+            info = "One or more groups have <2 samples — results may be unreliable"
+        elif no_within_group_variation:
+            info = "No variation across or within groups — test not meaningful"
+        elif identical_across_groups:
+            info = "Groups have near-identical means — low between-group variation"
+        else:
+            info = "OK"
+        infos.append(info)
     kruskal_col_res = pd.DataFrame(
-        data={f"{column}_p_value": kruskal_pvals, "Method": test_method},
-        index=component_names,
+        data={
+            "Column": column_vals,
+            "Component": component_names,
+            "Method": test_method,
+            "p-value": kruskal_pvals, 
+            "Info": infos
+        },
     )
-    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json")
+    kruskal_col_res.to_json(f"PCA_PC_KW_test_{column}.json", orient='records', indent=2)
 
 
 @update_and_export_plot(
-    json_path="PCA_area.json", width=600, height=775, showlegend=False
+    json_path="PCA_area_plot.json", width=600, height=775, showlegend=False
 )
 def get_area_plot(
     number_of_pcs: int,
     number_of_cpgs: int,
     perc_of_cpgs: int,
     explained_var_ratio: np.ndarray,
-    col: str,
+    language: str = "en",
 ) -> go.Figure:
     """A function generating area plot showing explained variance for principal components
 
@@ -79,7 +121,7 @@ def get_area_plot(
             provided by user
         explained_var_ratio (np.ndarray): Ratio of explained variance \
             for each component
-        col (str): Currently processed column
+        language (str): report language ("en"/"pl") for the axis/title labels
 
     Returns:
         go.Figure: area plot
@@ -99,10 +141,19 @@ def get_area_plot(
         hover_data=area_plot_data_df.columns.to_list(),
     )
 
-    fig_area.update_xaxes(title="Principal component")
+    # fig_area = go.Figure()
+    # fig_area.add_trace(go.Scatter(
+    #     x=np.arange(1, number_of_pcs + 1),
+    #     y=np.cumsum(explained_var_ratio * 100),
+    #     fill="tozeroy",
+    #     mode="lines",
+    #     hoverinfo="x+y",
+    # ))
+
+    fig_area.update_xaxes(title=t("plot.pca.principal_component", language))
     fig_area.update_layout(
-        title_text=f"Area plot<br>Top {perc_of_cpgs}% CpGs (n = {number_of_cpgs})<br>with highest variance",
-        margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        title_text=t("plot.pca.area_title", language, p=perc_of_cpgs, n=number_of_cpgs),
+        margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
     return fig_area
 
@@ -113,6 +164,7 @@ def get_scatter_matrix_json(
     number_of_cpgs: int,
     perc_of_cpgs: int,
     column: str,
+    language: str = "en",
 ) -> None:
     """A function generating scatter matrix plot
 
@@ -146,27 +198,28 @@ def get_scatter_matrix_json(
     )
     fig_scatter.update_traces(diagonal_visible=False, showupperhalf=False)
     fig_scatter.update_layout(
-        title_text = f"PCA scatter matrix - {column}<br>Top {perc_of_cpgs}% (n = {number_of_cpgs}) CpGs<br>with highest variance",
-        margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        title_text=t("plot.pca.scatter_title", language, col=column, p=perc_of_cpgs, n=number_of_cpgs),
+        #margin={"l": 20, "r": 20, "t": 175, "b": 20},
+        margin={"l": 20, "r": 20, "t": 100, "b": 20},
     )
 
     if fig_scatter:
         export_decorated_fig_with_custom_name(
             fig=fig_scatter,
             json_path=f"PCA_scatter_matrix_{column}.json",
-            showlegend=False,
-            height=len(component_names) * 150 + 175,
-            width=len(component_names) * 150,
+            #showlegend=False,
+            height=len(component_names) * 125 + 100,
+            width=len(component_names) * 125,
         )
 
 
 def main():
-    if len(sys.argv) != 7:
+    if len(sys.argv) != 8:
         print(
             "Usage: python pca.py <path_to_imputed_mynorm: str> \
                 <path_to_sample_sheet: str> <perc_pca_cpgs: int> \
                     <pca_number_of_components: int> <pca_columns: str> \
-                        <pca_matrix_pc_count: int>"
+                        <pca_matrix_pc_count: int> <report_language: en|pl>"
         )
         sys.exit(1)
 
@@ -176,6 +229,7 @@ def main():
     pca_number_of_components = int(sys.argv[4])
     pca_columns = str(sys.argv[5]).split(sep=",")
     pca_matrix_pc_count = int(sys.argv[6])
+    language = sys.argv[7]
 
     imputed_mynorm = pd.read_parquet(path_to_imputed_mynorm)
     imputed_mynorm.set_index("CpG", inplace=True)
@@ -228,21 +282,23 @@ def main():
             component_names=component_col_names[0:pca_matrix_pc_count:1],
             number_of_cpgs=n_cpgs,
             perc_of_cpgs=perc_pca_cpgs,
+            language=language,
         )
 
-        test_kw_to_json(
-            components_data=components_df,
-            column=column,
-            component_names=component_col_names,
-        )
+        if sample_sheet[column].nunique() >= 2:
+            test_kw_to_json(
+                components_data=components_df,
+                column=column,
+                component_names=component_col_names,
+            )
 
         if i == 0:
             get_area_plot(
-                col=column,
                 explained_var_ratio=pca_res.explained_variance_ratio_,
                 number_of_cpgs=n_cpgs,
                 number_of_pcs=pca_number_of_components,
                 perc_of_cpgs=perc_pca_cpgs,
+                language=language,
             )
 
 

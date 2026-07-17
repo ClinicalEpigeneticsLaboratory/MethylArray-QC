@@ -1,0 +1,205 @@
+// Tests for the CTRL_FLUORESCENCE_PLOTS process
+// (modules/ctrl_fluorescence_plots.nf).
+//
+// All tests run in stub mode – no containers needed.
+// The process uses `each column` and `each ctrl_probe_type` inputs, producing
+// a cartesian product of tasks. Each task emits one dynamic-name output:
+//   ${ctrl_probe_type}_by_${column}.json  (arity: 1..*)
+//
+// NOTE: Because the output pattern uses variable substitution and a wildcard,
+// stub mode may produce an empty match unless the process has an explicit
+// `stub:` block. If tests fail with "No output files found", add to
+// ctrl_fluorescence_plots.nf:
+//
+//   stub:
+//   """
+//   touch ${ctrl_probe_type}_by_${column}.json
+//   """
+//
+// In a process test each `each` input is provided as a single scalar value;
+// cartesian-product behaviour is tested at the subworkflow level.
+
+nextflow_process {
+
+    name "Test Process CTRL_FLUORESCENCE_PLOTS"
+    script "modules/ctrl_fluorescence_plots.nf"
+    process "CTRL_FLUORESCENCE_PLOTS"
+
+    // ----------------------------------------------------------------
+    // Happy path
+    // ----------------------------------------------------------------
+
+    test("Happy path: column=Sentrix_ID, ctrl_probe_type=BISULFITE_CONVERSION_I") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – column variations
+    // ----------------------------------------------------------------
+
+    test("Edge case: column=Sentrix_Position") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_Position"
+                input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: column=Sample_Group") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sample_Group"
+                input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Edge cases – ctrl_probe_type variations
+    // ----------------------------------------------------------------
+
+    test("Edge case: ctrl_probe_type=BISULFITE_CONVERSION_II") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_II"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: ctrl_probe_type=SPECIFICITY_I") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "SPECIFICITY_I"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    test("Edge case: ctrl_probe_type=NON_POLYMORPHIC") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "NON_POLYMORPHIC"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Snapshot
+    // ----------------------------------------------------------------
+
+    test("Snapshot: CTRL_FLUORESCENCE_PLOTS output channel – Sentrix_ID x BISULFITE_CONVERSION_I") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/stub.parquet")
+                input[1] = file("${projectDir}/tests/test_data/sample_sheet_large.csv")
+                input[2] = "Sentrix_ID"
+                input[3] = "BISULFITE_CONVERSION_I"
+                input[4] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

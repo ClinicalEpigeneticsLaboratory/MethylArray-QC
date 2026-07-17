@@ -1,0 +1,357 @@
+// Tests for the report_generator subworkflow and the REPORT module it wraps.
+//
+// Current status: subworkflows/report_generator.nf is not yet implemented.
+// The nextflow_workflow block below is a ready-to-use scaffold — activate it
+// once the subworkflow defines `workflow report_generator { ... }`.
+//
+// In the meantime the nextflow_process block exercises the REPORT module
+// directly to provide immediate coverage of report generation logic.
+//
+// All tests run in Nextflow stub mode (`options "-stub"`) unless otherwise noted.
+// Stub mode skips the Python script and creates an empty qc_report.html
+// matching the declared output pattern, letting us validate input wiring
+// and publishDir configuration without a full pipeline run.
+//
+// Required test-data files (created by the methylarrayqc_analysis tests):
+//   tests/test_data/sample_sheet_large.csv
+//   tests/test_data/idats/
+
+// ====================================================================
+// REPORT process – unit tests
+// ====================================================================
+
+nextflow_process {
+
+    name "Test Process REPORT"
+    script "modules/report.nf"
+    process "REPORT"
+
+    // ------------------------------------------------------------------
+    // Happy path – all real paths; optional paths use asset placeholders
+    // ------------------------------------------------------------------
+
+    test("Happy path: REPORT runs successfully with placeholder optional paths") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.size() > 0
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Snapshot – output file name is always qc_report.html
+    // ------------------------------------------------------------------
+
+    test("Snapshot: REPORT emits qc_report.html") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // The REPORT process must always emit exactly one file named qc_report.html
+            assert process.out[0].collect { file(it).name } == ["qc_report.html"]
+            assert snapshot(process.out).match()
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Edge case: ctrl_fluorescence_plot_paths is a comma-separated string
+    // (val input, not path) – verify the process accepts it
+    // ------------------------------------------------------------------
+
+    test("Edge case: ctrl_fluorescence_plot_paths provided as comma-separated string of paths") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "/some/path/BISULFITE_CONVERSION_I_by_Sentrix_ID.json,/some/path/BISULFITE_CONVERSION_I_by_Sentrix_Position.json"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "/some/path/Sentrix_ID_plot.json,/some/path/Sentrix_Position_plot.json"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "/some/path/PCA_PC_KW_test_Sentrix_ID.json"
+                input[13] = "/some/path/PCA_scatter_matrix_Sentrix_ID.json,/some/path/PCA_area_plot.json"
+                input[14] = "/some/path/Regr_Age_vs_Epi_Age_HannumG2013.json,/some/path/epi_clocks_res.json"
+                input[15] = "BISULFITE_CONVERSION_I,BISULFITE_CONVERSION_II"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Edge case: unique_probe_types_str="no_probe_types" sentinel value
+    // ------------------------------------------------------------------
+
+    test("Edge case: no_probe_types sentinel passes through without error") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Edge case: all optional placeholders simultaneously active
+    // (no sex inference, no epi age, no ctrl probes, no PCA/AO)
+    // ------------------------------------------------------------------
+
+    test("Edge case: all optional placeholder paths active simultaneously") {
+        options "-stub"
+
+        when {
+            params {
+                output = "results"
+            }
+            process {
+                """
+                input[0]  = file("${projectDir}/templates/report.html")
+                input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[2]  = "${projectDir}/assets/missing_process_output.txt"
+                input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+                input[9]  = "${projectDir}/assets/missing_process_output.txt"
+                input[10] = file("${projectDir}/assets/missing_process_output.txt")
+                input[11] = file("${projectDir}/assets/missing_process_output.txt")
+                input[12] = "${projectDir}/assets/missing_process_output.txt"
+                input[13] = "${projectDir}/assets/missing_process_output.txt"
+                input[14] = "${projectDir}/assets/missing_process_output.txt"
+                input[15] = "no_probe_types"
+                input[16] = "html"
+                input[17] = file("${projectDir}/templates/report_pdf.html")
+                input[18] = "en"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+        }
+    }
+}
+
+// ====================================================================
+// report_generator subworkflow – scaffold (activate once implemented)
+// ====================================================================
+//
+// Uncomment and complete once `workflow report_generator { ... }` is
+// defined in subworkflows/report_generator.nf.
+//
+// Expected interface (based on REPORT module inputs and methylarrayqc_analysis outputs):
+//
+//   take:
+//       report_template_path       // path  – templates/report.html
+//       qc_summary_path            // path  – qc.json from QC
+//       ctrl_fluorescence_plot_paths // val – comma-separated JSON plot paths
+//       preprocess_summary_path    // path  – preprocessing_data_summary.json
+//       imputation_summary_path    // path  – imputation_summary.json
+//       ao_plot_path               // path  – ao_plot.json or placeholder
+//       beta_distribution_plot     // path  – beta_distribution.json
+//       nan_distribution_per_probe_plot // path – nan_distribution_per_probe.json
+//       nan_distribution_per_sample_plot // path – nan_distribution_per_sample_*.json
+//       batch_effect_plot_paths    // val  – comma-separated JSON plot paths
+//       sex_inference_path         // path  – inferred_sex.json or placeholder
+//       params_path                // path  – params.json
+//       pca_kruskal_paths          // val  – comma-separated JSON paths or placeholder
+//       pca_plot_paths             // val  – comma-separated JSON paths or placeholder
+//       epi_age_paths              // val  – comma-separated JSON paths or placeholder
+//       unique_probe_types_str     // val  – probe types string or "no_probe_types"
+//       output_format              // val  – "html", "pdf", or "json"
+//       pdf_template_path          // path  – templates/report_pdf.html
+//
+//   emit:
+//       report  // path – qc_report.html
+//
+// /*
+// nextflow_workflow {
+//
+//     name "Test Subworkflow report_generator"
+//     script "subworkflows/report_generator.nf"
+//     workflow "report_generator"
+//
+//     test("Happy path: report_generator runs and emits qc_report.html") {
+//         options "-stub"
+//
+//         when {
+//             params {
+//                 output = "results"
+//             }
+//             workflow {
+//                 """
+//                 input[0]  = file("${projectDir}/templates/report.html")
+//                 input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[2]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[9]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[10] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[11] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[12] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[13] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[14] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[15] = "no_probe_types"
+//                 input[16] = "html"
+//                 input[17] = file("${projectDir}/templates/report_pdf.html")
+//                 input[18] = "en"
+//                 """
+//             }
+//         }
+//
+//         then {
+//             assert workflow.success
+//             def tasks = workflow.trace.tasks().collect { it.name }
+//             assert tasks.any { it.contains("REPORT") }
+//         }
+//     }
+//
+//     test("Snapshot: report_generator process set") {
+//         options "-stub"
+//
+//         when {
+//             params {
+//                 output = "results"
+//             }
+//             workflow {
+//                 """
+//                 input[0]  = file("${projectDir}/templates/report.html")
+//                 input[1]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[2]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[3]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[4]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[5]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[6]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[7]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[8]  = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[9]  = "${projectDir}/assets/missing_process_output.txt"
+//                 input[10] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[11] = file("${projectDir}/assets/missing_process_output.txt")
+//                 input[12] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[13] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[14] = "${projectDir}/assets/missing_process_output.txt"
+//                 input[15] = "no_probe_types"
+//                 input[16] = "html"
+//                 input[17] = file("${projectDir}/templates/report_pdf.html")
+//                 input[18] = "en"
+//                 """
+//             }
+//         }
+//
+//         then {
+//             assert workflow.success
+//             assert snapshot(workflow.trace.tasks().collect { it.name }.sort()).match()
+//         }
+//     }
+// }
+// */

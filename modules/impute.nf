@@ -1,5 +1,7 @@
 process IMPUTE {
     publishDir "${params.output}/Imputation", mode: 'copy', overwrite: true
+    // added a beforeScript directive due to WSL-Windows integration issues
+    beforeScript "mkdir -p ${params.output}/Imputation"
     label 'python'
 
     input:
@@ -12,10 +14,18 @@ process IMPUTE {
     path "imputed_mynorm.parquet", emit: imputed_mynorm
     path "impute_nan_per_sample.parquet", emit: nan_per_sample
     path "impute_nan_per_probe.parquet", emit: nan_per_probe
-    path "mynorm_imputed_n_cpgs.json", emit: mynorm_imputed_n_cpgs
+    path "imputation_summary.json", emit: imputation_summary_path
 
     script:
     """
     imputation.py ${mynorm} ${p_threshold} ${s_threshold} ${imputer_type}
+    """
+
+    stub:
+    """
+    touch imputed_mynorm.parquet
+    touch impute_nan_per_sample.parquet
+    touch impute_nan_per_probe.parquet
+    touch imputation_summary.json
     """
 }

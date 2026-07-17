@@ -1,0 +1,20 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+#*.c text
+#*.h text
+
+*.nf text eol=lf
+*.py text eol=lf
+*.R text eol=lf
+*.sh text eol=lf
+*.groovy text eol=lf
+Dockerfile text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary

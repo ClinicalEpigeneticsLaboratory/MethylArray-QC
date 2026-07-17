@@ -1,0 +1,11 @@
+{
+  "n_samples": 5,
+  "mynorm_imputed_n_cpgs": 850000,
+  "p_threshold": 0.2,
+  "s_threshold": 0.2,
+  "imputer_type": "knn",
+  "n_nan_before_imputation": 12500,
+  "n_nan_after_imputation": 0,
+  "samples_removed": [],
+  "probes_removed": []
+}

@@ -4,11 +4,12 @@ nextflow_pipeline {
     script "main.nf"
 
     test("Should run without failures") {
-
+        options "-stub"
         when {
             params {
-                // define parameters here. Example: 
-                // outdir = "tests/results"
+                input        = "${projectDir}/tests/test_data/idats"
+                sample_sheet = "${projectDir}/tests/test_data/sample_sheet_small.csv"
+                output       = "${outputDir}"
             }
         }
 

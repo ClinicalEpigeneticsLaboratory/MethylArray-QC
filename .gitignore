@@ -180,3 +180,25 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# NF test intermediate files
+.nf-test-*.nf
+.nf-test/*
+
+# Claude Code
+.claude/settings.local.json
+.claude/worktrees/
+.claude/agent-memory/
+
+# pipeline configs for manual testing
+test_configs/
+
+# Example workflow (downloaded data and pipeline results)
+examples/idats/
+examples/results/*
+!examples/results/.gitkeep
+
+# Test run logs (keep the directory, ignore the logs)
+test_logs/*
+!test_logs/.gitkeep

@@ -3,7 +3,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) != 6) {
-    stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code> <sample_sheet_path>")
+    stop("Expected input: Rscript preprocess.R <idats> <cpus> <prep_code> <collapse_prefix> <collapse_method> <sample_sheet_path>")
 } else {
     idats <- args[1]
     cpus <- args[2]
@@ -29,6 +29,8 @@ library(arrow)
 library(glue)
 library(jsonlite)
 
+source(file.path(dirname(normalizePath(sub("--file=", "", commandArgs(FALSE)[grep("--file=", commandArgs(FALSE))]))), "r_utils.R"))
+
 message("Parsing ...")
 
 sample_sheet <- data.frame()
@@ -53,8 +55,24 @@ mynorm <- openSesame(sdfs,
 message("Dumping ...")
 mynorm <- as.data.frame(mynorm)
 mynorm$CpG <- rownames(mynorm)
-write_parquet(mynorm, glue("raw_mynorm", ".parquet"))
+write_parquet_portable(mynorm, "raw_mynorm.parquet")
 
-raw_probe_count_json <- character()
-raw_probe_count_json <- toJSON(nrow(mynorm))
-write(raw_probe_count_json, "raw_mynorm_probe_count.json")
+preprocessing_data <- list()
+preprocessing_data <- list(
+    Microarray_platform = sesame::sdfPlatform(sdfs[[1]]),
+    SeSAME_prep_code = prep_code,
+    IDAT_count_in_input_dir = length(
+        list.files(
+            path = idats,
+            pattern = "\\.idat(\\.gz)?$",
+            full.names = TRUE,
+            recursive = TRUE
+        )
+    ),
+    Processed_samples_count = length(sdfs),
+    Processed_IDAT_count = length(sdfs)*2,
+    Raw_mynorm_probe_count = nrow(mynorm)
+)
+preprocessing_data_json <- character()
+preprocessing_data_json <- toJSON(preprocessing_data, auto_unbox = TRUE)
+write(preprocessing_data_json, "preprocessing_data_summary.json")

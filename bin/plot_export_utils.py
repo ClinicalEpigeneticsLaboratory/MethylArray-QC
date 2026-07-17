@@ -11,9 +11,9 @@ from decorators import update_and_export_plot
 def export_decorated_fig_with_custom_name(
     fig: go.Figure,
     json_path: Path | str,
-    height: int = 650,
-    width: int = 650,
-    font_size: int = 22,
+    height: int = 625,
+    width: int = 625,
+    font_size: int = 16,
     template: str = "ggplot2",
     legend_title: str = "",
     showlegend: bool = True,
