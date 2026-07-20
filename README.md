@@ -57,9 +57,9 @@ mv nextflow $HOME/bin/
 ### Configuration
 The pipeline is preconfigured to use Docker containers for R and Python environments:
 - R containers: 
-   - `janbinkowski96/methyl-array-qc-r`
-   - `janbinkowski96/methyl-array-qc-r-clock`
-- Python container: `janbinkowski96/methyl-array-qc-python`
+   - `patrycjaprzybylowicz92/methyl-array-qc-r:0.1.0`
+   - `patrycjaprzybylowicz92/methyl-array-qc-r-clock:0.1.0`
+- Python container: `patrycjaprzybylowicz92/methyl-array-qc-python:0.1.0`
 
 ## Usage
 

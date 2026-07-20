@@ -24,7 +24,7 @@ echo "=== $(date '+%F %T') poetry lock END rc=$rc ==="
 if [ "$rc" -ne 0 ]; then echo "ABORT: poetry lock failed (rc=$rc)"; echo "ALL_DONE BUILD_FAILED"; exit "$rc"; fi
 
 echo "=== $(date '+%F %T') STEP 2/2 docker build START ==="
-docker build -f images/Python/Dockerfile -t janbinkowski96/methyl-array-qc-python .
+docker build -f images/Python/Dockerfile -t patrycjaprzybylowicz92/methyl-array-qc-python:0.1.0 .
 rc=$?
 echo "=== $(date '+%F %T') docker build END rc=$rc ==="
 
