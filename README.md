@@ -304,3 +304,22 @@ authors. All commits reflect human authorship and editorial decisions.
 - anomaly detection: implement more models
 - fluorescence on control probes: 
    - check data export for platforms other than 450K, EPIC, EPICv2 & implement from scratch for MM285
+
+### Meeting 2026-07-24
+- QC metrics: show metric descriptions next to the columns or on hover over the column names (the descriptions should be present in the CSV export as well)
+- batch effect (outside the pipeline?): mean methylation per `Sentrix_Position` computed and plotted **separately for each slide** (`Sentrix_ID`)
+- per tissue type: plots with `Sample_Group` used as the sex/anatomical grouping, i.e.:
+   - skin: women only, split by sampling site
+   - cartilage: split by sex
+   - bone: occipital bone in women, occipital bone in men, femur in women, femur in men
+- control probe intensity: separate plots for each normalization channel (NORM_A, NORM_C, NORM_T, ...)
+- NaN distribution per sample: one plot per slide (samples coming from a single slide; outside the pipeline?), with each sample colored the same way as on the beta distribution plot
+- beta distribution: legend (in the CSV, so that the color name and/or the sample can be looked up - and/or a legend placed below the plot)
+- NaN heatmap: outside the pipeline, restricted to the 13 tissue-specific markers?
+
+### Meeting 2026-08-13
+- control probe intensity (RESTORATION): add to the description the information that the remaining samples, not subjected to restoration, show only the background signal (as on the NEGATIVE plot); possibly add a line with the mean background value; overlay the background level together with its CI on all the plots
+- imputation: make the description more precise - explain what the individual numbers mean and state the thresholds
+- beta distribution: make the plot taller
+- NaN per probe heatmap (Plotly): remove the legend and add a description instead, or leave only the color squares
+- QC metrics: mark the most basic metrics (e.g. `frac_na_cg`) and present the fractions as percentages
