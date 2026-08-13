@@ -162,7 +162,14 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "quality and the assay performance across samples</li><ul><li>"
             "BISULFITE_CONVERSION_I</li><li>BISULFITE_CONVERSION_II</li><li>"
             "SPECIFICITY_I</li><li>SPECIFICITY_II</li><li>NON-POLYMORPHIC</li><li>"
-            "NEGATIVE</li></ul></ul><br>If you need further details on how to "
+            "NEGATIVE</li></ul></ul><br>On the plots whose probes are expected "
+            "- all of them or a subset - at background level (TARGET_REMOVAL, "
+            "RESTORATION, NEGATIVE, STAINING, SPECIFICITY_I, "
+            "BISULFITE_CONVERSION_I) the background measured in these data is "
+            "marked with a dashed line (mean NEGATIVE signal) and a grey band "
+            "(5-95 percentile range of the NEGATIVE signal). Probes expected at "
+            "background level should fall within that band or below it."
+            "<br>If you need further details on how to "
             "interpret the results, please see: <ul><li><a href='https://"
             "support.illumina.com/content/dam/illumina-support/documents/"
             "documentation/chemistry_documentation/infinium_assays/"
@@ -319,6 +326,8 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "plot.pca.scatter_title": "PCA scatter matrix - {col}<br>Top {p}% (n = {n}) CpGs<br>with highest variance",
         "plot.ctrl.total_intensity": "Total Intensity",
         "plot.ctrl.max_intensity": "Max Intensity",
+        "plot.ctrl.background_level": "Background level (NEGATIVE)",
+        "plot.ctrl.background_band": "Background level (NEGATIVE, {low}-{high} pct)",
         "plot.epi.accel_suffix": "_Accel",
     },
     "pl": {
@@ -460,7 +469,14 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "próbki i wydajności testu w poszczególnych próbkach</li><ul><li>"
             "BISULFITE_CONVERSION_I</li><li>BISULFITE_CONVERSION_II</li><li>"
             "SPECIFICITY_I</li><li>SPECIFICITY_II</li><li>NON-POLYMORPHIC</li><li>"
-            "NEGATIVE</li></ul></ul><br>Jeśli potrzebujesz dodatkowych informacji o "
+            "NEGATIVE</li></ul></ul><br>Na wykresach, na których wszystkie lub "
+            "część sond oczekiwane są na poziomie tła (TARGET_REMOVAL, "
+            "RESTORATION, NEGATIVE, STAINING, SPECIFICITY_I, "
+            "BISULFITE_CONVERSION_I), tło zmierzone w tych danych zaznaczono "
+            "linią przerywaną (średni sygnał NEGATIVE) oraz szarym pasem "
+            "(zakres 5-95 percentyla sygnału NEGATIVE). Sondy oczekiwane na "
+            "poziomie tła powinny mieścić się w tym pasie lub poniżej niego."
+            "<br>Jeśli potrzebujesz dodatkowych informacji o "
             "interpretacji wyników, zobacz: <ul><li><a href='https://"
             "support.illumina.com/content/dam/illumina-support/documents/"
             "documentation/chemistry_documentation/infinium_assays/"
@@ -624,6 +640,8 @@ CATALOG: Dict[str, Dict[str, str]] = {
         "plot.pca.scatter_title": "Macierz rozrzutu PCA - {col}<br>Top {p}% (n = {n}) CpG<br>o największej wariancji",
         "plot.ctrl.total_intensity": "Całkowita intensywność",
         "plot.ctrl.max_intensity": "Maksymalna intensywność",
+        "plot.ctrl.background_level": "Poziom tła (NEGATIVE)",
+        "plot.ctrl.background_band": "Poziom tła (NEGATIVE, percentyl {low}-{high})",
         "plot.epi.accel_suffix": "_Przysp",
     },
 }
