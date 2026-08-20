@@ -38,6 +38,11 @@ RUN R -e "install.packages('arrow')"
 RUN R -e "BiocManager::install('impute', ask = FALSE, update = TRUE)"
 RUN R -e "BiocManager::install('preprocessCore', configure.args = '--disable-threading', ask = FALSE, update = TRUE)"
 
+# Install RPMM explicitly. dnaMethyAge pulls it transitively at runtime for some
+# clocks, which hard-fails on read-only (Singularity/Apptainer) images that can't
+# write to the R library. Baking it in avoids that runtime install.
+RUN R -e "install.packages('RPMM')"
+
 # Install dnaMethyAge from GitHub
 RUN R -e "remotes::install_github('yiluyucheng/dnaMethyAge', dependencies = TRUE, upgrade = 'never')"
 
