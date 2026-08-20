@@ -77,7 +77,7 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
 
 - **Preprocessing (Sesame)**:
   - `params.prep_code`: Preprocessing code for the `sesame` package (e.g., `QCDPB`, `SQCDPB`).
-  - `params.collapse_prefix`: Boolean indicating whether to collapse probes with the same prefix.
+  - `params.collapse_prefix`: Boolean indicating whether to collapse probes with the same prefix (should be set to `true` for microarrays with multiple probes per CpG, such as EPICv2 microarray).
   - `params.collapse_prefix_method`: Method for collapsing prefixes (e.g., `mean`, `minPval`).
 
 - **Imputation**:
