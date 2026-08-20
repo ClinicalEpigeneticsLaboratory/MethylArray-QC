@@ -49,18 +49,10 @@ missing values across probes and samples
             zmax=1,
             hoverinfo="text",
             text=hovertext,
-            colorbar={
-                "title": None,
-                "tickvals": [0, 1],
-                "ticktext": ["No NaN", "NaN"],
-                "tickmode": "array",
-                "ticks": "outside",
-                "lenmode": "fraction",  # Use fraction instead of pixels
-                "len": 0.8,  # Shorter color bar (30% of plot height)
-                "ticklen": 10,
-                "tickwidth": 2,
-                "tickangle": 0,
-            },
+            
+            # confusing colorbar replaced by a translated colour legend in the report subsection
+            # description (i18n key section.missing.probe_desc).
+            showscale=False,
         )
     )
 

@@ -1031,17 +1031,27 @@ def generate_subsection_list(
 
         regex = re.compile(rf"(?<![a-zA-Z]){re.escape(subsection)}(?=(_|$|[^a-zA-Z]))")
 
+        # Match the keyword against the FILE NAME only, never the full path.
+        # plot_paths are absolute work-dir paths, so matching the whole path let a
+        # pipeline run from a directory whose name contains a keyword (e.g. a
+        # "nan-per-probe-*" worktree) pull the per-sample plots into the "probe"
+        # subsection - the per-sample barplots then rendered under the heatmap
+        # heading as well as their own. The keyword always identifies a plot by its
+        # filename (nan_distribution_per_sample_*, PCA_scatter_matrix_*, ...).
+
         # ---- match plots ----
         matching_plots = (
-            [p for p in plot_paths if re.search(regex, p)] if plot_paths else []
+            [p for p in plot_paths if re.search(regex, Path(p).name)]
+            if plot_paths
+            else []
         )
 
         # ---- match tables ----
         matching_tables: List[Dict] = []
         if tables:  # structured entries
             for tbl in tables:
-                # choose regex target: path if present else use fallback ""
-                tgt = tbl.get("path", "")
+                # choose regex target: file name if a path is present else ""
+                tgt = Path(tbl.get("path") or "").name
                 if re.search(regex, tgt):
                     matching_tables.append(tbl)
 
@@ -1570,7 +1580,7 @@ def main():
         plot_paths=missing_data_plot_paths,
         table_paths=None,
         title_prefix=None,
-        sub_descr_dict=None,
+        sub_descr_dict={"probe": t("section.missing.probe_desc", report_language)},
         language=report_language,
     )
 

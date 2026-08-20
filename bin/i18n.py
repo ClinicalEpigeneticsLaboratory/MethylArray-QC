@@ -120,6 +120,12 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "(in columns) and randomly selected n probes (in rows; n specified by "
             "the user)</li></ul>"
         ),
+        "section.missing.probe_desc": (
+            'Colour legend: <span style="color:#000000;">■</span> beta value '
+            'present (no NaN), <span style="color:#87CEFA;">■</span> missing beta '
+            "value (NaN). Hover over a cell to see the sample, the CpG ID and its "
+            "NaN status."
+        ),
         "section.pca.desc_with_kw": (
             "This section contains the results of PCA analysis divided into the "
             "following subsections:<ul><li>an area cumulative variance plot for "
@@ -423,6 +429,12 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "cieplna przedstawiająca rozkład brakujących (NaN) wartości we "
             "wszystkich próbkach (w kolumnach) i losowo wybranych n sondach (w "
             "wierszach; n określone przez użytkownika)</li></ul>"
+        ),
+        "section.missing.probe_desc": (
+            'Legenda kolorów: <span style="color:#000000;">■</span> wartość beta '
+            'obecna (brak NaN), <span style="color:#87CEFA;">■</span> brakująca '
+            "wartość beta (NaN). Najedź kursorem na komórkę, aby zobaczyć próbkę, "
+            "identyfikator CpG i status NaN."
         ),
         "section.pca.desc_with_kw": (
             "Ta sekcja zawiera wyniki analizy PCA podzielone na następujące "
