@@ -319,3 +319,9 @@ authors. All commits reflect human authorship and editorial decisions.
 - imputation: make the description more precise - explain what the individual numbers mean and state the thresholds
 - beta distribution: make the plot taller
 - QC metrics: mark the most basic metrics (e.g. `frac_na_cg`) and present the fractions as percentages
+
+Meeting 21-08-26:
+dodac opis ze wykresy sa per sentric id i per sentrix pos
+
+control intensity probes - consider per-sample plots
+epi clock regression - add sample id to hover info
