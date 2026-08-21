@@ -315,7 +315,6 @@ authors. All commits reflect human authorship and editorial decisions.
 
 
 ### Meeting 2026-08-13
-- control probe intensity (RESTORATION): add to the description the information that the remaining samples, not subjected to restoration, show only the background signal (as on the NEGATIVE plot); 
 - imputation: make the description more precise - explain what the individual numbers mean and state the thresholds
 - beta distribution: make the plot taller
 - QC metrics: mark the most basic metrics (e.g. `frac_na_cg`) and present the fractions as percentages

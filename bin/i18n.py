@@ -223,7 +223,9 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "<p><b>RESTORATION controls (sample-independent, FFPE-specific)</b> "
             "assess the effectiveness of the DNA restoration step in Infinium HD "
             "FFPE protocol.<br><i>Expected</i>: high signal suggesting successful "
-            "repair of FFPE-derived DNA.</p>"
+            "repair of FFPE-derived DNA. Samples not subjected to the restoration "
+            "step (i.e. non-FFPE samples) show only the background signal, as on "
+            "the NEGATIVE plot.</p>"
         ),
         "ctrl.desc.NORM": (
             "<p><b>NORM controls (normalization control probe pairs, "
@@ -537,7 +539,9 @@ CATALOG: Dict[str, Dict[str, str]] = {
             "<p><b>Kontrole RESTORATION (niezależne od próbki, specyficzne dla "
             "FFPE)</b> oceniają skuteczność etapu odtwarzania DNA w protokole "
             "Infinium HD FFPE.<br><i>Oczekiwane</i>: wysoki sygnał sugerujący "
-            "skuteczną naprawę DNA pochodzącego z FFPE.</p>"
+            "skuteczną naprawę DNA pochodzącego z FFPE. Próbki niepoddane "
+            "etapowi odtwarzania (tj. próbki inne niż FFPE) wykazują jedynie "
+            "sygnał tła, tak jak na wykresie NEGATIVE.</p>"
         ),
         "ctrl.desc.NORM": (
             "<p><b>Kontrole NORM (pary sond kontrolnych normalizacji, niezależne od "
