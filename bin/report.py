@@ -680,6 +680,18 @@ def load_table_data_json(json_path: str) -> dict:
         return {}
 
 
+def fraction_to_pct(fraction) -> str:
+    """Format a 0-1 fraction as a compact percentage string (e.g. 0.2 -> "20").
+
+    Returns "NA" when the value is missing or non-numeric, so the imputation
+    description degrades gracefully instead of raising at report time.
+    """
+    try:
+        return f"{float(fraction) * 100:g}"
+    except (TypeError, ValueError):
+        return "NA"
+
+
 def get_nextflow_version(config: dict) -> str:
     """A function returning the Nextflow version string from exported workflow config.
 
@@ -1512,7 +1524,15 @@ def main():
             "title": t("section.impute.title", report_language),
             "type": "table",
             "data": imputation_summary,
-            "description": t("section.impute.desc", report_language),
+            "description": t(
+                "section.impute.desc",
+                report_language,
+                imputer_type=imputation_summary.get("imputer_type", "NA"),
+                p_threshold=imputation_summary.get("p_threshold", "NA"),
+                s_threshold=imputation_summary.get("s_threshold", "NA"),
+                p_threshold_pct=fraction_to_pct(imputation_summary.get("p_threshold")),
+                s_threshold_pct=fraction_to_pct(imputation_summary.get("s_threshold")),
+            ),
             "filename": "imputation_summary",
         }
     )

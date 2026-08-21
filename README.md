@@ -81,8 +81,8 @@ The pipeline parameters can be adjusted as needed. Below are the key parameters 
   - `params.collapse_prefix_method`: Method for collapsing prefixes (e.g., `mean`, `minPval`).
 
 - **Imputation**:
-  - `params.p_threshold`: Fraction of NaN probes for which a CpG is considered corrupted and removed.
-  - `params.s_threshold`: Fraction of NaN samples for which a sample is considered corrupted and removed.
+  - `params.p_threshold`: Fraction of NaN samples for which a CpG is considered corrupted and removed.
+  - `params.s_threshold`: Fraction of NaN probes for which a sample is considered corrupted and removed.
   - `params.imputer_type`: Type of imputation (`mean`, `median`, `knn`).
 
 - **Sex inference**:
@@ -315,7 +315,6 @@ authors. All commits reflect human authorship and editorial decisions.
 
 
 ### Meeting 2026-08-13
-- imputation: make the description more precise - explain what the individual numbers mean and state the thresholds
 - beta distribution: make the plot taller
 - QC metrics: mark the most basic metrics (e.g. `frac_na_cg`) and present the fractions as percentages
 

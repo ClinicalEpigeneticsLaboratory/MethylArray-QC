@@ -69,11 +69,13 @@ def main():
         json.dump(
             obj={
                 "imputer_type": imputer_type,
+                "p_threshold": p_threshold,
+                "s_threshold": s_threshold,
                 "mynorm_imputed_n_cpgs": mynorm_imputed.index.size,
-                "mynorm_imputed_n_samples": mynorm_imputed.columns.size-1
-            }, 
-            fp=f, 
-            indent=4
+                "mynorm_imputed_n_samples": mynorm_imputed.columns.size - 1,
+            },
+            fp=f,
+            indent=4,
         )
 
 
